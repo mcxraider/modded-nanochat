@@ -11,3 +11,6 @@ eval_bundle/
 # Local setup
 CLAUDE.md
 wandb/
+
+# Experiment outputs (the historical runtime lives in a separate worktree)
+experiments/artifacts/

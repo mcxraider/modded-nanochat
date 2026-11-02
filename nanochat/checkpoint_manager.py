@@ -94,10 +94,15 @@ def build_model(checkpoint_dir, step, device, phase):
     model_config_kwargs = meta_data["model_config"]
     _patch_missing_config_keys(model_config_kwargs)
     log0(f"Building model with config: {model_config_kwargs}")
-    model_config = GPTConfig(**model_config_kwargs)
+    model_class, config_class = GPT, GPTConfig
+    if meta_data.get("model_type") == "modified_gpt_324e69c":
+        from nanochat.modified_gpt import GPT as model_class, GPTConfig as config_class
+    elif meta_data.get("model_type") is not None:
+        raise ValueError(f"Unknown checkpoint model_type: {meta_data['model_type']}")
+    model_config = config_class(**model_config_kwargs)
     _patch_missing_keys(model_data, model_config)
     with torch.device("meta"):
-        model = GPT(model_config)
+        model = model_class(model_config)
     # Load the model state
     model.to_empty(device=device)
     model.init_weights() # note: this is dumb, but we need to init the rotary embeddings. TODO: fix model re-init

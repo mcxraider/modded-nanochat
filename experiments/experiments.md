@@ -1,155 +1,285 @@
 # nanochat experiments
 
-## Goal
+## Research question
 
-Compare validation bits per byte (BPB), training throughput, and inference throughput for three d24 configurations on **2× L40S 48GB GPUs on one node, with up to two hours of training per run**.
+**Under a small, fixed training budget, what do grouped-query attention (GQA) and partial RoPE cost or buy us in validation quality, training speed, and inference memory/speed, and does the answer depend on model size?**
 
-These are planned experiments, not completed results. The two-hour limit applies to each run, giving up to six training hours for all three runs.
+GQA (Ainslie et al., 2023; building on multi-query attention, Shazeer, 2019) shares each key/value head across several query heads, shrinking the KV cache. Partial RoPE (RoFormer, Su et al., 2021; GPT-NeoX's `rotary_pct`, Black et al., 2022) rotates only a fraction of each head's dimensions. Both are widely adopted on the strength of small or indirect evidence at small scale, so we test them in a controlled setting, with a seed-noise estimate and a parameter-matched control.
 
-## Current scope: three runs
+This is a **small-scale, single-GPU-node study**. The results describe short, compute-limited training; they are not claimed to transfer to large models.
 
-| Run | Configuration | Purpose |
-|---|---|---|
-| B0 | Pre-autoresearch d24, preserving historical attention and RoPE settings | Establish the baseline |
-| E1-GQA-full | d24 with 2:1 GQA and full RoPE (100% of each Q/K head) | Compare GQA/full RoPE against B0 |
-| E1-GQA-75 | Same d24 and 2:1 GQA configuration as E1-GQA-full, with 75% RoPE | Isolate the effect of reducing the rotary fraction from 100% to 75% |
+## Budget, initialisation and evaluation (declared before running)
 
-Use **2:1 GQA in both E1 runs**: two query heads per KV head (`n_kv_head = n_head / 2`), requiring an even query-head count. Record B0's actual query/KV head counts and rotary fraction; do not assume the historical baseline uses MHA or full RoPE. If B0 already matches E1-GQA-full, resolve the duplicate configuration before training. If B0 differs in both attention and rotary fraction, label the B0 comparison as a combined change rather than attributing its entire effect to GQA.
+- **Hardware:** one node, 2× NVIDIA L40S (48 GB each), BF16, RunPod at $2.18/node-hour (to confirm at booking).
+- **Budget per run:** a **fixed token count**, identical for every run at the same depth, set to about 10 tokens per scaling parameter (currently provisional: d8 = 3,200 updates ≈ 0.42B tokens, d12 = 8,400 updates ≈ 1.10B tokens, at a global batch of 131,072 tokens; frozen after the pilot). A 2-hour wall-clock safety cap (`wallclock_cap_seconds = 7200`) applies to every run; a run that ends on the cap is flagged `wallclock_cap` and is not comparable. Wall-clock time, tokens and estimated FLOPs are all recorded; a fixed token count means variants differ in time, not in data seen.
+- **Initialisation:** every model trains from random initialisation. No pretrained weights, embeddings or components. The nanochat architecture, ClimbMix data and nanochat tokenizer are reused, pinned to upstream commit `324e69c45d3606095adb6b409078647145165454`.
+- **Metric:** bits per byte (BPB) on held-out ClimbMix text. BPB is tokenizer-independent, and the tokenizer is fixed anyway. It measures next-token prediction on web-style text only; it does not measure reasoning, instruction following or long-context ability.
+- **Data splits** (ClimbMix shards): training = the downloaded pool of shards below index 6541; **validation** = shard 06542 (highest shard, the historical validation shard), used for interim curves and any choices; **test** = shard 06541, held out and evaluated once per run after training. Selection decisions never use the test shard. Evaluation sizes are fixed bytes from the start of each shard: interim validation 2²¹ tokens every `eval_every` updates (d8: 400, d12: 700), final validation and test 2²⁴ tokens each; all runs see identical evaluation text. Interim validation consumes wall-clock time inside training (it counts toward the 2-hour cap, not toward the token target), so its cost is measured in the pilot; the final validation and test passes run after training.
+- **Preliminary and tuning experiments** (pilots, microbatch fit) are excluded from the budget and reported separately.
 
-All models retain d24 depth, query-head count, head dimension, and context length. Keep data, tokenizer, global batch, optimizer, seed, and time-budget learning-rate policy fixed. Record unavoidable parameter-count changes from GQA. Smaller-model sweeps, other GQA ratios, other rotary fractions, data-mix changes, and loader experiments are outside this phase.
+## Experiments and hypotheses
 
-Each run receives the same two-hour cap. At the supplied combined rate of $2.18/hour, the training allocation is **up to $4.36 per run and $13.08 for three runs**, or **12 L40S GPU-hours** total. Preparation, pilots, evaluation, inference benchmarks, and overruns cost extra. No additional training runs or repeats are included.
+Notation: B0 is the pre-autoresearch nanochat baseline (MHA, full RoPE). `GQA-k` means `n_kv_head = n_head / k`. `R75` means 75% of each head's dimensions are rotated and 25% left unchanged.
 
-Report absolute and relative BPB differences against B0, and E1-GQA-75 against E1-GQA-full, alongside actual tokens, estimated FLOPs, parameter counts, peak VRAM, and training/inference speedups. With one seed per configuration, treat small differences as preliminary.
+At d8 (4 heads of dimension 128), the KV head counts are 4 (MHA), 2 (GQA-2), 1 (GQA-4, i.e. MQA). At d12 (6 heads), they are 6 and 3.
 
-## Baseline: before autoresearch rounds 1 and 2
+Each prediction is written down **before** any results exist. The primary quality metric is the final **test BPB**; validation BPB is used for curves. A difference counts as **resolved** only if it exceeds the Experiment 1 noise threshold `2√2 · s`, where `s` is the sample standard deviation (ddof = 1) of test BPB over the three d8 baseline seeds, so the threshold is a two-sigma bound on the difference of two single runs.
 
-- Pin upstream nanochat commit **`324e69c45d3606095adb6b409078647145165454`** (`324e69c`), the ClimbMix leaderboard entry before either autoresearch round.
-- Do not use the current checkout's architecture or tuned defaults as the baseline. Round 1 is recorded at `6ed7d1d`; round 2 at `a825e63`.
-- Start from that revision's d24 architecture, ClimbMix data, tokenizer, optimizer, precision, sequence length, batch configuration, and learning-rate settings. Record the resolved configuration, including the actual query/KV head counts; do not assume the baseline uses ordinary multi-head attention.
-- Adapt execution to two GPUs using a global batch of 131,072 tokens through gradient accumulation; record this override and any associated learning-rate changes from the historical configuration. Replace the historical token-based stopping horizon with the two-hour budget, and document how the learning-rate schedule maps to that horizon.
-- Freeze this adapted configuration as **B0**. All architecture experiments branch from B0, without importing later autoresearch improvements.
-- Use separate checkouts or worktrees and artifact directories for historical baseline and variants. Record any compatibility patches.
+### E1: Noise floor
 
-Source: [local leaderboard history](../dev/LEADERBOARD.md), especially Runs 4–6. The historical Run 4 reported validation BPB **0.71854**, but this is a reference result, not the expected result of our two-GPU, two-hour run.
+*Question:* how much does test BPB change from seed to seed for the same configuration?
+*Runs (d8):* `d8-b0-s1`, `d8-b0-s2`, `d8-b0-s3`. The seed sets the initialisation **and** the training-data order: seed 1 keeps the historical shard order, seeds 2 and 3 rotate the shard pool by `(seed − 1) × ⌊pool/3⌋`, so they also start on a different subset of shards.
+*Prediction:* s is on the order of 0.001–0.003 BPB.
+*Use:* defines the resolution threshold for all other comparisons. With three seeds the estimate of s is itself crude, and it includes data-order noise; both are stated in the report. We assume s is similar across variants (checked only if budget allows a second GQA seed), and d12 has no seed estimate of its own.
 
-## Model implementation and experiment configuration
+### E2: Main comparison — does GQA/partial RoPE cost quality?
 
-Use **one configurable `nanochat/gpt.py` in a dedicated experiment checkout based on `324e69c45d3606095adb6b409078647145165454`**, preserving existing work in the current checkout. Do not create a model-file copy per experiment. Preserve `nanochat/modded_gpt.py` as exploratory work outside this suite: its current rotary function still rotates the full head, and its `SSL` attention-pattern default differs from the current shared model's `SSSL` default. Freeze the historical attention pattern for all three runs.
+*Question:* at matched tokens, how much BPB do GQA-2 and GQA-2 + R75 lose relative to B0, and how much training throughput do they gain?
+*Runs (d8):* `d8-gqa2` (2 KV heads, full RoPE) and `d8-gqa2-r75` (2 KV heads, 75% RoPE: 96 rotated and 32 untouched dimensions per head). The reference B0 is the mean of the three E1 runs; `d8-gqa2-r75` is also compared with `d8-gqa2`, which isolates the rotary fraction.
+*Predictions:*
+- H2a: GQA-2 is slightly worse than B0 in BPB (below 1.5× the threshold), consistent with GQA's reported near-parity with MHA.
+- H2b: training-throughput gain from GQA-2 is small (under 5%), because KV projections are a minor share of training compute at this size.
+- H2c: R75 vs full RoPE is not resolved in BPB, and shows no measurable throughput difference (under 2%).
+*What would falsify it:* a resolved BPB loss larger than 1.5× the threshold for GQA-2, or a resolved R75 loss.
+*Note:* the historical value embeddings have width `n_kv_head × head_dim`, so GQA also shrinks them; GQA-2 therefore removes parameters beyond the K/V projections. Report both total and scaling-parameter counts.
 
-GQA is already supported through `GPTConfig.n_head` and `GPTConfig.n_kv_head`; expose the KV-head setting through the runner. Add a serialized `rotary_fraction: float = 1.0` field to `GPTConfig`, preserving full-RoPE behavior by default. CLI flags, if provided, populate that same resolved configuration.
+### E3: Parameter-matched control — architecture effect or parameter-count effect?
 
-With the historical d24 defaults of 12 query heads and 128 dimensions per head, use:
+*Question:* is any GQA-2 loss because attention is worse, or simply because the model has fewer parameters?
+*Runs (d8):* `d8-gqa2-pm`: GQA-2 with `mlp_ratio = 4.5`, i.e. MLP hidden width 2304 instead of 2048, which returns the K/V projection parameters to the MLP. **Matching is on scaling parameters** (transformer matrices + unembedding, the quantity nanochat uses for its token budget): the 2,097,152 parameters removed from K/V equal the 256 added hidden units, leaving only a 256-parameter remainder from the value gates (a test checks the match to within 0.01% at d8 and d12). Total parameters cannot be matched, because the value embeddings shrink by about 33.5M at d8 and cannot be recovered through the MLP; both counts are reported.
+*Prediction (H3):* GQA-2-PM closes most of the E2 gap (BPB within the threshold of B0).
+*Falsifier:* GQA-2-PM stays resolved-worse than B0, which would indicate that attention capacity, not parameter count, matters at this size.
+*Caveats:* GQA-2-PM has more FLOPs per token than GQA-2, which is reported; the comparison is at matched scaling parameters, not matched FLOPs. Muon rescales the learning rate of a matrix by `max(1, rows/cols)^0.5`, so `c_fc` gets about 6% more learning rate in the wider MLP. The weight-decay scale is computed from the MHA baseline of the same depth (with `mlp_ratio` reset to 4.0), so PM uses the same weight decay as B0.
 
-| Run | Query heads | KV heads | Rotary fraction | Rotated / untouched dimensions per head |
-|---|---:|---:|---:|---:|
-| B0 | 12 | 12 | 1.0 | 128 / 0 |
-| E1-GQA-full | 12 | 6 | 1.0 | 128 / 0 |
-| E1-GQA-75 | 12 | 6 | 0.75 | 96 / 32 |
+### E4: Dose-response — how far can each knob be pushed?
 
-The pinned historical training script sets `n_kv_head=num_heads`, confirming that its default baseline uses multi-head attention. Verify the fully resolved settings during preflight and reject duplicate configurations.
+*Question:* how does quality change along the KV-sharing and rotary-fraction axes?
+*Runs (d8):* `d8-gqa4` (1 KV head, MQA) and `d8-gqa2-r25` (2 KV heads, 25% RoPE: 32 rotated dimensions). Combined with E1–E2: KV heads 4, 2, 1 (full RoPE) and rotary fraction 100%, 75%, 25% (on GQA-2).
+*Predictions:*
+- H4a: BPB degrades monotonically with KV sharing, and MQA is the worst, with a resolved loss.
+- H4b: R25 is not resolved from R75/full, because with head dimension 128 even 25% leaves 32 rotated dimensions (consistent with GPT-NeoX's 25%).
+*Falsifier:* a resolved R25 loss, or a non-monotone GQA trend.
 
-For partial RoPE, generate frequencies for the selected rotary dimension, rotate only that prefix of Q/K, and concatenate the untouched suffix. Validate that the fraction is in `(0, 1]` and produces an even integer rotary dimension without silent rounding. Keep the frequency convention, RoPE base, position handling, and QK normalization fixed. Verify that fraction 1.0 reproduces historical behavior.
+### E5: Scale transfer — does the gap persist with size?
 
-Store independent, fully resolved settings in `experiments/configs/b0.json`, `experiments/configs/e1_gqa_full.json`, and `experiments/configs/e1_gqa_75.json`. Use `experiments/run.py` for independent execution and `experiments/run_all.py` for sequential B0 → E1-GQA-full → E1-GQA-75 execution. Launch a fresh two-worker `torchrun` process for each run and wait for all workers to exit before starting the next.
+*Question:* is the E2 GQA-2 gap similar at d12 (≈ 2.5× the compute)?
+*Runs (d12):* `d12-b0` (6 KV heads) and `d12-gqa2` (3 KV heads), one seed each.
+*Prediction (H5):* the gap does not grow with size (it stays within the threshold of the d8 gap, or shrinks).
+*Falsifier:* a resolved larger gap at d12.
+*Limits:* d12 has no seed replicate, so its gap is judged against the d8 threshold only. Two sizes are not a scaling law and cannot establish a trend. We state them as two data points and compare against the compute-optimal-training literature (Kaplan et al., 2020; Hoffmann et al., 2022) only for context; at d12 we sit near, not at, a compute-optimal ratio, and nanochat's own training ratio is a reference we do not tune.
 
-Save query/KV head counts and rotary fraction with each final checkpoint. Loading must reconstruct the shared model from its saved configuration without manual model-file selection. Before full training, verify full-RoPE equivalence, unchanged partial-RoPE suffixes, GQA projection/cache shapes, cached versus full-sequence decoding, and checkpoint reload/generation.
+### Inference study (no extra training)
 
-## RunPod hardware and rental plan
+*Question:* where does the KV-cache saving actually show up?
+*Setup:* the benchmark runs automatically after each training run, on one L40S (the first visible GPU), with fixed random prompts, greedy decoding and exactly 256 generated tokens (EOS ignored). Grid: batch size 1, 4, 16, 64 × prompt length 128, 2,048, 8,192; OOM workloads are recorded, not shrunk. The 2,048- and 8,192-token workloads need a cache larger than the 2,048-token training context, so they are speed-only tests with no quality claim. Reported per workload: prefill tokens/s, time to first token, decode tokens/s (the remaining 255 tokens), peak VRAM, the allocated KV-cache bytes, and the analytic KV-cache bytes `2 × n_layer × batch × positions × n_kv_head × head_dim × 2` (BF16).
+*Predictions:*
+- H6a: measured cache size scales exactly with `n_kv_head` (verifies the implementation does not expand K/V).
+- H6b: at batch 1 and short context, decode throughput differs by under 5% between variants.
+- H6c: at large batch and long context, GQA-2 and GQA-4 have a resolved decode-throughput advantage that grows with the KV-cache share.
+*Risk:* the historical runtime selects SDPA on L40S. If it repeats K/V to match query heads, the expected savings vanish; this is checked in preflight and reported either way.
 
-Use **2× NVIDIA L40S, 48GB VRAM each, on the same multi-GPU node**, with working NCCL communication. Two separately rented instances cannot use the standalone launch below. Verify availability and interconnect performance before the sweep.
+## Run list
 
-| Item | Planned value |
-|---|---|
-| Provider | RunPod |
-| Combined hourly rate | $2.18/hour (user-supplied quote; confirm at booking) |
-| Two-hour training allocation | $4.36 per run; four GPU-hours |
-| Three-run matrix | $13.08; 12 GPU-hours, excluding preparation/evaluation/repeats |
-| Starting model | Historical d24, approximately 1.38B parameters; record actual count |
-| Context length | 2,048 tokens |
-| Starting sequences per GPU | 4 |
-| Gradient accumulation | 8 microsteps per optimizer update |
-| Global batch | 131,072 tokens per optimizer update |
+Defined once in `RUNS` (`experiments/config.py`); every config is generated from it.
 
-**4 × 2,048 × 2 GPUs × 8 microsteps = 131,072 tokens/update.** Batch 32 per GPU with accumulation 1 has the same effective batch, but activations plus weights, gradients, and optimizer state may exceed 48GB. Batch 4 is a starting point to test, not a guarantee of fit. Pilot per-GPU batches 4, 8, and 16 with accumulation 8, 4, and 2 respectively. Measure peak VRAM and combined tokens/sec while holding the global batch fixed; larger microbatches are not automatically faster. If batch 4 fails, reduce it and increase accumulation accordingly.
+| Run ID | Exp. | Depth (layers / width / heads) | KV heads | Rotary | MLP ratio | Seed | Compared with |
+|---|---|---|---|---|---|---|---|
+| `d8-b0-s1` | E1, E2 | d8 (8 / 512 / 4) | 4 | 1.0 | 4.0 | 1 | — |
+| `d8-b0-s2` | E1 | d8 | 4 | 1.0 | 4.0 | 2 | — |
+| `d8-b0-s3` | E1 | d8 | 4 | 1.0 | 4.0 | 3 | — |
+| `d8-gqa2` | E2 | d8 | 2 | 1.0 | 4.0 | 1 | `d8-b0` (mean of the 3 seeds) |
+| `d8-gqa2-r75` | E2 | d8 | 2 | 0.75 | 4.0 | 1 | `d8-b0`, `d8-gqa2` |
+| `d8-gqa2-pm` | E3 | d8 | 2 | 1.0 | 4.5 | 1 | `d8-b0`, `d8-gqa2` |
+| `d8-gqa4` | E4 | d8 | 1 | 1.0 | 4.0 | 1 | `d8-b0`, `d8-gqa2` |
+| `d8-gqa2-r25` | E4 | d8 | 2 | 0.25 | 4.0 | 1 | `d8-gqa2`, `d8-gqa2-r75` |
+| `d12-b0` | E5 | d12 (12 / 768 / 6) | 6 | 1.0 | 4.0 | 1 | — |
+| `d12-gqa2` | E5 | d12 | 3 | 1.0 | 4.0 | 1 | `d12-b0` |
 
-After preparing data and tokenizer, the proposed d24 pilot command is:
+**10 training runs.** Everything not listed above (data, tokenizer, context 2,048, global batch of 131,072 tokens, optimizer, schedule, evaluation sizes) is held fixed across runs at the same depth. Head dimension is 128 at both depths, `SSSL` window pattern, vocabulary 32,768. Seed 1 is used everywhere except the E1 replicates.
 
-```bash
-torchrun --standalone --nproc_per_node=2 \
-  -m scripts.base_train \
-  --depth=24 \
-  --max-seq-len=2048 \
-  --device-batch-size=4 \
-  --total-batch-size=131072 \
-  --num-iterations=1000
-```
+## Cost and time estimate
 
-The [current training script](../scripts/base_train.py) supports these flags and calculates accumulation automatically. Verify the CLI against the pinned historical revision and supply the full frozen B0 configuration: this command alone does not recreate historical architecture or optimizer defaults. **1,000 updates is a pilot target, not a two-hour stopping mechanism or completion prediction.** Implement and verify time-budget stopping, final checkpointing, and the corresponding learning-rate schedule before full trials. Do not enable the current script's H100+ FP8 option for this plan.
+These are estimates from FLOPs, not measurements. Replace them with pilot numbers.
 
-Record the attention backend actually selected on the pinned revision. L40S cannot use the Hopper-specific kernel path, but SDPA is not an unconditional requirement: the [current attention loader](../nanochat/flash_attention.py) attempts a community kernel for non-Hopper GPUs, with an SDPA fallback. Verify backend availability and record compatibility patches; kernel choice can materially affect throughput.
+- **Active parameters (matmul, incl. unembedding):** d8 ≈ 42M; d12 ≈ 110M. At 10 tokens/param that is ≈ 0.42B and ≈ 1.1B tokens.
+- **FLOPs:** about 6 × params × tokens, plus about 10% for attention. d8 ≈ 1.2×10¹⁷; d12 ≈ 8×10¹⁷.
+- **Throughput assumption:** 2 × L40S have about 724 TFLOPs peak BF16 dense. Taking 20–35% utilisation gives about 145–250 TFLOPs sustained. Small models tend to sit at the low end, and with no NVLink the gradient all-reduce adds a few percent.
+- **Per-run time:** d8 ≈ 8–15 min of training (about 15 min including compilation, evaluation and checkpointing); d12 ≈ 55–90 min.
 
-### Illustrative two-hour progress
+| Block | Runs | Time (central) | Cost at $2.18/h |
+|---|---|---|---|
+| d8 runs | 8 | ≈ 2.0–2.5 h | ≈ $4.5–5.5 |
+| d12 runs | 2 | ≈ 2.2–2.5 h | ≈ $4.8–5.5 |
+| Training total | 10 | ≈ 4.5 h | ≈ $10 (range ≈ $7–15) |
+| Pilots, setup, final evaluation, inference benchmarks | — | ≈ 1.5–2.5 h | ≈ $3–5 extra |
 
-At an **assumed combined throughput of 5,000 tokens/sec**, 7,200 seconds corresponds to **36 million tokens**, about **275 optimizer updates** (274 complete updates at 131,072 tokens/update), and **0.026 tokens per parameter** for a 1.38B model. This is an illustration, not a measured L40S benchmark. Compilation, evaluation, data stalls, and checkpoint overhead reduce useful training time; revise the estimate using measured end-to-end throughput.
+Plan on roughly **$13–15 and 6–7 node-hours in total**, with a worst case near $20 if throughput is at the low end.
 
-This is a short pretraining experiment for testing loss reduction, throughput, and training correctness, without assuming useful pretrained quality in two hours. Combined tokens/sec measures the training work purchased at the quoted hourly rate; validation BPB remains the quality measure. The $4.36 allocation covers two hours only: preparation, pilots, evaluation, and any overrun increase rental cost.
+If the pilot shows d12 is slower than the range above, the fallback is to run E5 at a smaller token ratio for both d12 runs (identical for both), recorded as a deviation. d8 remains the primary scale.
 
-## Budget and comparison rules
+## Comparison rules
 
-- Each training trial gets two L40S GPUs for **7,200 seconds of training-phase wall time**: four GPU-hours. Include compilation, data stalls, logging, and checkpoint overhead in this clock. Stop at an optimizer-step boundary, save the final checkpoint, and record any overrun.
-- Prepare dependencies, data, and tokenizer before the clock starts. Run final evaluation and inference benchmarks afterward and account for their GPU time separately. Thus total rental time exceeds two hours; a strict two-hour rental cap would require reserving setup/evaluation time inside that cap.
-- Fixed hardware and time are **not fixed FLOPs**. Record estimated cumulative training FLOPs and tokens processed for every run. Use architecture-aware FLOP estimates, including attention, rather than parameter count alone.
-- Primary comparison: final validation BPB at the time limit. Secondary comparisons: BPB at matched token counts and matched estimated FLOPs, plus training tokens/sec, step time, peak VRAM, and GPU utilization.
-- Keep validation bytes, tokenizer, context length, evaluation procedure, seed, and training-data order fixed unless explicitly varied. Keep global token batch and optimizer settings fixed for architecture-only comparisons. Record changes in parameter count caused by GQA.
-- Use a consistent time-budget learning-rate schedule across variants; record the schedule and any pilot throughput estimates. Do not stop a configuration early at an automatically calculated token/parameter ratio. Record any run ending before the cap and its reason; use matched-time checkpoints if elapsed times differ.
-- Run one seed per configuration in this three-run plan. Additional seeds require a separately budgeted extension; small differences are preliminary.
+- **Matched tokens** at the same depth is the primary comparison: every run at a depth trains on the same number of tokens, and the primary number is the final test BPB. BPB against wall-clock time and estimated FLOPs (read from the validation curves at exactly shared observations, never interpolated) are secondary, since GQA changes both per-step time and FLOPs.
+- **Resolution threshold:** two runs differ only if the test-BPB gap exceeds `2√2 · s` from E1. Smaller gaps are reported as unresolved, not as ties or wins.
+- **Reporting:** absolute and relative test BPB differences (and validation, for curves) against each run's `compare_to` references in the run list, each with a resolved/unresolved flag; parameter counts (total and scaling); tokens; estimated FLOPs; peak VRAM; training tokens/s.
+- **No hyperparameter tuning** is done per variant. The inherited H100-tuned optimizer settings are used for all, so a GQA loss could partly reflect that the settings were tuned for MHA. This is listed as a limitation. If budget remains, B0 and GQA-2 at 2× and 0.5× matrix LR at d8 would test it (about 4 cheap runs).
+- **Negative and null results** are reported in full, with the pre-registered prediction next to the outcome.
 
-## GQA and RoPE comparison protocol
+## Baseline definition
 
-- Define the GQA ratio as **query heads / KV heads = 2** in both E1 variants. Keep the query-head count fixed and use half as many KV heads; verify the resolved d24 query-head count is divisible by 2.
-- Full RoPE rotates 100% of each Q/K head. **75% RoPE means rotating 75% of the head dimensions and leaving 25% unchanged**, not reducing rotation by 75%. Require an even rotary dimension and record the actual dimension/fraction; choose compatible dimensions rather than silently rounding. Keep RoPE base and position handling fixed between E1 variants.
-- Train each configuration from scratch. Confirm the kernel supports the selected GQA layout and the inference cache stores fewer KV heads. Explicitly repeating K/V tensors can erase expected speed and memory benefits.
-- Verify cached decoding agrees with full-sequence inference for both GQA/RoPE variants. Check quality at the 2,048-token training context; any longer-context claims require separate evaluation.
-- Benchmark all three checkpoints on exactly one L40S, using batch sizes 1, 4, and 16 where they fit, prompt lengths 128 and 2,048 tokens, and a fixed 256-token decode workload. Hold precision, kernels, prompts, sampling settings, and cache policy fixed; warm up and synchronize timings.
-- Report prefill tokens/sec, time to first token, per-request and aggregate decode tokens/sec, and peak VRAM. Keep fixed-batch comparisons separate from maximum-throughput-at-capacity tests.
-- Measure whole-step training throughput: less rotary work does not guarantee a meaningful speedup. Define acceptable BPB degradation before choosing a speed/quality winner.
+B0 is the nanochat ClimbMix leaderboard configuration immediately before the autoresearch rounds (`324e69c`; round 1 at `6ed7d1d`, round 2 at `a825e63`), re-scaled to d8 and d12. The historical launch used H100 FP8; this study uses BF16 throughout. It retains `SSSL` windowed attention, half-context short windows, base-10,000 RoPE, value gates and the historical optimizer grouping, and excludes later architectural improvements. The learning-rate multiplier keeps the historical batch scaling against 524,288 tokens (a 0.5 multiplier at our global batch of 131,072), and the schedule is mapped onto the token target: no warmup, constant for the first 50% of updates, then linear decay to zero; Muon weight decay decays linearly to zero and Muon momentum warmup stays step-based (0.85 → 0.95 over 300 updates). Source: [local leaderboard history](../dev/LEADERBOARD.md), especially Runs 4–6.
 
-## GPT-2 reference
+## Model implementation and configuration
 
-The primary question is whether architecture changes improve **validation BPB under our fixed budget**. GPT-2 is an additional reference if it can be evaluated on the exact same held-out bytes with an appropriate scoring procedure.
+One configurable `nanochat/modified_gpt.py` derived from the pinned commit exposes `GPTConfig.n_head`, `GPTConfig.n_kv_head` and `rotary_fraction`, plus `mlp_ratio` (MLP hidden width = `mlp_ratio × n_embd`, default 4.0 = historical; the hidden width must be an exact multiple of 128). JSON configs under `experiments/configs/` carry all settings and are generated by `experiments/make_configs.py` from the `RUNS` table, so none are edited by hand. For partial RoPE, frequencies are built for the rotated prefix only, that prefix of Q/K is rotated, and the remaining suffix is concatenated unchanged. The rotary dimension must be an exact even integer (no silent rounding), and fraction 1.0 must reproduce the historical behaviour.
 
-Do not label **0.71854** as GPT-2's validation BPB: it is nanochat Run 4's result on its validation distribution. The repo's historical GPT-2 capability threshold is **CORE = 0.256525**, a separate metric. If a directly comparable GPT-2 BPB result is unavailable, report the gap to B0 and use CORE only as a secondary capability check.
+Required checks before the full runs: full-RoPE equivalence to the historical code; untouched partial-RoPE suffixes; GQA projection and cache shapes; cached versus full-sequence decoding; checkpoint reload and generation; the selected attention backend (SDPA on L40S) handling GQA without expanding K/V.
 
-## Suggested execution order
+## Implementation status
 
-1. Pin the historical baseline and save its full configuration and data/tokenizer manifests. Resolve B0's head counts and rotary fraction; verify both E1 variants use the specified 2:1 GQA ratio.
-2. Verify GQA, full/75% RoPE, time-budget stopping, measurement, checkpointing, and resume before the full runs. Pilot memory fit and throughput on the target node.
-3. Train B0 from scratch for up to two hours.
-4. Train E1-GQA-full from scratch under the same two-hour cap.
-5. Train E1-GQA-75 from scratch under the same cap, changing only the rotary fraction from E1-GQA-full.
-6. Evaluate all three checkpoints on the same validation bytes and run the same one-L40S inference benchmark. Report quality and throughput comparisons with actual elapsed time and rental cost.
+Implemented and covered by CPU tests (`tests/test_experiments.py`, `test_data.py`, `test_modified_gpt.py`, `test_visualise.py`):
 
-The plan contains exactly three training runs, with up to six node-hours / 12 GPU-hours of training. Any repeats or new configurations are outside this budget.
+- `config.py`: `RUNS` table (single source of truth), token-target and wall-clock-cap schema, three evaluation sizes, `mlp_ratio`, step-based `schedule`, `validate_suite`.
+- `make_configs.py`: generates the 10 JSON configs; per-depth policy (token targets, microbatch, cadence) lives in its `DEFAULTS` and is **provisional until the pilot**.
+- `data.py`: held-out test shard (`shard_06541`), seed-dependent training order, epoch guard, built on the unmodified historical dataloader.
+- `train.py`: fixed-token stop, 2 h safety cap, interim/final validation and a separate test pass, `data_order.json`, `mlp_ratio` reset in the weight-decay reference models.
+- `modified_gpt.py`: `GPTConfig.mlp_ratio` (default 4.0 = historical).
+- `benchmark.py`: analytic and allocated KV-cache bytes per workload; wider batch/prompt sweep in the generated configs.
+- `report.py` / `visualise.py`: seed noise `s`, threshold `2√2·s`, resolved flags, per-depth figures, `dose_response` and `scale_transfer`.
+
+Still to do on the GPU node (not verifiable locally): download the pool and test shard, run the d8 and d12 pilots, freeze `DEFAULTS` and regenerate configs, check that the pinned SDPA path runs GQA without expanding K/V (and does not fall back to the math kernel for short-window layers), and confirm `kv_cache_bytes_allocated` equals the analytic value on GPU.
+
+Known confounds to report: the historical value embeddings shrink with KV heads (total parameters cannot be matched in E3); Muon rescales the `c_fc` learning rate with its aspect ratio (about +6% in the 4.5× MLP); the seed varies both initialisation and training-data order, so `s` includes data-order noise.
+
+## Execution order
+
+1. On the GPU node: prepare the pinned worktree, download the shard pool and shard 06541, train the tokenizer, and run the preflight checks above (commands under "Pipeline reference").
+2. Pilot d8 and d12 (10 updates each, device batch 4/8/16): measure tokens/s, peak VRAM and evaluation cost; freeze `DEFAULTS` in `make_configs.py` (token targets, microbatch, cadence) and regenerate the configs.
+3. Run E1 (`d8-b0-s1/s2/s3`). Compute `s` and the threshold with `experiments.report`.
+4. Run E2, E3 and E4 (the remaining d8 runs), then E5 (d12).
+5. Collect the inference results, which each run produces automatically after training, and rerun `experiments.report` and `visualise.py`.
+6. Write up predictions versus outcomes.
 
 ## Run record
 
-For every trial, save:
+For every run, save: run ID, experiment, hypothesis, parent config, code commit/diff, launch command, seed, resolved config; GPU model/count, software versions, precision, attention backend; total and scaling parameter counts, KV heads, rotary fraction; dataset/tokenizer manifests and split manifests; tokens, estimated FLOPs, step time, throughput, peak VRAM; validation curve, final test BPB; checkpoint path; GPU-hours and cost.
 
-- Run ID, hypothesis, parent configuration, exact code commit/diff, launch command, seed, and full resolved configuration.
-- GPU model/count/interconnect, driver and software versions, precision, attention kernel, model parameters, query/KV heads, rotary fraction, and context length.
-- Dataset versions and sampling weights, tokenizer hash, validation manifest, loader settings, global token batch, learning-rate schedule, and checkpoint cadence.
-- Training-phase elapsed time, overruns/interruption history, total tokens, unique-data estimate, estimated FLOPs and formula, throughput, peak VRAM, and final checkpoint path.
-- Final BPB, BPB curves against time/tokens/FLOPs, optional CORE, inference results, GPU-hours including preparation/evaluation, and rental cost.
+| Run ID | Seed | Params (total / scaling) | Tokens | Train seconds | Test BPB | Train tok/s | Status |
+|---|---|---|---|---|---|---|---|
+| `d8-b0-s1` | 1 | — | — | — | — | — | Planned |
+| `d8-b0-s2` | 2 | — | — | — | — | — | Planned |
+| `d8-b0-s3` | 3 | — | — | — | — | — | Planned |
+| `d8-gqa2` | 1 | — | — | — | — | — | Planned |
+| `d8-gqa2-r75` | 1 | — | — | — | — | — | Planned |
+| `d8-gqa2-pm` | 1 | — | — | — | — | — | Planned |
+| `d8-gqa4` | 1 | — | — | — | — | — | Planned |
+| `d8-gqa2-r25` | 1 | — | — | — | — | — | Planned |
+| `d12-b0` | 1 | — | — | — | — | — | Planned |
+| `d12-gqa2` | 1 | — | — | — | — | — | Planned |
 
-| Run ID | Change | Seed | Params | Tokens | Est. FLOPs | Train seconds | Val BPB | Train tok/s | Decode tok/s (batch 1) | Status |
-|---|---|---|---|---|---|---|---|---|---|---|
-| B0 | Pre-autoresearch d24 | TBD | — | — | — | — | — | — | — | Planned |
-| E1-GQA-full | d24, 2:1 GQA, 100% RoPE | TBD | — | — | — | — | — | — | — | Planned |
-| E1-GQA-75 | Same d24/2:1 GQA, 75% RoPE | TBD | — | — | — | — | — | — | — | Planned |
+No results have been produced. Every number in the plan above is a prediction or an estimate.
 
-## Decisions still to make
+## GPT-2 reference (optional)
 
-- Acceptable BPB degradation for a training/inference speed improvement.
+Do not label 0.71854 (nanochat Run 4's validation BPB, on its own distribution) as GPT-2's BPB. The repo's GPT-2 threshold is CORE = 0.256525, a separate metric. Our d8/d12 models are far too small and short-trained to approach it, so GPT-2 is not a target; if a directly comparable BPB number is not available, omit it.
 
-Implementation of the experiment runner, model variants, and measurements is separate from this plan. No training results are claimed here.
+---
+
+# Pipeline reference
+
+## Prepare once on the GPU node
+
+The launcher prepares a managed, detached worktree at the pinned commit, by default next to this repository as `modded-nanochat-experiments-324e69c`. It overlays `modified_gpt.py`, every `experiments/*.py` file (including `data.py`), and the patched checkpoint dispatch. Historical data loading, attention backend, optimizer and other dependencies remain pinned. It refuses unmanaged edits and concurrent use of the same runtime.
+
+```bash
+python experiments/make_configs.py
+python experiments/run.py --config experiments/configs/d8-b0-s1.json --prepare-only
+uv sync --project ../modded-nanochat-experiments-324e69c --extra gpu --group dev
+```
+
+Prepare the ClimbMix shards and tokenizer from the historical worktree, using its environment and the same `NANOCHAT_BASE_DIR` for every run. The pool must cover the largest run (about `target_tokens / 0.65` raw tokens, because best-fit packing crops roughly 35%) and the d8 seed rotations; measure tokens per shard first. The test shard is fetched separately (`dataset.py` always fetches validation shard 06542):
+
+```bash
+cd ../modded-nanochat-experiments-324e69c
+.venv/bin/python -m nanochat.dataset -n <POOL_SHARDS>
+.venv/bin/python -c "from nanochat.dataset import download_single_file; download_single_file(6541)"
+.venv/bin/python -m scripts.tok_train
+cd ../modded-nanochat
+```
+
+The suite rejects the legacy FineWeb fallback, a missing test shard, and tokenizer vocabulary mismatches. Dependency installation, data preparation, pilots and idle time are outside the measured training phase and remain additional rental cost.
+
+## Pilot, validate, run
+
+```bash
+python - <<'PILOT'
+import json
+from pathlib import Path
+config = json.loads(Path("experiments/configs/d8-b0-s1.json").read_text())
+config["run_id"] = "d8-b0-s1"
+config["training"].update(max_steps=10, eval_every=-1, save_every=-1)
+config["evaluation"].update(interim_tokens=131072, final_tokens=131072, test_tokens=131072)
+config["benchmark"].update(batch_sizes=[1], prompt_lengths=[128], decode_tokens=16, warmup=1, repeats=1)
+Path("/tmp/nanochat-pilot.json").write_text(json.dumps(config, indent=2))
+PILOT
+python experiments/run.py --config /tmp/nanochat-pilot.json --output-root experiments/artifacts/pilots
+```
+
+Repeat for d12 and for `device_batch_size` 4/8/16 (global batch fixed at 131,072); pilot run IDs must be unique and pilots never count as suite runs. Measure tokens/s, peak VRAM and evaluation cost, then edit `DEFAULTS` in `make_configs.py` and regenerate.
+
+```bash
+python experiments/run_all.py --dry-run                      # resolves all 10 runs, creates nothing
+python experiments/run.py --config experiments/configs/d8-b0-s1.json
+python experiments/run_all.py --runs d8-b0-s1 d8-b0-s2 d8-b0-s3   # E1 only; omit --runs for the whole suite
+python experiments/run.py --config experiments/configs/d8-b0-s1.json --resume 1600
+```
+
+The suite validator checks every config against `RUNS`, that configs at one depth differ only in run ID, seed, KV heads, rotary fraction and MLP ratio, that no (model, seed) pair repeats, and that the suite uses two workers, global batch 131,072 and no step cap. Existing outputs are rejected unless an individual resume is requested. Each launch trains on two workers, evaluates (validation then test) after training, then benchmarks the final checkpoint in a fresh process on the first visible GPU. A failed process stops the sweep. `run_all.py` writes `comparison.json` and `tables.md` at the end.
+
+## Stopping, schedule and optimizer policy
+
+Training runs to `target_tokens / total_batch_size` optimizer updates. The learning-rate schedule is a function of step progress: no warmup, constant for the first 50%, then linear decay to zero; Muon weight decay decays linearly to zero with progress; Muon momentum warmup stays step-based (0.85 → 0.95 over 300 updates). A wall-clock cap (`wallclock_cap_seconds`, 7,200 s) is a safety stop only: a run that ends on it is flagged `stop_reason = wallclock_cap` and is not comparable. Learning rates keep the historical batch scaling against 524,288 tokens (a 0.5 multiplier at the global batch of 131,072 before model-width scaling). Initial weight-decay scaling is resolved from the MHA baseline of the same depth and the historical d12 reference, then frozen across variants (with `mlp_ratio` reset to 4.0 in those references). BF16 replaces the leaderboard's H100 FP8; FP8 is never enabled.
+
+Evaluation uses fixed bytes: interim validation (`interim_tokens`) on the validation shard every `eval_every` updates, then after training a final validation pass (`final_tokens`) and a test pass (`test_tokens`) on the held-out test shard, outside the training clock. Tuning decisions use validation only; the test number is reported once.
+
+Resume restores per-rank optimizer and RNG state and replays consumed microbatches to preserve exact packing. Only the wall-clock cap depends on cumulative seconds; lost time after an interruption is not charged back automatically.
+
+## Observe a running experiment
+
+| Observation | Cadence | File in the run directory |
+|---|---|---|
+| Step, elapsed time, worker-0 loss, tokens, estimated FLOPs, step duration, throughput, LR multiplier, peak allocated VRAM | Every update | `metrics.jsonl`, `train.log` |
+| GPU utilisation and memory (`nvidia-smi`) | Every 10 updates | `metrics.jsonl` |
+| Distributed validation BPB | Every `eval_every` updates, and after training (`final: true`) | `metrics.jsonl` |
+| Test BPB (`kind: "test"`) | Once, after training | `metrics.jsonl`, `result.json` |
+| Hardware/software, effective optimizer groups, parameter counts, manifests, data order | Before training | `hardware.json`, `data_manifest.json`, `data_order.json`, `launch.json`, `config.json` |
+
+Follow `train.log` with `tail -f`, or rerun `visualise.py` on a local copy. Training loss is worker 0's; validation and test BPB are averaged across workers. Peak VRAM is the per-GPU maximum.
+
+## Outputs and comparisons
+
+Each run directory under `experiments/artifacts/` holds the frozen config and source, provenance, logs, curves, checkpoints, `result.json` (including `val_bpb`, `test_bpb`, `scaling_parameters`, `target_tokens`, `data_epoch`), `inference.json`, and rental accounting. `data_manifest.json` is seed-independent (pool shards, validation and test hashes, tokenizer hashes) and is compared across runs at one depth; the per-run training order is in `data_order.json`. `data_epoch > 1` means a run saw repeated data and is flagged.
+
+`report.py` computes the d8 baseline seed standard deviation `s` (ddof = 1) from test BPB, the threshold `2√2·s`, and for every `compare_to` pair the test and validation BPB differences, relative differences, a `resolved` flag (`|Δ|` above the threshold), training-speed ratio, total and scaling parameter counts, exact matched-token and matched-FLOP observations (never interpolated), and inference speedups including KV-cache byte ratios. `scale_transfer` compares the GQA-2 gap at d12 with the d8 gap, with the caveat that the threshold comes from d8 seeds only.
+
+FLOPs use the historical estimate (six per matmul parameter per token plus attention by query-head count and window); they exclude lookup, norm, softmax and rotary elementwise work. Inference uses fixed greedy prompts and exactly 256 generated tokens ignoring EOS, measures prefill and TTFT separately, times the remaining 255 tokens as decode, records OOM workloads without shrinking the batch, and labels any workload whose cache exceeds the 2,048-token training context as speed-only.
+
+Rental accounting covers the launcher duration at the supplied $2.18/node-hour quote and excludes earlier preparation, pilots and idle gaps.
+
+```bash
+python -m experiments.report --output-root experiments/artifacts
+# Inside the prepared historical worktree, with its Python environment:
+CUDA_VISIBLE_DEVICES=0 .venv/bin/python -m experiments.benchmark --run-dir /absolute/path/to/artifacts/d8-b0-s1
+python -m pytest tests/test_experiments.py tests/test_data.py tests/test_modified_gpt.py tests/test_visualise.py tests/test_engine.py -q
+```
+
+Local CPU tests do not establish GPU throughput, memory fit, NCCL behaviour or the selected attention backend; verify those on the two-L40S node before the full runs.
+
+## Visualise
+
+```bash
+python experiments/visualise.py --output-root experiments/artifacts
+python experiments/visualise.py --output-root experiments/artifacts --output-dir /tmp/figures --smooth-window 10
+```
+
+Figures are written as PNG and SVG under `<output-root>/figures/`. Per depth (`_d8`, `_d12`): `learning_curves`, `training_performance`, `final_comparison` (final test BPB, pairwise differences against each run's `compare_to` references with the ±2√2·s noise band, throughput, peak VRAM), `quality_speed`, and `inference_comparison` (prefill/decode throughput, TTFT, peak VRAM and allocated KV cache by prompt length and batch size). Across depths: `dose_response` (BPB against KV heads and rotary fraction) and `scale_transfer` (GQA-2 gap at d8 and d12). Learning and performance figures work while runs are in progress; missing runs and provenance are flagged; data, code or hardware differences reject the comparison. Charts show observations and descriptive smoothing, with no automatic causal attribution; unresolved differences are not ties.
