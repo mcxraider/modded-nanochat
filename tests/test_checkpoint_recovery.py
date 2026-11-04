@@ -74,3 +74,24 @@ def test_benchmark_recovery_does_not_launch_training_or_touch_metrics(tmp_path, 
     assert process.call_count == 1
     assert process.call_args.args[0][1:3] == ['-m', 'experiments.benchmark']
     assert metrics.read_text() == 'final evaluation evidence\n'
+
+
+def test_prune_keeps_two_newest_and_deletes_marker_first(tmp_path, monkeypatch):
+    root = tmp_path / 'checkpoints'
+    for step in (400, 800, 1200):
+        save(root, step)
+    checkpoints.prune(root, {800, 1200}, 1)
+    assert sorted(p.name for p in root.glob('timing_*.json')) == ['timing_000800.json', 'timing_001200.json']
+    assert not any(root.glob('*_000400*'))
+    assert resume.resume_action(tmp_path, 1) == ('resume', 1200)
+    # Interrupted right after the marker goes: the generation is invalid, never half-valid.
+    unlink = Path.unlink
+    def fail_payload(path, missing_ok=False):
+        if path.name.startswith('model_'):
+            raise OSError('simulated interruption')
+        return unlink(path, missing_ok=missing_ok)
+    monkeypatch.setattr(Path, 'unlink', fail_payload)
+    with pytest.raises(OSError):
+        checkpoints.prune(root, {1200}, 1)
+    assert not checkpoints.valid(root, 800, 1)
+    assert resume.resume_action(tmp_path, 1) == ('resume', 1200)

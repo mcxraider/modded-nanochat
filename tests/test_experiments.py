@@ -32,7 +32,7 @@ def configs(config_dir):
 
 def test_generated_suite_matches_runs_table_and_batch_policy(config_dir):
     suite = configs(config_dir)
-    assert len(suite) == 8
+    assert len(suite) == 14
     assert {p.stem for p in config_dir.glob("*.json")} == set(RUNS)
     assert [c["run_id"] for c in suite] == list(RUNS)
     validate_suite(suite)
@@ -44,14 +44,60 @@ def test_generated_suite_matches_runs_table_and_batch_policy(config_dir):
     assert {RUNS[r]["depth"] for r in RUNS} == {8}
 
 
+def test_flop_budget_is_b0s_usage_and_iso_runs_fill_it(config_dir):
+    suite = {c["run_id"]: c for c in configs(config_dir)}
+    budget = suite[FIRST]["training"]["flop_budget"]
+    assert {c["training"]["flop_budget"] for c in suite.values()} == {budget}
+    assert budget == suite[FIRST]["training"]["target_tokens"] * make_configs.flops_per_token(FIRST)
+    for run_id, c in suite.items():
+        fpt, target, batch = make_configs.flops_per_token(run_id), c["training"]["target_tokens"], c["training"]["total_batch_size"]
+        assert target * fpt <= budget  # no run exceeds the declared budget
+        if RUNS[run_id]["budget"] == "flops":
+            assert (target + batch) * fpt > budget  # the most whole updates that fit
+            assert target * fpt > 0.999 * budget
+        else:
+            assert target == suite[FIRST]["training"]["target_tokens"]
+    assert {r: suite[r]["training"]["target_tokens"] // 131072 for r in ("d8-gqa2-iso", "d8-gqa4-iso")} == {
+        "d8-gqa2-iso": 3333, "d8-gqa4-iso": 3404}
+
+
+def test_suite_allows_token_target_drift_only_on_flop_budget_runs(config_dir):
+    suite = configs(config_dir)
+    index = {c["run_id"]: i for i, c in enumerate(suite)}
+    drifted = copy.deepcopy(suite)
+    drifted[index["d8-gqa2-r75"]]["training"]["target_tokens"] += 131072
+    with pytest.raises(ValueError, match="may differ only"):
+        validate_suite(drifted)
+    budget = copy.deepcopy(suite)
+    budget[index["d8-gqa2-iso"]]["training"]["flop_budget"] += 1
+    with pytest.raises(ValueError, match="may differ only"):
+        validate_suite(budget)
+    iso = copy.deepcopy(suite)
+    iso[index["d8-gqa2-iso"]]["training"]["target_tokens"] = suite[index[FIRST]]["training"]["target_tokens"]
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_suite(iso)  # identical to d8-gqa2-s1 once its target matches
+
+
+def test_value_embedding_runs_form_a_2x2_with_b0_and_gqa2():
+    from experiments.config import INTERACTIONS
+    a, b, c, d = INTERACTIONS["E5"]
+    assert {model_for(members(x)[0])["value_embeds"] for x in (a, b)} == {True}
+    assert {model_for(x)["value_embeds"] for x in (c, d)} == {False}
+    for on, off in ((members(a)[0], c), (members(b)[0], d)):
+        assert {**model_for(on), "value_embeds": False} == model_for(off)
+
+
 def test_runs_table_references_resolve_and_encode_the_experiment_design():
     for run_id, spec in RUNS.items():
         for ref in spec["compare_to"]:
             assert members(ref)
     assert members("d8-b0") == GROUPS["d8-b0"] and len(GROUPS["d8-b0"]) == 3
-    assert [model_for(r)["n_kv_head"] for r in ("d8-b0-s1", "d8-gqa2", "d8-gqa4")] == [4, 2, 1]
+    assert [model_for(r)["n_kv_head"] for r in ("d8-b0-s1", "d8-gqa2-s1", "d8-gqa4")] == [4, 2, 1]
     assert model_for("d8-gqa2-pm")["mlp_ratio"] == 4.5 and model_for("d8-gqa2-r25")["rotary_fraction"] == 0.25
     assert sorted(RUNS[r]["seed"] for r in GROUPS["d8-b0"]) == [1, 2, 3]
+    # GQA-2 seeds: one architecture, seeds 1-3; seeds share B0's data rotations.
+    assert sorted(RUNS[r]["seed"] for r in GROUPS["d8-gqa2"]) == [1, 2, 3]
+    assert {json.dumps(model_for(r), sort_keys=True) for r in GROUPS["d8-gqa2"]} == {json.dumps(model_for("d8-gqa2-s1"), sort_keys=True)}
 
 
 def test_suite_rejects_policy_drift_duplicates_and_table_mismatch(config_dir):
@@ -208,9 +254,11 @@ def test_runtime_loader_patch():
 
 
 def test_report_arithmetic_and_no_interpolated_observations():
-    reference = {"run_id": "B0", "val_bpb": 2, "training_tokens_per_second": 100}
-    result = {"val_bpb": 1.5, "training_tokens_per_second": 150}
-    assert compare(result, reference) == {"reference": "B0", "bpb_delta": -0.5, "bpb_relative_delta": -0.25, "training_speedup": 1.5}
+    reference = {"run_id": "B0", "val_bpb": 2, "training_tokens_per_second": 100, "steady_tokens_per_second": 200}
+    result = {"val_bpb": 1.5, "training_tokens_per_second": 150, "steady_tokens_per_second": 220}
+    assert compare(result, reference) == {"reference": "B0", "bpb_delta": -0.5, "bpb_relative_delta": -0.25,
+                                          "training_speedup": pytest.approx(1.1), "whole_phase_training_speedup": 1.5}
+    assert compare({**result, "steady_tokens_per_second": None}, reference)["training_speedup"] is None
     assert matched_observations([{"kind": "validation", "tokens": 10, "val_bpb": 1}], [], "tokens") == []
 
 
@@ -223,7 +271,8 @@ def test_launch_trains_then_benchmarks_on_one_gpu(config_dir, tmp_path, monkeypa
     calls = []
     def execute(cmd, **kwargs):
         calls.append((cmd, kwargs["env"]))
-    monkeypatch.setattr(subprocess, "run", execute)
+        assert kwargs["watch"].name in ("train.log", "benchmark.log") and kwargs["stall_seconds"] == run.STALL_SECONDS
+    monkeypatch.setattr(run, "run_process", execute)
     run.launch(config_dir / f"{FIRST}.json", tmp_path / "artifacts", runtime)
     assert "--nproc_per_node=1" in calls[0][0]
     assert "experiments.train" in calls[0][0]
@@ -242,7 +291,7 @@ def test_failed_launch_records_attempt_and_skips_benchmark(config_dir, tmp_path,
     def execute(cmd, **kwargs):
         calls.append(cmd)
         raise subprocess.CalledProcessError(1, cmd)
-    monkeypatch.setattr(subprocess, "run", execute)
+    monkeypatch.setattr(run, "run_process", execute)
     with pytest.raises(subprocess.CalledProcessError):
         run.launch(config_dir / f"{FIRST}.json", tmp_path / "artifacts", runtime)
     assert len(calls) == 1
@@ -262,11 +311,11 @@ def test_seed_noise_threshold_and_resolution():
     reference = pooled(results, "d8-b0")
     assert reference["test_bpb"] == pytest.approx(1.0) and len(reference["members"]) == 3
     assert pooled({"d8-b0-s1": results["d8-b0-s1"]}, "d8-b0") is None  # incomplete group is not a baseline
-    small = pair_entry(result("d8-gqa2", 1.0, 1.04), reference, noise["threshold"])
-    big = pair_entry(result("d8-gqa2", 1.0, 1.07), reference, noise["threshold"])
+    small = pair_entry(result("d8-gqa2-s1", 1.0, 1.04), reference, noise["threshold"])
+    big = pair_entry(result("d8-gqa2-s1", 1.0, 1.07), reference, noise["threshold"])
     assert small["resolved"] is False and big["resolved"] is True
     assert big["test_bpb_delta"] == pytest.approx(0.07)
-    assert pair_entry(result("d8-gqa2", 1.0, 1.07), reference, None)["resolved"] is None
+    assert pair_entry(result("d8-gqa2-s1", 1.0, 1.07), reference, None)["resolved"] is None
 
 
 def test_saved_outputs_reject_changed_config_source_and_missing_provenance(tmp_path):
@@ -365,3 +414,50 @@ def test_budget_timeout_kills_the_entire_training_process_group(monkeypatch):
     with pytest.raises(subprocess.TimeoutExpired):
         run.run_process(["torchrun"], timeout=0)
     popen.assert_not_called()
+
+
+def test_stall_watchdog_kills_silent_process_as_a_failure(tmp_path):
+    import sys, time
+    log = tmp_path / "train.log"
+    log.write_text("")
+    started = time.monotonic()
+    with pytest.raises(subprocess.CalledProcessError):
+        run.run_process([sys.executable, "-c", "import time; time.sleep(60)"], timeout=None, watch=log, stall_seconds=1)
+    assert time.monotonic() - started < 10
+    # A process that keeps writing is not a stall.
+    with log.open("a") as stream:
+        run.run_process([sys.executable, "-c", "import time\nfor _ in range(4): print(1, flush=True); time.sleep(0.4)"],
+                        timeout=30, watch=log, stall_seconds=1, stdout=stream)
+
+
+def test_writer_lock_is_reclaimed_by_same_owner_only():
+    from experiments.resume import exclusive_writer
+    class SharedDict(dict):
+        def put(self, key, value, *, skip_if_exists):
+            if key in self:
+                return False
+            self[key] = value
+            return True
+    locks = SharedDict(writer="call-1")  # stale lock left by a preempted attempt
+    with pytest.raises(RuntimeError, match="another pipeline"):
+        with exclusive_writer(locks, owner="call-2"):
+            pass
+    with exclusive_writer(locks, owner="call-1"):
+        assert locks["writer"] == "call-1"
+    assert not locks
+
+
+def test_budget_retry_by_same_owner_settles_its_own_reservation(tmp_path, monkeypatch):
+    from experiments import resume
+    wall = [1000.0]
+    monkeypatch.setattr(resume.time, "time", lambda: wall[0])
+    ledger = tmp_path / "accounting/suite.json"
+    resume.BudgetSession(ledger, 40, 4, 2, lambda: None, owner="call-1").__enter__()  # hard kill
+    wall[0] += 3600
+    with pytest.raises(RuntimeError, match="budget exhausted or reserved"):
+        resume.BudgetSession(ledger, 40, 4, 0, lambda: None, owner="call-2").__enter__()
+    retry = resume.BudgetSession(ledger, 40, 4, 0, lambda: None, owner="call-1")
+    assert retry.before == 6  # 2 earlier + one charged hour
+    assert retry.remaining_usd == 34
+    wall[0] += 100 * 3600  # never charges more than was reserved
+    assert resume.BudgetSession(ledger, 40, 4, 0, lambda: None, owner="call-1").before == 40

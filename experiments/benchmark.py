@@ -76,6 +76,7 @@ def benchmark(model, config, device):
                 # Drop references before freeing allocator blocks for the next fixed workload.
                 cache = ids = logits = next_id = None
                 torch.cuda.empty_cache()
+            print(json.dumps({"benchmark_row": rows[-1]["batch_size"], "prompt_tokens": prompt_len, "status": rows[-1]["status"]}), flush=True)
     return {"device": torch.cuda.get_device_name(device), "attention_backend": "FA3" if HAS_FA3 else "SDPA",
             "attention_kernel": kernel_provenance(),
             "torch": torch.__version__, "cuda": torch.version.cuda, "sampling": "greedy, fixed length, no EOS early exit",

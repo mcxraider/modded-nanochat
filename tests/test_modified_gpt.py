@@ -13,8 +13,9 @@ from nanochat.engine import KVCache
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def tiny(kv=4, fraction=1.0):
-    config = GPTConfig(sequence_len=16, vocab_size=64, n_layer=3, n_head=4, n_kv_head=kv, n_embd=64, rotary_fraction=fraction)
+def tiny(kv=4, fraction=1.0, ve=True):
+    config = GPTConfig(sequence_len=16, vocab_size=64, n_layer=3, n_head=4, n_kv_head=kv, n_embd=64, rotary_fraction=fraction,
+                       value_embeds=ve)
     model = GPT(config)
     model.init_weights()
     # Exercise attention: historical initialization zeros the output projections.
@@ -35,6 +36,7 @@ def test_full_rope_matches_historical_outputs_loss_and_gradients():
     config = asdict(model.config)
     config.pop("rotary_fraction")
     config.pop("mlp_ratio")
+    config.pop("value_embeds")
     ref = historical.GPT(historical.GPTConfig(**config))
     ref.init_weights()
     ref.load_state_dict(model.state_dict())
@@ -92,15 +94,16 @@ def test_last_token_logits_reject_loss_targets():
         model(ids, targets=ids, last_token_only=True)
 
 
-@pytest.mark.parametrize("kv,fraction", [(4, 1.0), (2, 1.0), (2, 0.75)])
-def test_cached_decoding_and_projection_shapes(kv, fraction):
+@pytest.mark.parametrize("kv,fraction,ve", [(4, 1.0, True), (2, 1.0, True), (2, 0.75, True), (4, 1.0, False), (2, 1.0, False)])
+def test_cached_decoding_and_projection_shapes(kv, fraction, ve):
     torch.manual_seed(23)
-    model = tiny(kv, fraction).eval()
+    model = tiny(kv, fraction, ve).eval()
     cfg = model.config
     cache = KVCache(2, kv, 32, 16, cfg.n_layer, "cpu", torch.float32)
     assert cache.k_cache.shape == (3, 2, 32, kv, 16)
     assert model.transformer.h[0].attn.c_k.weight.shape == (kv * 16, 64)
-    assert model.value_embeds["0"].weight.shape == (64, kv * 16)
+    if ve:
+        assert model.value_embeds["0"].weight.shape == (64, kv * 16)
     assert model.cos.shape[-1] == cfg.rotary_dim // 2
     ids = torch.randint(0, cfg.vocab_size, (2, 16))
     with torch.inference_mode():
@@ -117,15 +120,17 @@ def test_cached_decoding_and_projection_shapes(kv, fraction):
     {"rotary_fraction": 0.7}, {"rotary_fraction": True}, {"n_kv_head": 0},
     {"n_head": 5}, {"n_kv_head": 4}, {"window_pattern": ""}, {"n_layer": 0},
     {"mlp_ratio": 0}, {"mlp_ratio": float("nan")}, {"mlp_ratio": 4.3}, {"mlp_ratio": -4.0},
+    {"value_embeds": "yes"}, {"value_embeds": 1},
 ])
 def test_invalid_model_config(kwargs):
     with pytest.raises(ValueError):
         GPTConfig(**kwargs)
 
 
-def test_checkpoint_dispatch_and_generation(tmp_path, monkeypatch):
+@pytest.mark.parametrize("ve", [True, False])
+def test_checkpoint_dispatch_and_generation(tmp_path, monkeypatch, ve):
     from nanochat import checkpoint_manager
-    model = tiny(2, 0.75).eval()
+    model = tiny(2, 0.75, ve).eval()
     config = asdict(model.config)
     checkpoint_manager.save_checkpoint(str(tmp_path), 1, model.state_dict(), None,
         {"model_type": "modified_gpt_324e69c", "model_config": config, "step": 1})
@@ -169,6 +174,23 @@ def test_pm_ratio_recovers_removed_kv_parameters_at_d8_and_d12():
             mha, gqa, pm = scaling(cfg(heads, 4.0)), scaling(cfg(heads // 2, 4.0)), scaling(cfg(heads // 2, 4.5))
         assert gqa < mha
         assert abs(pm - mha) < 0.0001 * mha  # only the ve_gate remainder is left
+
+
+def test_value_embeds_off_removes_exactly_the_embeddings_and_gates(monkeypatch):
+    # The pinned runtime's optimizer is not in this checkout; only the parameter grouping is under test.
+    import sys
+    record = lambda groups: types.SimpleNamespace(param_groups=groups)
+    monkeypatch.setitem(sys.modules, "nanochat.optim", types.SimpleNamespace(MuonAdamW=record, DistMuonAdamW=record))
+    on, off = tiny(2), tiny(2, ve=False)
+    assert len(off.value_embeds) == 0 and all(block.attn.ve_gate is None for block in off.transformer.h)
+    removed = sum(p.numel() for p in on.value_embeds.parameters()) + sum(
+        block.attn.ve_gate.weight.numel() for block in on.transformer.h if block.attn.ve_gate is not None)
+    assert sum(p.numel() for p in on.parameters()) - sum(p.numel() for p in off.parameters()) == removed
+    assert on.estimate_flops() - off.estimate_flops() == 6 * (removed - sum(p.numel() for p in on.value_embeds.parameters()))
+    # VE off: no empty optimizer group. It loses exactly the VE AdamW group and the ve_gate Muon shape group.
+    kinds = lambda m: sorted((g["kind"], tuple(sorted({tuple(p.shape) for p in g["params"]}))) for g in m.setup_optimizer().param_groups)
+    assert all(g["params"] for g in off.setup_optimizer().param_groups)
+    assert sorted(set(kinds(on)) - set(kinds(off))) == [("adamw", ((64, 32),)), ("muon", ((2, 32),))]
 
 
 def test_benchmark_kv_bytes_match_allocated_cache_and_scale_with_kv_heads():

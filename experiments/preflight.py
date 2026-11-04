@@ -13,6 +13,11 @@ from experiments.config import RUNS, model_for
 # conservative smoke-test tolerance, not a claim of bitwise equivalence.
 RTOL = 0.03
 ATOL = 0.03
+# Per-tensor relative L2 error. Norms average out per-element BF16 rounding (~0.4%
+# spacing), but FA3 and SDPA backward reduce in different orders and the noise
+# compounds through eight blocks of backprop; 5% is ~6x the BF16 epsilon while a
+# wrong mask, window, or GQA head mapping gives O(1) error.
+GRAD_RTOL = 0.05
 
 
 def unique_variants():
@@ -37,6 +42,29 @@ def compare_logits(actual, expected):
     return {"max_absolute_error": error.abs().max().item(), "rms_error": error.square().mean().sqrt().item()}
 
 
+def compare_backward(actual, expected):
+    """Compare (loss, {name: grad}) pairs; fail closed and return evidence."""
+    import torch
+    (loss, grads), (reference_loss, reference_grads) = actual, expected
+    if grads.keys() != reference_grads.keys():
+        raise AssertionError(f"gradient parameter sets differ: {sorted(grads.keys() ^ reference_grads.keys())}")
+    if not torch.isfinite(loss) or not torch.isfinite(reference_loss):
+        raise AssertionError("nonfinite preflight loss")
+    torch.testing.assert_close(loss, reference_loss, rtol=RTOL, atol=ATOL)
+    worst, worst_name = 0.0, None
+    for name, reference in reference_grads.items():
+        if not torch.isfinite(grads[name]).all() or not torch.isfinite(reference).all():
+            raise AssertionError(f"nonfinite gradient for {name}")
+        # A zero reference makes any nonzero actual gradient fail.
+        error = ((grads[name] - reference).norm() / reference.norm().clamp_min(1e-12)).item()
+        if error > worst:
+            worst, worst_name = error, name
+    if worst > GRAD_RTOL:
+        raise AssertionError(f"gradient relative error {worst:.4f} for {worst_name} exceeds {GRAD_RTOL}")
+    return {"loss_difference": (loss - reference_loss).abs().item(),
+            "max_grad_relative_error": worst, "worst_parameter": worst_name}
+
+
 def run_preflight():
     import torch
     import nanochat.flash_attention as attention
@@ -51,6 +79,15 @@ def run_preflight():
     started = time.monotonic()
     results = []
     original_override = attention._override_impl
+
+    def backward(model, module, ids, targets):
+        model.zero_grad(set_to_none=True)
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            loss = module(ids, targets=targets)
+        loss.backward()
+        return loss.detach().float(), {name: p.grad.float().clone()
+                                       for name, p in model.named_parameters() if p.grad is not None}
+
     try:
         for variant in unique_variants():
             torch.manual_seed(1729)
@@ -87,17 +124,34 @@ def run_preflight():
                 attention._override_impl = "sdpa"
                 reference = model(ids)
                 backend_check = compare_logits(full, reference)
+            # Training path: FA3 backward (incl. GQA) against SDPA, then the compiled
+            # model train.py actually runs against eager. Compiling forward+backward
+            # costs roughly 30-90 s per variant on an H100 (8 variants).
+            # Full training length: at `length` only ~6 queries pass the short window, so an
+            # ignored window moves gradients by ~0.3% (under GRAD_RTOL); at sequence_len, ~24%.
+            model.train()
+            train_ids = torch.randint(0, config.vocab_size, (1, config.sequence_len), device=device)
+            targets = torch.randint(0, config.vocab_size, (1, config.sequence_len), device=device)
+            attention._override_impl = "fa3"
+            eager = backward(model, model, train_ids, targets)
+            attention._override_impl = "sdpa"
+            grad_check = compare_backward(eager, backward(model, model, train_ids, targets))
+            attention._override_impl = "fa3"  # before tracing: dynamo specializes on it
+            compiled = torch.compile(model, dynamic=False)
+            compile_check = compare_backward(backward(model, compiled, train_ids, targets), eager)
             torch.cuda.synchronize(device)
-            results.append({**variant, "tokens": length, "cached_vs_full": cache_check,
-                            "fa3_vs_sdpa": backend_check, "status": "passed"})
-            del model, cache, ids, full, chunk, tail, cached, reference
+            results.append({**variant, "tokens": length, "training_tokens": config.sequence_len, "cached_vs_full": cache_check,
+                            "fa3_vs_sdpa": backend_check, "fa3_vs_sdpa_grad": grad_check,
+                            "compiled_vs_eager": compile_check, "status": "passed"})
+            del model, cache, ids, train_ids, full, chunk, tail, cached, reference, targets, eager, compiled
+            torch._dynamo.reset()
             torch.cuda.empty_cache()
     finally:
         attention._override_impl = original_override
     require_fa3()
     return {"status": "passed", "device": torch.cuda.get_device_name(device),
             "attention_kernel": kernel_provenance(), "torch": torch.__version__,
-            "cuda": torch.version.cuda, "rtol": RTOL, "atol": ATOL,
+            "cuda": torch.version.cuda, "rtol": RTOL, "atol": ATOL, "grad_rtol": GRAD_RTOL,
             "elapsed_seconds": time.monotonic() - started, "variants": results}
 
 

@@ -37,6 +37,19 @@ def publish(staging, directory, step, workers, timing):
     staging.rmdir()
 
 
+def prune(directory, keep, workers):
+    """Delete every published generation not in `keep`. Marker first: a half-deleted
+    generation is never mistaken for a valid one."""
+    directory = Path(directory)
+    for marker in directory.glob('timing_*.json'):
+        step = int(marker.stem.split('_')[1])
+        if step in keep:
+            continue
+        marker.unlink()
+        for name in filenames(step, workers):
+            (directory / name).unlink(missing_ok=True)
+
+
 def valid(directory, step, workers):
     directory = Path(directory)
     try:

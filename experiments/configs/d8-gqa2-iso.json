@@ -1,24 +1,28 @@
 {
-  "run_id": "E1-GQA-75",
+  "run_id": "d8-gqa2-iso",
   "base_commit": "324e69c45d3606095adb6b409078647145165454",
-  "seed": 42,
-  "workers": 2,
+  "seed": 1,
+  "workers": 1,
   "model": {
     "sequence_len": 2048,
     "vocab_size": 32768,
-    "n_layer": 24,
-    "n_head": 12,
-    "n_kv_head": 6,
-    "n_embd": 1536,
+    "n_layer": 8,
+    "n_head": 4,
+    "n_kv_head": 2,
+    "n_embd": 512,
     "window_pattern": "SSSL",
-    "rotary_fraction": 0.75
+    "rotary_fraction": 1.0,
+    "mlp_ratio": 4.0,
+    "value_embeds": true
   },
   "training": {
-    "budget_seconds": 7200,
-    "device_batch_size": 4,
+    "target_tokens": 436862976,
+    "flop_budget": 131942683823308800,
+    "wallclock_cap_seconds": 7200,
+    "device_batch_size": 32,
     "total_batch_size": 131072,
-    "save_every": 50,
-    "eval_every": 50,
+    "save_every": 400,
+    "eval_every": 400,
     "max_steps": null,
     "compile": true
   },
@@ -38,17 +42,21 @@
     "final_lr_frac": 0.0
   },
   "evaluation": {
-    "tokens": 41943040
+    "interim_tokens": 2097152,
+    "final_tokens": 16777216,
+    "test_tokens": 16777216
   },
   "benchmark": {
     "batch_sizes": [
       1,
       4,
-      16
+      16,
+      64
     ],
     "prompt_lengths": [
       128,
-      2048
+      2048,
+      8192
     ],
     "decode_tokens": 256,
     "warmup": 2,

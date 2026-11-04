@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 dev-ignore/
-report.md
+/report.md
 eval_bundle/
 
 # Secrets
@@ -14,3 +14,6 @@ wandb/
 
 # Experiment outputs (the historical runtime lives in a separate worktree)
 experiments/artifacts/
+
+# Course rubric (local reference)
+rubrics.md

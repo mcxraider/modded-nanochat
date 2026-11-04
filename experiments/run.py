@@ -19,6 +19,15 @@ from experiments.config import BASE_COMMIT, NODE_HOUR_USD, read_config
 from experiments.resume import validate_saved_run, resume_action
 from experiments.backend import patch_attention_loader, kernel_provenance
 
+# ponytail: fixed 30 min without log output = hung (covers compile, replay, eval); tune from pilot logs.
+STALL_SECONDS = 1800
+# Provenance covers only files that can change a run's results (train.py and benchmark.py plus
+# their experiments.* imports; tests check the closure). Editing report.py, visualise.py, etc.
+# after the suite must not lock out completed runs. Everything is still copied and in the marker.
+RESULT_FILES = ("nanochat/modified_gpt.py", "experiments/train.py", "experiments/data.py", "experiments/benchmark.py",
+                "experiments/backend.py", "experiments/config.py", "experiments/checkpoints.py",
+                "nanochat/checkpoint_manager.py", "nanochat/flash_attention.py")
+
 
 def patch_checkpoint_loader(source):
     needle = "    model_config = GPTConfig(**model_config_kwargs)"
@@ -35,6 +44,10 @@ def patch_checkpoint_loader(source):
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def copied_files():
+    return [ROOT / "nanochat/modified_gpt.py", *sorted((ROOT / "experiments").glob("*.py"))]
 
 
 def prepare_runtime(directory):
@@ -58,8 +71,8 @@ def prepare_runtime(directory):
     else:
         directory.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["git", "-C", str(ROOT), "worktree", "add", "--detach", str(directory), BASE_COMMIT], check=True)
-    files = [ROOT / "nanochat/modified_gpt.py", *sorted((ROOT / "experiments").glob("*.py"))]
     hashes = {}
+    files = copied_files()
     for path in files:
         relative = path.relative_to(ROOT)
         target = directory / relative
@@ -76,7 +89,7 @@ def prepare_runtime(directory):
     target.write_text(patch_attention_loader(historical_attention))
     hashes["nanochat/flash_attention.py"] = digest(target)
     marker.write_text(json.dumps(hashes, indent=2) + "\n")
-    return directory, hashes
+    return directory, {name: hashes[name] for name in RESULT_FILES}
 
 
 def command(config, config_path, output, resume=None, interpreter=None):
@@ -87,15 +100,34 @@ def command(config, config_path, output, resume=None, interpreter=None):
     return cmd
 
 
-def run_process(cmd, *, timeout, **kwargs):
-    """Stop torchrun and its workers together when a budget deadline expires."""
-    if timeout is None:
+def run_process(cmd, *, timeout, watch=None, stall_seconds=None, **kwargs):
+    """Stop torchrun and its workers together when a budget deadline expires, or when
+    `watch` (its log) stops growing for `stall_seconds` — a hang is reported as a failure."""
+    if timeout is None and watch is None:
         return subprocess.run(cmd, check=True, **kwargs)
-    if timeout <= 0:
+    if timeout is not None and timeout <= 0:
         raise subprocess.TimeoutExpired(cmd, timeout)
+    deadline = None if timeout is None else time.monotonic() + timeout
     with subprocess.Popen(cmd, start_new_session=True, **kwargs) as process:
         try:
-            returncode = process.wait(timeout=timeout)
+            size, progressed = -1, time.monotonic()
+            poll = min(30, stall_seconds) if watch else None
+            while True:
+                left = None if deadline is None else deadline - time.monotonic()
+                if left is not None and left <= 0:
+                    raise subprocess.TimeoutExpired(cmd, timeout)
+                try:
+                    returncode = process.wait(timeout=min(t for t in (poll, left) if t is not None))
+                    break
+                except subprocess.TimeoutExpired:
+                    if watch is None:
+                        raise
+                current = Path(watch).stat().st_size if Path(watch).exists() else 0
+                if current != size:
+                    size, progressed = current, time.monotonic()
+                elif time.monotonic() - progressed >= stall_seconds:
+                    print(f"no output in {watch} for {stall_seconds}s; killing stalled process", flush=True)
+                    raise subprocess.CalledProcessError(-9, cmd)
         except BaseException:
             try:
                 os.killpg(process.pid, signal.SIGKILL)
@@ -136,7 +168,10 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None, time
     # Freeze the actual source used, including new files absent from git diff.
     source = output / "source"
     if not source.exists():
-        for relative in overlay:
+        # Every copied file, not only the hashed RESULT_FILES; hashed files must exist, extras may not in test runtimes.
+        for relative in dict.fromkeys([*overlay, *(str(f.relative_to(ROOT)) for f in copied_files())]):
+            if relative not in overlay and not (runtime / relative).is_file():
+                continue
             target = source / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(runtime / relative, target)
@@ -162,12 +197,14 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None, time
                     if path.exists() and json.loads(path.read_text()).get("step", -1) > resume:
                         path.unlink()
             with (output / "train.log").open("a") as log:
-                run_process(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
+                run_process(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining(),
+                            watch=output / "train.log", stall_seconds=STALL_SECONDS)
         benchmark_env = dict(env)
         benchmark_env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]
         with (output / "benchmark.log").open("a") as log:
             run_process([interpreter, "-m", "experiments.benchmark", "--run-dir", str(output)],
-                           cwd=runtime, env=benchmark_env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
+                           cwd=runtime, env=benchmark_env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining(),
+                           watch=output / "benchmark.log", stall_seconds=STALL_SECONDS)
         attempt["status"] = "complete"
     finally:
         if attempt["status"] == "running":

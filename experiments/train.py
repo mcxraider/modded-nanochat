@@ -11,13 +11,16 @@ from pathlib import Path
 import platform
 import random
 import shutil
+import statistics
 import subprocess
 import time
 
 from experiments.config import BASE_COMMIT, MODEL_TYPE, NODE_HOUR_USD, read_config, schedule
 from experiments.backend import require_fa3, kernel_provenance
-from experiments.checkpoints import publish, valid as valid_checkpoint
+from experiments.checkpoints import prune, publish, valid as valid_checkpoint
 from experiments.data import make_loader, shard_index, split_paths
+
+STEADY_SKIP_STEPS = 20  # excludes compile warmup from steady_tokens_per_second
 
 
 def write_json(path, value):
@@ -117,8 +120,13 @@ def main():
         return tensor.item()
     def autocast():
         return torch.autocast("cuda", dtype=torch.bfloat16) if args.device_type == "cuda" else nullcontext()
+    peak = {"train": 0, "eval": 0}  # eager evals (fp32 logits) must not inflate the training peak
+    def fold(kind):
+        if args.device_type == "cuda":
+            peak[kind] = max(peak[kind], torch.cuda.max_memory_allocated(device))
+            torch.cuda.reset_peak_memory_stats(device)
     def memory():
-        return maximum(torch.cuda.max_memory_allocated(device) if args.device_type == "cuda" else 0)
+        return maximum(max(peak["train"], torch.cuda.max_memory_allocated(device)) if args.device_type == "cuda" else 0)
 
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -145,8 +153,8 @@ def main():
     with torch.device("meta"):
         model = GPT(model_config)
         # Freeze historical scaling against MHA B0, including for both GQA variants.
-        baseline = GPT(replace(model_config, n_kv_head=model_config.n_head, rotary_fraction=1.0, mlp_ratio=4.0))
-        reference = GPT(replace(model_config, n_layer=12, n_embd=768, n_head=6, n_kv_head=6, rotary_fraction=1.0, mlp_ratio=4.0))
+        baseline = GPT(replace(model_config, n_kv_head=model_config.n_head, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
+        reference = GPT(replace(model_config, n_layer=12, n_embd=768, n_head=6, n_kv_head=6, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
     def scaling_params(m):
         counts = m.num_scaling_params()
         return counts["transformer_matrices"] + counts["lm_head"]
@@ -166,6 +174,8 @@ def main():
                          "parameter_count": sum(p.numel() for p in g["params"])} for g in optimizer.param_groups]
     parameter_count = sum(p.numel() for p in model.parameters())
     flops_per_token = model.estimate_flops()
+    if t["target_tokens"] * flops_per_token > t["flop_budget"]:
+        raise ValueError("run exceeds the declared FLOP budget")
     step, elapsed_before, val_bpb = 0, 0.0, None
     restored_rng = None
     if args.resume is not None:
@@ -193,9 +203,16 @@ def main():
     # The historical loader exposes only approximate row-group resume. Replay keeps exact
     # document packing/data order without changing the historical loader implementation.
     replay_started = time.monotonic()
-    for _ in range(step * accum if completed is None else 0):
+    for replayed in range(step * accum if completed is None else 0):
         data_epoch = max(data_epoch, next(train_loader)[2]["epoch"])
+        if rank == 0 and replayed % 1000 == 999:
+            print(f"replayed {replayed + 1}/{step * accum} batches", flush=True)  # liveness for the stall watchdog
     replay_seconds = time.monotonic() - replay_started
+    # Prefetch one ahead like historical base_train: batch step*accum+i still feeds microbatch i of each step.
+    x, y, state = next(train_loader) if completed is None else (None, None, None)
+    # Safe only because the loader's `device == "cuda"` is False for a torch.device (torch 2.9.1): its cpu_buffer is
+    # unpinned and the HtoD copy_ is blocking (it waits for queued work), so a repack never races the previous copy.
+    # The cost: one stream drain per microbatch remains; only CPU packing overlaps the queued backward (as historically).
     if restored_rng:
         torch.set_rng_state(restored_rng["torch_rng"])
         random.setstate(restored_rng["python_rng"])
@@ -208,7 +225,7 @@ def main():
                 "gpu": torch.cuda.get_device_name(device) if args.device_type == "cuda" else platform.processor(),
                 "effective_optimizer_groups": effective_groups, "batch_lr_scale": batch_scale,
                 "effective_initial_weight_decay": weight_decay, "parameters": parameter_count,
-                "flops_per_token": flops_per_token,
+                "flops_per_token": flops_per_token, "flop_budget": t["flop_budget"],
                 "flops_formula": "6 * matmul_parameters + sum_layers(12 * query_heads * head_dim * effective_window); excludes lookup, norm, softmax, rotary elementwise ops",
                 "unique_data_estimate": None, "unique_data_note": "packing/cropping prevents inference of unique tokens from total tokens",
                 "gradient_accumulation": accum, "resume_replay_batches": step * accum if completed is None else 0, "resume_replay_seconds": replay_seconds,
@@ -222,6 +239,7 @@ def main():
     def evaluate(split, tokens):
         if tokens % eval_micro_tokens:
             raise ValueError("evaluation tokens must divide exactly into whole microbatches")
+        fold("train")
         model.eval()
         eval_loader = new_loader(split)
         def batches():
@@ -230,6 +248,7 @@ def main():
         with autocast():
             value = evaluate_bpb(model, batches(), tokens // eval_micro_tokens, token_bytes)
         model.train()
+        fold("eval")
         return value
     e = config["evaluation"]
     sync()
@@ -263,6 +282,8 @@ def main():
         seconds = elapsed()
         if rank == 0:
             publish(staging, checkpoints, step, world, {"training_seconds": seconds})
+            # Keep the new generation plus one fallback in case the newest is later found damaged.
+            prune(checkpoints, {step, last_saved}, world)
         barrier()
         return elapsed()
     last_saved = args.resume
@@ -288,16 +309,18 @@ def main():
         step_started = time.monotonic()
         loss_sum = 0.0
         for _ in range(accum):
-            x, y, state = next(train_loader)
-            data_epoch = max(data_epoch, state["epoch"])
+            data_epoch = max(data_epoch, state["epoch"])  # epoch of the batch trained on, not the prefetched one
             with autocast():
                 loss = train_model(x, targets=y)
-            if not torch.isfinite(loss).item():
-                raise FloatingPointError("nonfinite training loss")
-            loss_sum += loss.detach().item() / accum
+            loss_sum = loss_sum + loss.detach() / accum
             (loss / accum).backward()
+            # x/y are views of the loader's reused GPU buffer: never read them after this refill.
+            x, y, state = next(train_loader)  # CPU packing overlaps the queued backward
         optimizer.step()
         model.zero_grad(set_to_none=True)
+        loss_sum = loss_sum.item()  # one loss readback per step (the loader's blocking copy also syncs); raising here still precedes any checkpoint/eval
+        if not math.isfinite(loss_sum):
+            raise FloatingPointError("nonfinite training loss")
         step += 1
         sync()
         dt = maximum(time.monotonic() - step_started)
@@ -347,17 +370,28 @@ def main():
     log({"kind": "test", "final": True, "test_bpb": test_bpb, **final_record})
     result = {"run_id": config["run_id"], "step": step, "stop_reason": stop_reason,
               "parameters": parameter_count, "scaling_parameters": scaling_parameter_count,
-              "target_tokens": t["target_tokens"], "data_epoch": data_epoch,
+              "target_tokens": t["target_tokens"], "flop_budget": t["flop_budget"], "flops_per_token": flops_per_token,
+              "data_epoch": data_epoch,
               "model_config": asdict(model_config), "tokens": step * t["total_batch_size"],
               "estimated_flops": step * t["total_batch_size"] * flops_per_token,
               "training_seconds": training_seconds, "overrun_seconds": max(0, training_seconds - t["wallclock_cap_seconds"]),
               "val_bpb": final_bpb, "test_bpb": test_bpb, "training_tokens_per_second": step * t["total_batch_size"] / training_seconds,
-              "peak_vram_bytes": peak_vram, "evaluation_seconds": evaluation_seconds,
+              # Eval peak covers only evaluations run by this process (post-resume ones after a resume).
+              "peak_vram_bytes": peak_vram, "eval_peak_vram_bytes": maximum(peak["eval"]), "evaluation_seconds": evaluation_seconds,
               "training_gpu_hours": training_seconds * world / 3600,
               "evaluation_gpu_hours": evaluation_seconds * world / 3600,
               "training_cost_usd": training_seconds * NODE_HOUR_USD / 3600,
               "checkpoint_dir": str(checkpoints), "checkpoint_step": step}
     if rank == 0:
+        speeds = {}  # keyed by step: a row repeated after resume counts once
+        for line in metrics_path.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # a line torn by an earlier crash
+            if row["kind"] == "train" and row["step"] > STEADY_SKIP_STEPS:
+                speeds[row["step"]] = row["tokens_per_second"]
+        result["steady_tokens_per_second"] = statistics.median(speeds.values()) if speeds else None
         write_json(output / "result.json", result)
     barrier()
     compute_cleanup()

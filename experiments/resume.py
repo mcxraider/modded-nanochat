@@ -96,10 +96,11 @@ def validate_saved_run(run_dir, config, overlay):
 
 
 @contextmanager
-def exclusive_writer(locks):
-    """One writer across Apps; a hard-killed owner requires manual recovery."""
-    owner = uuid.uuid4().hex
-    if not locks.put("writer", owner, skip_if_exists=True):
+def exclusive_writer(locks, owner=None):
+    """One writer across Apps. A retry of the same owner (e.g. after preemption) reclaims
+    its own stale lock; any other hard-killed owner requires manual recovery."""
+    owner = owner or uuid.uuid4().hex
+    if not locks.put("writer", owner, skip_if_exists=True) and locks.get("writer") != owner:
         raise RuntimeError("another pipeline owns the Volume writer lock; stop all old Apps before clearing a stale lock")
     try:
         yield
@@ -108,16 +109,22 @@ def exclusive_writer(locks):
 
 
 class BudgetSession:
-    """Reserve remaining funds durably; interrupted reservations count as spent."""
+    """Reserve remaining funds durably; interrupted reservations count as spent, except that a
+    retry by the same owner settles its own reservation at wall-clock time since it started
+    (over-counts any gap between attempts, never under-counts)."""
 
-    def __init__(self, path, budget_usd, hourly_usd, legacy_usd, commit):
+    def __init__(self, path, budget_usd, hourly_usd, legacy_usd, commit, owner=None):
         if not math.isfinite(budget_usd) or budget_usd <= 0:
             raise ValueError("budget must be a positive finite USD amount")
         self.path = Path(path)
         self.hourly_usd = hourly_usd
         self.commit = commit
+        self.owner = owner
         self.ledger = json.loads(self.path.read_text()) if self.path.exists() else {"spent_usd": legacy_usd}
         self.before = self.ledger["spent_usd"]
+        if owner and self.ledger.get("reserved_usd") and self.ledger.get("owner") == owner:
+            used = max(0.0, time.time() - self.ledger["started_unix_seconds"]) * hourly_usd / 3600
+            self.before = self.ledger["before_usd"] + min(self.ledger["reserved_usd"], used)
         self.remaining_usd = max(0.0, budget_usd - self.before)
 
     def write(self, value):
@@ -132,7 +139,7 @@ class BudgetSession:
             raise RuntimeError("budget exhausted or reserved by an interrupted attempt; reconcile accounting before restarting")
         self.started = time.monotonic()
         self.write({"spent_usd": self.before + self.remaining_usd, "reserved_usd": self.remaining_usd,
-                    "started_unix_seconds": time.time()})
+                    "started_unix_seconds": time.time(), "before_usd": self.before, "owner": self.owner})
         return self
 
     def spent(self):

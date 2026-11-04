@@ -21,12 +21,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 import re
 
-from experiments.config import RUNS, members, validate_suite
+from experiments.config import GROUPS, RUNS, members, validate_suite
 from experiments.report import comparison_eligibility, pooled, seed_noise
 
-_VARIANTS = ("b0", "gqa2", "gqa2-r75", "gqa2-pm", "gqa4", "gqa2-r25")
-_COLORS = ("#315A8C", "#B47B15", "#A13D6F", "#2E7D5B", "#7A4EA3", "#C0504D")
-_MARKERS = ("o", "s", "D", "^", "v", "P")
+_VARIANTS = ("b0", "gqa2", "gqa2-r75", "gqa2-pm", "gqa4", "gqa2-r25", "b0-nove", "gqa2-nove", "gqa2-iso", "gqa4-iso")
+_COLORS = ("#315A8C", "#B47B15", "#A13D6F", "#2E7D5B", "#7A4EA3", "#C0504D", "#6F8FB8", "#D6A85A", "#8C5A08", "#4E2A70")
+_MARKERS = ("o", "s", "D", "^", "v", "P", "X", "*", "h", "p")
 
 
 def variant(run_id):
@@ -34,13 +34,16 @@ def variant(run_id):
     return re.sub(r"-s\d$", "", run_id.split("-", 1)[1])
 
 
-# Colour/marker identify the variant; line style identifies depth. Seeds of one variant share a style.
+# Colour/marker identify the variant; line style: solid = VE on at the token target, dotted = VE off,
+# dashed = trained to the FLOP budget. Seeds of one variant share a style.
 STYLES = {name: dict(color=_COLORS[_VARIANTS.index(variant(name))], marker=_MARKERS[_VARIANTS.index(variant(name))],
-                     linestyle="-" if RUNS[name]["depth"] == 8 else "--") for name in RUNS}
+                     linestyle="--" if RUNS[name]["budget"] == "flops" else ":" if not RUNS[name]["ve"] else "-")
+          for name in RUNS}
+STYLES.update({group: STYLES[names[0]] for group, names in GROUPS.items()})  # a seed-group mean looks like its seeds
 AXES = (("training_seconds", 60, "Training-phase elapsed time (minutes)"),
         ("tokens", 1e6, "Training tokens (millions)"),
         ("estimated_flops", 1e15, "Estimated training FLOPs (PFLOP)"))
-NOTE = "Seed noise is measured on d8 baseline runs only; other configurations have one seed. Lines connect observations, without extrapolation."
+NOTE = "Seed noise from the d8 baseline; B0 and GQA-2 have 3 seeds, other configurations one. Lines connect observations, without extrapolation."
 
 
 def read_json(path):
@@ -125,7 +128,9 @@ def load_runs(root):
             warnings.warn(f"{name}: no recorded measurements yet")
             continue
         if result is not None:
-            for key in ("val_bpb", "training_tokens_per_second", "peak_vram_bytes", "training_seconds", *(("test_bpb",) if "test_bpb" in result else ())):
+            # steady_tokens_per_second (None for tiny runs), eval_peak_vram_bytes and test_bpb are optional.
+            optional = tuple(k for k in ("test_bpb", "steady_tokens_per_second", "eval_peak_vram_bytes") if result.get(k) is not None)
+            for key in ("val_bpb", "training_tokens_per_second", "peak_vram_bytes", "training_seconds", *optional):
                 value = result.get(key)
                 if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
                     raise ValueError(f"{directory / 'result.json'}: invalid {key}")
@@ -245,13 +250,18 @@ def baseline_noise(runs):
 
 
 def pair_deltas(runs, metric):
+    """Same subjects as report.py: each seed group once, as its mean, plus every ungrouped run."""
     results = eligible_results(runs)
+    grouped = {r: g for g, rs in GROUPS.items() for r in rs}
     out = []
-    for name, result in results.items():
-        for ref in RUNS[name]["compare_to"]:
+    for name in dict.fromkeys(grouped.get(r, r) for r in RUNS):
+        subject = pooled(results, name)
+        if subject is None:
+            continue
+        for ref in RUNS[subject["members"][0]]["compare_to"]:
             reference = pooled(results, ref)
-            if reference is not None and reference.get(metric) is not None and result.get(metric) is not None:
-                out.append((name, ref, result[metric] - reference[metric]))
+            if reference is not None and reference.get(metric) is not None and subject.get(metric) is not None:
+                out.append((name, ref, subject[metric] - reference[metric]))
     return out
 
 
@@ -287,13 +297,15 @@ def final_comparison(runs, context, noise=None):
         axes[0, 1].text(0.5, 0.5, "Waiting for comparable final results", transform=axes[0, 1].transAxes, ha="center", fontsize=9)
         axes[0, 1].set_axis_off()
     for ax, key, scale, title, label in (
-        (axes[1, 0], "training_tokens_per_second", 1, "Whole-phase training throughput", "Combined tokens/second · higher is better"),
-        (axes[1, 1], "peak_vram_bytes", 2**30, "Peak allocated VRAM", "GiB per GPU · lower is better"),
+        (axes[1, 0], "steady_tokens_per_second", 1, "Steady-state training throughput", "Combined tokens/second, compile warm-up excluded · higher is better"),
+        (axes[1, 1], "peak_vram_bytes", 2**30, "Peak allocated VRAM · training", "GiB per GPU · lower is better"),
     ):
-        values = [r[key] / scale for r in results]
-        bars = ax.barh(positions, values, color=colors, height=0.5)
-        ax.bar_label(bars, labels=[f"{v:,.1f}" for v in values], padding=5, fontsize=9)
-        ax.set(yticks=positions, yticklabels=names, title=title, xlabel=label, xlim=(0, max(values, default=0) * 1.28 or 1))
+        shown = [(i, r[key] / scale) for i, r in enumerate(results) if r.get(key) is not None]
+        missing = [names[i] for i, r in enumerate(results) if r.get(key) is None]
+        bars = ax.barh([i for i, _ in shown], [v for _, v in shown], color=[colors[i] for i, _ in shown], height=0.5)
+        ax.bar_label(bars, labels=[f"{v:,.1f}" for _, v in shown], padding=5, fontsize=9)
+        ax.set(yticks=positions, yticklabels=names, title=title + (f" · not measured: {len(missing)}" if missing else ""),
+               xlabel=label, xlim=(0, max((v for _, v in shown), default=0) * 1.28 or 1))
     return fig
 
 
@@ -309,11 +321,13 @@ def dose_response(runs, context):
     results = eligible_results(runs)
     base = pooled(results, "d8-b0")
     kv = [(4, base[metric])] if base and base.get(metric) is not None else []
-    kv += [(4 // RUNS[n]["gqa"], results[n][metric]) for n in ("d8-gqa2", "d8-gqa4") if n in results]
-    rope = [(RUNS[n]["rotary"], results[n][metric]) for n in ("d8-gqa2", "d8-gqa2-r75", "d8-gqa2-r25") if n in results]
+    gqa2 = pooled(results, "d8-gqa2")  # three-seed mean, like the baseline
+    gqa2 = [] if gqa2 is None or gqa2.get(metric) is None else [gqa2[metric]]
+    kv += [(2, y) for y in gqa2] + [(1, results[n][metric]) for n in ("d8-gqa4",) if n in results]
+    rope = [(1.0, y) for y in gqa2] + [(RUNS[n]["rotary"], results[n][metric]) for n in ("d8-gqa2-r75", "d8-gqa2-r25") if n in results]
     if len(kv) < 2 and len(rope) < 2:
         return None
-    fig, axes = canvas("Dose-response", f"{context} · d8 · {metric.replace('_bpb', '')} BPB; single seeds except the baseline mean", 1, 2, sharey=True)
+    fig, axes = canvas("Dose-response", f"{context} · d8 · {metric.replace('_bpb', '')} BPB; seed means for B0 and GQA-2, single seeds otherwise", 1, 2, sharey=True)
     noise = baseline_noise(runs)
     for ax, points, xlabel, title in ((axes[0, 0], kv, "KV heads (4 = MHA, 1 = MQA)", "KV sharing · full RoPE"),
                                       (axes[0, 1], rope, "Rotary fraction of each head", "Partial RoPE · 2 KV heads")):
@@ -334,11 +348,46 @@ def quality_speed(runs, context):
     metric = "test_bpb" if all(r.get("test_bpb") is not None for _, r in completed) else "val_bpb"
     fig, axes = canvas("Quality / speed tradeoff", context)
     ax = axes[0, 0]
+    missing = [name for name, result in completed if result.get("steady_tokens_per_second") is None]
+    if missing:
+        warnings.warn("No steady-state throughput (omitted from quality/speed): " + ", ".join(missing))
     for name, result in completed:
-        x, y = result["training_tokens_per_second"], result[metric]
+        if name in missing:
+            continue
+        x, y = result["steady_tokens_per_second"], result[metric]
         ax.scatter(x, y, color=STYLES[name]["color"], marker=STYLES[name]["marker"], s=80, label=name, zorder=3)
-    ax.set(xlabel="Whole-phase combined training tokens/second → faster", ylabel=f"Final {metric.replace('_bpb', '')} BPB · lower is better")
+    ax.set(xlabel="Steady-state combined training tokens/second (compile warm-up excluded) → faster", ylabel=f"Final {metric.replace('_bpb', '')} BPB · lower is better")
     ax.margins(x=0.2, y=0.25)
+    if ax.collections:
+        ax.legend(frameon=False, fontsize=9)
+    return fig
+
+
+def budget_comparison(runs, context):
+    """E6: final BPB against estimated training FLOPs; arrows join each token-matched run to its FLOP-matched twin."""
+    results = eligible_results(runs)
+    metric = "test_bpb" if all(r.get("test_bpb") is not None for r in results.values()) else "val_bpb"
+    pairs = [(RUNS[iso]["compare_to"][0], iso) for iso in RUNS if RUNS[iso]["budget"] == "flops"]
+    points = {}
+    for name in dict.fromkeys(["d8-b0", *(n for pair in pairs for n in pair)]):
+        record = pooled(results, name)
+        runs_ = [results[m] for m in members(name) if m in results]
+        if record is not None and record.get(metric) is not None and runs_:
+            points[name] = (sum(r["estimated_flops"] for r in runs_) / len(runs_) / 1e15, record[metric])
+    if not any(iso in points for _, iso in pairs):
+        return None
+    fig, axes = canvas("Fixed compute budget", f"{context} · {metric.replace('_bpb', '')} BPB at matched tokens (solid) vs matched FLOPs (dashed)")
+    ax = axes[0, 0]
+    for name, (x, y) in points.items():
+        ax.scatter(x, y, color=STYLES[name]["color"], marker=STYLES[name]["marker"], s=80, label=name, zorder=3)
+    for token_run, iso in pairs:
+        if token_run in points and iso in points:
+            ax.annotate("", xy=points[iso], xytext=points[token_run], arrowprops=dict(arrowstyle="->", color="#7A8796", linestyle="--"))
+    budget = next((r["flop_budget"] for r in results.values() if r.get("flop_budget")), None)
+    if budget:
+        ax.axvline(budget / 1e15, color="#A13D6F", linewidth=1, linestyle=":", label="declared budget")
+    ax.set(xlabel="Estimated training FLOPs (PFLOP)", ylabel=f"Final {metric.replace('_bpb', '')} BPB · lower is better")
+    ax.margins(x=0.15, y=0.25)
     ax.legend(frameon=False, fontsize=9)
     return fig
 
@@ -409,6 +458,7 @@ def render(output_root, output_dir=None, smooth_window=10):
             "inference_comparison" + tag: lambda g=group, c=ctx: inference_comparison(g, c),
         })
     builders["dose_response"] = lambda: dose_response(runs, context)
+    builders["budget_comparison"] = lambda: budget_comparison(runs, context)
     written = []
     for name, build in builders.items():
         if name.startswith(("learning_curves", "training_performance")):

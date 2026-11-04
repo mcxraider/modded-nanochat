@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from experiments.config import RUNS, model_for
-from experiments.preflight import compare_logits, unique_variants
+from experiments.preflight import GRAD_RTOL, compare_backward, compare_logits, unique_variants
 
 
 def test_preflight_covers_every_run_and_all_scientific_variants():
@@ -12,7 +12,12 @@ def test_preflight_covers_every_run_and_all_scientific_variants():
     assert sorted(covered) == sorted(RUNS)
     baseline = next(item for item in variants if "d8-b0-s1" in item["run_ids"])
     assert set(baseline["run_ids"]) == {"d8-b0-s1", "d8-b0-s2", "d8-b0-s3"}
-    for run_id in ("d8-gqa2", "d8-gqa2-r75", "d8-gqa2-r25", "d8-gqa2-pm", "d8-gqa4"):
+    gqa2 = next(item for item in variants if "d8-gqa2-s1" in item["run_ids"])
+    # Seeds and the FLOP-budget run share one architecture check; only token targets differ.
+    assert gqa2["run_ids"] == ["d8-gqa2-s1", "d8-gqa2-s2", "d8-gqa2-s3", "d8-gqa2-iso"]
+    gqa4 = next(item for item in variants if "d8-gqa4" in item["run_ids"])
+    assert gqa4["run_ids"] == ["d8-gqa4", "d8-gqa4-iso"]
+    for run_id in ("d8-gqa2-r75", "d8-gqa2-r25", "d8-gqa2-pm", "d8-b0-nove", "d8-gqa2-nove"):
         selected = [item for item in variants if run_id in item["run_ids"]]
         assert len(selected) == 1
         assert selected[0]["run_ids"] == [run_id]
@@ -33,3 +38,26 @@ def test_preflight_accepts_small_bf16_rounding_and_reports_error():
 def test_preflight_rejects_wrong_logits_shape_or_nonfinite(actual):
     with pytest.raises(AssertionError):
         compare_logits(actual, torch.zeros(1, 1, 3))
+
+
+def _grads(scale=1.0):
+    return torch.tensor(2.0), {"w": torch.tensor([3.0, -4.0]) * scale, "b": torch.tensor([1.0])}
+
+
+def test_preflight_accepts_near_equal_gradients_and_reports_error():
+    stats = compare_backward(_grads(1.01), _grads())
+    assert stats["max_grad_relative_error"] == pytest.approx(0.01, rel=1e-4)
+    assert stats["worst_parameter"] == "w"
+    assert stats["loss_difference"] == 0.0
+
+
+@pytest.mark.parametrize("actual", [
+    _grads(1 + 2 * GRAD_RTOL),
+    _grads(float("nan")),
+    (torch.tensor(float("inf")), _grads()[1]),
+    (torch.tensor(3.0), _grads()[1]),
+    (torch.tensor(2.0), {"w": torch.tensor([3.0, -4.0])}),
+])
+def test_preflight_rejects_gradient_mismatch_nonfinite_or_parameter_sets(actual):
+    with pytest.raises(AssertionError):
+        compare_backward(actual, _grads())

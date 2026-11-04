@@ -12,14 +12,16 @@
     "n_embd": 512,
     "window_pattern": "SSSL",
     "rotary_fraction": 1.0,
-    "mlp_ratio": 4.0
+    "mlp_ratio": 4.0,
+    "value_embeds": true
   },
   "training": {
     "target_tokens": 419430400,
+    "flop_budget": 131942683823308800,
     "wallclock_cap_seconds": 7200,
     "device_batch_size": 32,
     "total_batch_size": 131072,
-    "save_every": 1600,
+    "save_every": 400,
     "eval_every": 400,
     "max_steps": null,
     "compile": true
