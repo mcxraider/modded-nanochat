@@ -2,7 +2,7 @@
   "run_id": "d12-b0",
   "base_commit": "324e69c45d3606095adb6b409078647145165454",
   "seed": 1,
-  "workers": 2,
+  "workers": 1,
   "model": {
     "sequence_len": 2048,
     "vocab_size": 32768,
@@ -17,7 +17,7 @@
   "training": {
     "target_tokens": 1101004800,
     "wallclock_cap_seconds": 7200,
-    "device_batch_size": 8,
+    "device_batch_size": 16,
     "total_batch_size": 131072,
     "save_every": 2100,
     "eval_every": 700,

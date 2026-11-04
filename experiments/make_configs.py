@@ -13,8 +13,8 @@ from experiments.config import BASE_COMMIT, RUNS, model_for, read_config, valida
 # tokens/s, peak VRAM, and evaluation cost; edit here and regenerate.
 # target_tokens ~ 10 x scaling params (d8 ~42M, d12 ~110M); micro-batches must tile total_batch_size.
 DEFAULTS = {
-    8: {"target_tokens": 3200 * 131072, "device_batch_size": 16, "eval_every": 400, "save_every": 1600},
-    12: {"target_tokens": 8400 * 131072, "device_batch_size": 8, "eval_every": 700, "save_every": 2100},
+    8: {"target_tokens": 3200 * 131072, "device_batch_size": 32, "eval_every": 400, "save_every": 1600},
+    12: {"target_tokens": 8400 * 131072, "device_batch_size": 16, "eval_every": 700, "save_every": 2100},
 }
 OPTIMIZER = {"embedding_lr": 0.3, "unembedding_lr": 0.004, "matrix_lr": 0.02, "scalar_lr": 0.5, "weight_decay": 0.2,
              "adam_betas": [0.8, 0.95], "reference_batch_size": 524288, "warmup_ratio": 0.0, "warmdown_ratio": 0.5,
@@ -26,7 +26,7 @@ BENCHMARK = {"batch_sizes": [1, 4, 16, 64], "prompt_lengths": [128, 2048, 8192],
 def build(run_id):
     r, d = RUNS[run_id], DEFAULTS[RUNS[run_id]["depth"]]
     return {
-        "run_id": run_id, "base_commit": BASE_COMMIT, "seed": r["seed"], "workers": 2, "model": model_for(run_id),
+        "run_id": run_id, "base_commit": BASE_COMMIT, "seed": r["seed"], "workers": 1, "model": model_for(run_id),
         "training": {"target_tokens": d["target_tokens"], "wallclock_cap_seconds": 7200,
                      "device_batch_size": d["device_batch_size"], "total_batch_size": 131072,
                      "save_every": d["save_every"], "eval_every": d["eval_every"], "max_steps": None, "compile": True},

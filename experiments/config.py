@@ -5,6 +5,7 @@ from pathlib import Path
 
 BASE_COMMIT = "324e69c45d3606095adb6b409078647145165454"
 MODEL_TYPE = "modified_gpt_324e69c"
+NODE_HOUR_USD = 4.43  # Modal: H100 + 6 cores + 24 GiB; see modal_app.py
 
 # Depth -> (n_layer, n_embd, n_head). nanochat uses n_embd = 64 * depth rounded up to a multiple of head_dim=128.
 DEPTHS = {8: (8, 512, 4), 12: (12, 768, 6)}
@@ -155,8 +156,8 @@ def validate_suite(configs):
         if config["model"] != model_for(run_id) or config["seed"] != RUNS[run_id]["seed"]:
             raise ValueError(f"{run_id} model or seed differs from the RUNS table")
         t = config["training"]
-        if config["workers"] != 2 or t["total_batch_size"] != 131072 or t["max_steps"] is not None:
-            raise ValueError("suite requires two workers, batch 131072, and no step cap")
+        if config["workers"] != 1 or t["total_batch_size"] != 131072 or t["max_steps"] is not None:
+            raise ValueError("suite requires one worker, batch 131072, and no step cap")
         rest = {k: v for k, v in config.items() if k not in ("run_id", "seed", "model")}
         group = by_depth.setdefault(RUNS[run_id]["depth"], rest)
         if rest != group:

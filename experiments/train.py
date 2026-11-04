@@ -13,7 +13,7 @@ import random
 import subprocess
 import time
 
-from experiments.config import BASE_COMMIT, MODEL_TYPE, read_config, schedule
+from experiments.config import BASE_COMMIT, MODEL_TYPE, NODE_HOUR_USD, read_config, schedule
 from experiments.data import make_loader, shard_index, split_paths
 
 
@@ -41,8 +41,8 @@ def data_manifest(base_dir, paths):
     members = sorted([*train, val, test], key=shard_index)
     return {
         "dataset": "karpathy/climbmix-400b-shuffle",
-        "shards": [{"path": str(Path(p).resolve()), "bytes": Path(p).stat().st_size,
-                    "mtime_ns": Path(p).stat().st_mtime_ns} for p in members],
+        # No mtimes: they aren't guaranteed stable across containers and would fail every resume.
+        "shards": [{"path": str(Path(p).resolve()), "bytes": Path(p).stat().st_size} for p in members],
         "train_shards": len(train),
         "validation_shard": Path(val).name, "validation_sha256": sha256(val),
         "test_shard": Path(test).name, "test_sha256": sha256(test),
@@ -320,7 +320,7 @@ def main():
               "peak_vram_bytes": peak_vram, "evaluation_seconds": evaluation_seconds,
               "training_gpu_hours": training_seconds * world / 3600,
               "evaluation_gpu_hours": evaluation_seconds * world / 3600,
-              "training_cost_at_2_18_per_node_hour": training_seconds * 2.18 / 3600,
+              "training_cost_usd": training_seconds * NODE_HOUR_USD / 3600,
               "checkpoint_dir": str(checkpoints), "checkpoint_step": step}
     if rank == 0:
         write_json(output / "result.json", result)

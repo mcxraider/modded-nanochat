@@ -10,7 +10,7 @@ This is a **small-scale, single-GPU-node study**. The results describe short, co
 
 ## Budget, initialisation and evaluation (declared before running)
 
-- **Hardware:** one node, 2× NVIDIA L40S (48 GB each), BF16, RunPod at $2.18/node-hour (to confirm at booking).
+- **Hardware:** one NVIDIA H100 SXM (80 GB), BF16, on Modal (`gpu="H100!"`, 6 cores, 24 GiB) at about $4.43/hour. Chosen over 2× L40S before any results existed: same price, faster, and FA3 runs GQA with sliding windows natively.
 - **Budget per run:** a **fixed token count**, identical for every run at the same depth, set to about 10 tokens per scaling parameter (currently provisional: d8 = 3,200 updates ≈ 0.42B tokens, d12 = 8,400 updates ≈ 1.10B tokens, at a global batch of 131,072 tokens; frozen after the pilot). A 2-hour wall-clock safety cap (`wallclock_cap_seconds = 7200`) applies to every run; a run that ends on the cap is flagged `wallclock_cap` and is not comparable. Wall-clock time, tokens and estimated FLOPs are all recorded; a fixed token count means variants differ in time, not in data seen.
 - **Initialisation:** every model trains from random initialisation. No pretrained weights, embeddings or components. The nanochat architecture, ClimbMix data and nanochat tokenizer are reused, pinned to upstream commit `324e69c45d3606095adb6b409078647145165454`.
 - **Metric:** bits per byte (BPB) on held-out ClimbMix text. BPB is tokenizer-independent, and the tokenizer is fixed anyway. It measures next-token prediction on web-style text only; it does not measure reasoning, instruction following or long-context ability.
@@ -71,12 +71,12 @@ Each prediction is written down **before** any results exist. The primary qualit
 ### Inference study (no extra training)
 
 *Question:* where does the KV-cache saving actually show up?
-*Setup:* the benchmark runs automatically after each training run, on one L40S (the first visible GPU), with fixed random prompts, greedy decoding and exactly 256 generated tokens (EOS ignored). Grid: batch size 1, 4, 16, 64 × prompt length 128, 2,048, 8,192; OOM workloads are recorded, not shrunk. The 2,048- and 8,192-token workloads need a cache larger than the 2,048-token training context, so they are speed-only tests with no quality claim. Reported per workload: prefill tokens/s, time to first token, decode tokens/s (the remaining 255 tokens), peak VRAM, the allocated KV-cache bytes, and the analytic KV-cache bytes `2 × n_layer × batch × positions × n_kv_head × head_dim × 2` (BF16).
+*Setup:* the benchmark runs automatically after each training run, on the H100, with fixed random prompts, greedy decoding and exactly 256 generated tokens (EOS ignored). Grid: batch size 1, 4, 16, 64 × prompt length 128, 2,048, 8,192; OOM workloads are recorded, not shrunk. The 2,048- and 8,192-token workloads need a cache larger than the 2,048-token training context, so they are speed-only tests with no quality claim. Reported per workload: prefill tokens/s, time to first token, decode tokens/s (the remaining 255 tokens), peak VRAM, the allocated KV-cache bytes, and the analytic KV-cache bytes `2 × n_layer × batch × positions × n_kv_head × head_dim × 2` (BF16).
 *Predictions:*
 - H6a: measured cache size scales exactly with `n_kv_head` (verifies the implementation does not expand K/V).
 - H6b: at batch 1 and short context, decode throughput differs by under 5% between variants.
 - H6c: at large batch and long context, GQA-2 and GQA-4 have a resolved decode-throughput advantage that grows with the KV-cache share.
-*Risk:* the historical runtime selects SDPA on L40S. If it repeats K/V to match query heads, the expected savings vanish; this is checked in preflight and reported either way.
+*Risk:* the runtime must select FA3 on the H100. Its loader silently falls back to SDPA, which would repeat K/V to match query heads on masked layers and remove the expected savings; the pilot stops if the backend is not FA3.
 
 ## Run list
 
@@ -103,17 +103,17 @@ These are estimates from FLOPs, not measurements. Replace them with pilot number
 
 - **Active parameters (matmul, incl. unembedding):** d8 ≈ 42M; d12 ≈ 110M. At 10 tokens/param that is ≈ 0.42B and ≈ 1.1B tokens.
 - **FLOPs:** about 6 × params × tokens, plus about 10% for attention. d8 ≈ 1.2×10¹⁷; d12 ≈ 8×10¹⁷.
-- **Throughput assumption:** 2 × L40S have about 724 TFLOPs peak BF16 dense. Taking 20–35% utilisation gives about 145–250 TFLOPs sustained. Small models tend to sit at the low end, and with no NVLink the gradient all-reduce adds a few percent.
-- **Per-run time:** d8 ≈ 8–15 min of training (about 15 min including compilation, evaluation and checkpointing); d12 ≈ 55–90 min.
+- **Throughput assumption:** one H100 has 989 TFLOPs peak BF16 dense and needs no gradient all-reduce. Published benchmarks and peak FLOPs suggest about 1.4–2× the previously assumed 2× L40S throughput.
+- **Per-run time:** d8 ≈ 5–10 min of training; d12 ≈ 30–60 min.
 
-| Block | Runs | Time (central) | Cost at $2.18/h |
-|---|---|---|---|
-| d8 runs | 8 | ≈ 2.0–2.5 h | ≈ $4.5–5.5 |
-| d12 runs | 2 | ≈ 2.2–2.5 h | ≈ $4.8–5.5 |
-| Training total | 10 | ≈ 4.5 h | ≈ $10 (range ≈ $7–15) |
-| Pilots, setup, final evaluation, inference benchmarks | — | ≈ 1.5–2.5 h | ≈ $3–5 extra |
+| Block | Time | Cost at $4.43/h |
+|---|---|---|
+| Data and tokenizer (CPU only) | ≈ 0.5 h | under $0.50 |
+| Pilots | ≈ 0.3 h | ≈ $1–2 |
+| Training, 10 runs | ≈ 2.3–3.3 h | ≈ $10–15 |
+| Inference benchmarks, 10 | ≈ 0.3–0.8 h | ≈ $1.5–3.5 |
 
-Plan on roughly **$13–15 and 6–7 node-hours in total**, with a worst case near $20 if throughput is at the low end.
+Plan on roughly **$14–21**. Modal's usage limit for this study is $42.50, and the job stops itself at $40: after the pilots if the projection is over, and before any run that could not finish within it.
 
 If the pilot shows d12 is slower than the range above, the fallback is to run E5 at a smaller token ratio for both d12 runs (identical for both), recorded as a deviation. d8 remains the primary scale.
 
@@ -133,7 +133,7 @@ B0 is the nanochat ClimbMix leaderboard configuration immediately before the aut
 
 One configurable `nanochat/modified_gpt.py` derived from the pinned commit exposes `GPTConfig.n_head`, `GPTConfig.n_kv_head` and `rotary_fraction`, plus `mlp_ratio` (MLP hidden width = `mlp_ratio × n_embd`, default 4.0 = historical; the hidden width must be an exact multiple of 128). JSON configs under `experiments/configs/` carry all settings and are generated by `experiments/make_configs.py` from the `RUNS` table, so none are edited by hand. For partial RoPE, frequencies are built for the rotated prefix only, that prefix of Q/K is rotated, and the remaining suffix is concatenated unchanged. The rotary dimension must be an exact even integer (no silent rounding), and fraction 1.0 must reproduce the historical behaviour.
 
-Required checks before the full runs: full-RoPE equivalence to the historical code; untouched partial-RoPE suffixes; GQA projection and cache shapes; cached versus full-sequence decoding; checkpoint reload and generation; the selected attention backend (SDPA on L40S) handling GQA without expanding K/V.
+Required checks before the full runs: full-RoPE equivalence to the historical code; untouched partial-RoPE suffixes; GQA projection and cache shapes; cached versus full-sequence decoding; checkpoint reload and generation; the selected attention backend (FA3 on H100) handling GQA without expanding K/V.
 
 ## Implementation status
 
@@ -147,7 +147,7 @@ Implemented and covered by CPU tests (`tests/test_experiments.py`, `test_data.py
 - `benchmark.py`: analytic and allocated KV-cache bytes per workload; wider batch/prompt sweep in the generated configs.
 - `report.py` / `visualise.py`: seed noise `s`, threshold `2√2·s`, resolved flags, per-depth figures, `dose_response` and `scale_transfer`.
 
-Still to do on the GPU node (not verifiable locally): download the pool and test shard, run the d8 and d12 pilots, freeze `DEFAULTS` and regenerate configs, check that the pinned SDPA path runs GQA without expanding K/V (and does not fall back to the math kernel for short-window layers), and confirm `kv_cache_bytes_allocated` equals the analytic value on GPU.
+Still to do on the GPU node (not verifiable locally): download the pool and test shard, run the d8 and d12 pilots, freeze `DEFAULTS` and regenerate configs, check that FA3 is selected, so GQA runs without expanding K/V, and confirm `kv_cache_bytes_allocated` equals the analytic value on GPU.
 
 Known confounds to report: the historical value embeddings shrink with KV heads (total parameters cannot be matched in E3); Muon rescales the `c_fc` learning rate with its aspect ratio (about +6% in the 4.5× MLP); the seed varies both initialisation and training-data order, so `s` includes data-order noise.
 
@@ -187,6 +187,28 @@ Do not label 0.71854 (nanochat Run 4's validation BPB, on its own distribution) 
 
 # Pipeline reference
 
+## Run on Modal
+
+`modal_app.py` runs everything below in one job on an H100, resuming after preemption. Commit your changes first: the commit and any diff go into each run's provenance, and changing `experiments/*.py` midway makes resumes refuse the changed runtime.
+
+```bash
+modal run modal_app.py::image_check          # CPU only: image builds, configs resolve
+modal run modal_app.py::gpu_check            # H100 available, FA3 loads
+modal run modal_app.py --pilot-only          # data, 4 pilots, cost table; no full runs
+modal run --detach modal_app.py              # the whole suite
+```
+
+Re-running the last command is always safe: finished runs are skipped, interrupted ones resume from their newest complete checkpoint. Lower the ceiling with `--budget-usd` if part of the Modal limit is already used. Everything lives on the `nanochat-experiments` Volume:
+
+```bash
+modal volume get nanochat-experiments artifacts/d8-b0-s1/metrics.jsonl -
+modal volume get nanochat-experiments results.tar.gz . && tar xzf results.tar.gz -C experiments/
+```
+
+**Deviations from the steps below:** the pilot checks that the provisional `DEFAULTS` fit and measures their speed, but does not sweep device batch 4/8/16. `DEFAULTS` are not re-frozen from pilot numbers, and token targets stay at their declared values.
+
+The sections below describe the same steps by hand on a GPU node.
+
 ## Prepare once on the GPU node
 
 The launcher prepares a managed, detached worktree at the pinned commit, by default next to this repository as `modded-nanochat-experiments-324e69c`. It overlays `modified_gpt.py`, every `experiments/*.py` file (including `data.py`), and the patched checkpoint dispatch. Historical data loading, attention backend, optimizer and other dependencies remain pinned. It refuses unmanaged edits and concurrent use of the same runtime.
@@ -225,7 +247,7 @@ PILOT
 python experiments/run.py --config /tmp/nanochat-pilot.json --output-root experiments/artifacts/pilots
 ```
 
-Repeat for d12 and for `device_batch_size` 4/8/16 (global batch fixed at 131,072); pilot run IDs must be unique and pilots never count as suite runs. Measure tokens/s, peak VRAM and evaluation cost, then edit `DEFAULTS` in `make_configs.py` and regenerate.
+Repeat for d12 and, if wanted, other `device_batch_size` values (global batch fixed at 131,072); pilot run IDs must be unique and pilots never count as suite runs. Measure tokens/s, peak VRAM and evaluation cost, then edit `DEFAULTS` in `make_configs.py` and regenerate.
 
 ```bash
 python experiments/run_all.py --dry-run                      # resolves all 10 runs, creates nothing
@@ -234,7 +256,7 @@ python experiments/run_all.py --runs d8-b0-s1 d8-b0-s2 d8-b0-s3   # E1 only; omi
 python experiments/run.py --config experiments/configs/d8-b0-s1.json --resume 1600
 ```
 
-The suite validator checks every config against `RUNS`, that configs at one depth differ only in run ID, seed, KV heads, rotary fraction and MLP ratio, that no (model, seed) pair repeats, and that the suite uses two workers, global batch 131,072 and no step cap. Existing outputs are rejected unless an individual resume is requested. Each launch trains on two workers, evaluates (validation then test) after training, then benchmarks the final checkpoint in a fresh process on the first visible GPU. A failed process stops the sweep. `run_all.py` writes `comparison.json` and `tables.md` at the end.
+The suite validator checks every config against `RUNS`, that configs at one depth differ only in run ID, seed, KV heads, rotary fraction and MLP ratio, that no (model, seed) pair repeats, and that the suite uses one worker, global batch 131,072 and no step cap. Existing outputs are rejected unless an individual resume is requested. Each launch trains, evaluates (validation then test) after training, then benchmarks the final checkpoint in a fresh process. A failed process stops the sweep. `run_all.py` writes `comparison.json` and `tables.md` at the end.
 
 ## Stopping, schedule and optimizer policy
 
@@ -264,7 +286,7 @@ Each run directory under `experiments/artifacts/` holds the frozen config and so
 
 FLOPs use the historical estimate (six per matmul parameter per token plus attention by query-head count and window); they exclude lookup, norm, softmax and rotary elementwise work. Inference uses fixed greedy prompts and exactly 256 generated tokens ignoring EOS, measures prefill and TTFT separately, times the remaining 255 tokens as decode, records OOM workloads without shrinking the batch, and labels any workload whose cache exceeds the 2,048-token training context as speed-only.
 
-Rental accounting covers the launcher duration at the supplied $2.18/node-hour quote and excludes earlier preparation, pilots and idle gaps.
+Rental accounting covers the launcher duration at `NODE_HOUR_USD` (`config.py`) and excludes earlier preparation, pilots and idle gaps.
 
 ```bash
 python -m experiments.report --output-root experiments/artifacts
@@ -273,7 +295,7 @@ CUDA_VISIBLE_DEVICES=0 .venv/bin/python -m experiments.benchmark --run-dir /abso
 python -m pytest tests/test_experiments.py tests/test_data.py tests/test_modified_gpt.py tests/test_visualise.py tests/test_engine.py -q
 ```
 
-Local CPU tests do not establish GPU throughput, memory fit, NCCL behaviour or the selected attention backend; verify those on the two-L40S node before the full runs.
+Local CPU tests do not establish GPU throughput, memory fit or the selected attention backend; the Modal pilot checks backend and memory fit before the full runs.
 
 ## Visualise
 

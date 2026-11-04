@@ -9,6 +9,7 @@ import pytest
 from experiments.config import GROUPS, RUNS, members, model_for, read_config, schedule, validate_suite
 from experiments import make_configs, run, run_all
 from experiments.report import compare, matched_observations
+from experiments.resume import pilot_tokens_per_second, project_seconds, resume_action, spent_seconds, truncate_metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 FIRST = "d8-b0-s1"
@@ -138,6 +139,63 @@ def test_run_all_rejects_unknown_runs(config_dir, tmp_path, monkeypatch):
         run_all.main()
 
 
+def write_checkpoint(directory, step, workers=1, skip=()):
+    directory.mkdir(parents=True, exist_ok=True)
+    names = [f"model_{step:06d}.pt", f"meta_{step:06d}.json", f"timing_{step:06d}.json"]
+    for rank in range(workers):
+        names += [f"optim_{step:06d}_rank{rank}.pt", f"runtime_{step:06d}_rank{rank}.pt"]
+    for name in names:
+        if name not in skip:
+            (directory / name).write_text("{}")
+
+
+def test_resume_action_picks_newest_complete_checkpoint(tmp_path):
+    run_dir = tmp_path / "run"
+    assert resume_action(run_dir, 1) == ("fresh", None)
+    (run_dir / "checkpoints").mkdir(parents=True)
+    (run_dir / "metrics.jsonl").write_text("")
+    assert resume_action(run_dir, 1) == ("fresh", None)  # partial directory, no checkpoint
+    write_checkpoint(run_dir / "checkpoints", 1600)
+    assert resume_action(run_dir, 1) == ("resume", 1600)
+    write_checkpoint(run_dir / "checkpoints", 3200, skip=("optim_003200_rank0.pt",))
+    assert resume_action(run_dir, 1) == ("resume", 1600)  # newest one lost a file
+    (run_dir / "checkpoints/timing_003200.json").unlink()
+    write_checkpoint(run_dir / "checkpoints", 3200, skip=("timing_003200.json",))
+    assert resume_action(run_dir, 1) == ("resume", 1600)  # no timing means the save never finished
+    assert resume_action(run_dir, 2) == ("fresh", None)  # rank 1 files are required with two workers
+    (run_dir / "inference.json").write_text("{}")
+    assert resume_action(run_dir, 1) == ("skip", None)
+
+
+def test_truncate_metrics_keeps_only_rows_the_resume_will_not_repeat(tmp_path):
+    path = tmp_path / "metrics.jsonl"
+    rows = [{"kind": "train", "step": 1}, {"kind": "validation", "step": 2}, {"kind": "train", "step": 3},
+            {"kind": "validation", "step": 2, "final": True}, {"kind": "test", "step": 2, "final": True}]
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows) + '{"kind": "tra')
+    truncate_metrics(path, 2)
+    assert [json.loads(line) for line in path.read_text().splitlines()] == rows[:2]
+    truncate_metrics(tmp_path / "absent.jsonl", 2)
+
+
+def test_budget_helpers(tmp_path, config_dir):
+    for name, seconds in (("a", 100), ("b", 50)):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "rental_accounting.json").write_text(json.dumps({"total_pipeline_node_seconds": seconds}))
+    (tmp_path / "c").mkdir()  # started, nothing recorded yet
+    assert spent_seconds([tmp_path, tmp_path / "absent"]) == 150
+
+    metrics = tmp_path / "metrics.jsonl"
+    rows = [{"kind": "train", "step": s, "tokens_per_second": v} for s, v in ((1, 1), (2, 2), (3, 100), (4, 200), (5, 300))]
+    metrics.write_text("".join(json.dumps(r) + "\n" for r in [*rows, {"kind": "test", "step": 5}]))
+    assert pilot_tokens_per_second(metrics) == 200  # compilation steps excluded
+
+    config = read_config(config_dir / f"{FIRST}.json")
+    t, e = config["training"], config["evaluation"]
+    projected = project_seconds(config, 1000)
+    assert projected["training"] == (t["target_tokens"] + 7 * e["interim_tokens"]) / 1000  # 3200 updates, every 400, none on the last
+    assert projected["total"] > projected["training"] + (e["final_tokens"] + e["test_tokens"]) / 1000
+
+
 def test_runtime_loader_patch():
     source = subprocess.check_output(["git", "show", "324e69c:nanochat/checkpoint_manager.py"], cwd=ROOT, text=True)
     patched = run.patch_checkpoint_loader(source)
@@ -164,7 +222,7 @@ def test_launch_trains_then_benchmarks_on_one_gpu(config_dir, tmp_path, monkeypa
         calls.append((cmd, kwargs["env"]))
     monkeypatch.setattr(subprocess, "run", execute)
     run.launch(config_dir / f"{FIRST}.json", tmp_path / "artifacts", runtime)
-    assert "--nproc_per_node=2" in calls[0][0]
+    assert "--nproc_per_node=1" in calls[0][0]
     assert "experiments.train" in calls[0][0]
     assert "experiments.benchmark" in calls[1][0]
     assert calls[1][1]["CUDA_VISIBLE_DEVICES"] == "GPU-first"

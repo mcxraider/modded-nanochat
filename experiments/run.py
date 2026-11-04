@@ -14,7 +14,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from experiments.config import BASE_COMMIT, read_config
+from experiments.config import BASE_COMMIT, NODE_HOUR_USD, read_config
 
 
 def patch_checkpoint_loader(source):
@@ -137,8 +137,8 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None):
         attempt["node_seconds"] = time.monotonic() - launch_started
         accounting["total_pipeline_node_seconds"] = sum(item.get("node_seconds", 0) for item in accounting["launches"])
         accounting["total_pipeline_gpu_hours"] = accounting["total_pipeline_node_seconds"] * config["workers"] / 3600
-        accounting["cost_at_2_18_per_node_hour"] = accounting["total_pipeline_node_seconds"] * 2.18 / 3600
-        accounting["note"] = "Assumes both rented GPUs remain allocated during single-GPU benchmarking; excludes earlier dependency/data preparation, pilots, idle gaps, and unrecorded force-killed launches."
+        accounting["cost_usd"] = accounting["total_pipeline_node_seconds"] * NODE_HOUR_USD / 3600
+        accounting["note"] = "Excludes earlier dependency/data preparation, pilots, idle gaps, and unrecorded force-killed launches."
         accounting_path.write_text(json.dumps(accounting, indent=2) + "\n")
     print(f"Completed {config['run_id']}: {output}", flush=True)
 
