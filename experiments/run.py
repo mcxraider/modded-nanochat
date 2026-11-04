@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from experiments.config import BASE_COMMIT, NODE_HOUR_USD, read_config
+from experiments.resume import validate_saved_run
 
 
 def patch_checkpoint_loader(source):
@@ -80,7 +82,27 @@ def command(config, config_path, output, resume=None, interpreter=None):
     return cmd
 
 
-def _launch(config_path, output_root, worktree, dry_run=False, resume=None):
+def run_process(cmd, *, timeout, **kwargs):
+    """Stop torchrun and its workers together when a budget deadline expires."""
+    if timeout is None:
+        return subprocess.run(cmd, check=True, **kwargs)
+    if timeout <= 0:
+        raise subprocess.TimeoutExpired(cmd, timeout)
+    with subprocess.Popen(cmd, start_new_session=True, **kwargs) as process:
+        try:
+            returncode = process.wait(timeout=timeout)
+        except BaseException:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+            raise
+        if returncode:
+            raise subprocess.CalledProcessError(returncode, cmd)
+
+
+def _launch(config_path, output_root, worktree, dry_run=False, resume=None, timeout_seconds=None):
     config_path = Path(config_path).resolve()
     config = read_config(config_path)
     output = Path(output_root).resolve() / config["run_id"]
@@ -97,6 +119,8 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None):
     runtime_python = runtime / ".venv/bin/python"
     interpreter = str(runtime_python) if runtime_python.is_file() else sys.executable
     cmd = command(config, output / "config.json", output, resume, interpreter)
+    if resume is not None:
+        validate_saved_run(output, config, overlay)
     if resume is None:
         output.mkdir(parents=True, exist_ok=False)
         (output / "config.json").write_text(json.dumps(config, indent=2) + "\n")
@@ -104,11 +128,6 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None):
                       "source_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                       "source_diff": subprocess.check_output(["git", "-C", str(ROOT), "diff", "HEAD"], text=True)}
         (output / "launch.json").write_text(json.dumps(provenance, indent=2) + "\n")
-    else:
-        if json.loads((output / "config.json").read_text()) != config:
-            raise ValueError("resume config differs from original run")
-        if json.loads((output / "launch.json").read_text())["overlay_sha256"] != overlay:
-            raise ValueError("resume runtime differs from original run")
     # Freeze the actual source used, including new files absent from git diff.
     source = output / "source"
     if not source.exists():
@@ -122,14 +141,16 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None):
     attempt = {"resume_step": resume, "started_unix_seconds": time.time(), "status": "running", "command": cmd}
     accounting["launches"].append(attempt)
     accounting_path.write_text(json.dumps(accounting, indent=2) + "\n")
+    def remaining():
+        return None if timeout_seconds is None else timeout_seconds - (time.monotonic() - launch_started)
     try:
         with (output / "train.log").open("a") as log:
-            subprocess.run(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
+            run_process(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
         benchmark_env = dict(env)
         benchmark_env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]
         with (output / "benchmark.log").open("a") as log:
-            subprocess.run([interpreter, "-m", "experiments.benchmark", "--run-dir", str(output)],
-                           cwd=runtime, env=benchmark_env, stdout=log, stderr=subprocess.STDOUT, check=True)
+            run_process([interpreter, "-m", "experiments.benchmark", "--run-dir", str(output)],
+                           cwd=runtime, env=benchmark_env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
         attempt["status"] = "complete"
     finally:
         if attempt["status"] == "running":
@@ -155,11 +176,11 @@ def runtime_lock(worktree):
         yield
 
 
-def launch(config_path, output_root, worktree, dry_run=False, resume=None):
+def launch(config_path, output_root, worktree, dry_run=False, resume=None, timeout_seconds=None):
     if dry_run:
         return _launch(config_path, output_root, worktree, True, resume)
     with runtime_lock(worktree):
-        return _launch(config_path, output_root, worktree, False, resume)
+        return _launch(config_path, output_root, worktree, False, resume, timeout_seconds)
 
 
 def main():

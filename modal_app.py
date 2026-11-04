@@ -1,4 +1,4 @@
-"""Run the whole experiment suite on Modal: data, pilots, budget gates, 10 runs, report.
+"""Run the whole experiment suite on Modal: data, pilots, budget gates, 8 runs, report.
 
     modal run modal_app.py::gpu_check         # is the GPU available, does FA3 load?
     modal run modal_app.py::image_check       # CPU only: image builds, configs resolve
@@ -18,7 +18,7 @@ import modal
 GPU = "H100!"  # "!" blocks Modal's H200 upgrade; report.py rejects mixed GPUs across runs
 CPU_CORES, MEMORY_GIB = 6, 24  # priced into config.NODE_HOUR_USD; change them together
 SHARDS = 48  # training pool, shards 0..47; prepare() checks it covers the largest run
-BUDGET_USD = 40.0  # stops $2.50 short of the $42.50 Modal usage limit
+BUDGET_USD = 40.0  # application estimate; also configure a workspace usage limit
 PREPARE_USD = 0.5  # CPU preparation is not in the rental accounting
 VRAM_BYTES = 80e9
 FA3_REPO = "varunneal/flash-attention-3"
@@ -30,7 +30,7 @@ VOLUME_PATH = Path("/vol")
 BASE_DIR = VOLUME_PATH / "nanochat"
 ARTIFACTS = VOLUME_PATH / "artifacts"
 PILOTS = VOLUME_PATH / "pilots"
-PILOT_RUNS = ("d8-b0-s1", "d8-gqa2", "d12-b0", "d12-gqa2")
+PILOT_RUNS = ("d8-b0-s1", "d8-gqa2")
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -51,6 +51,7 @@ image = (
     .env({"NANOCHAT_BASE_DIR": str(BASE_DIR)})
 )
 volume = modal.Volume.from_name("nanochat-experiments", create_if_missing=True, version=2)
+writer_locks = modal.Dict.from_name("nanochat-experiments-locks", create_if_missing=True)
 app = modal.App("nanochat-experiments", image=image)
 
 COUNT_TOKENS = """
@@ -84,6 +85,16 @@ def read_run_json(run_dir, name):
 
 @app.function(cpu=8.0, memory=32 * 1024, volumes={VOLUME_PATH: volume}, timeout=4 * 3600)
 def prepare():
+    _, resume, _ = experiments_modules()
+    with resume.exclusive_writer(writer_locks):
+        volume.reload()
+        try:
+            return prepare_data()
+        finally:
+            volume.commit()
+
+
+def prepare_data():
     """Download shards and train the tokenizer, skipping whatever is already on the Volume."""
     config, _, _ = experiments_modules()
     data = BASE_DIR / "base_data_climbmix"
@@ -108,11 +119,13 @@ def prepare():
         raise RuntimeError(f"raise SHARDS: {SHARDS} shards hold {tokens * SHARDS:,} tokens, need {needed:,.0f}")
 
 
-def run_one(config_path, output_root):
+def run_one(config_path, output_root, budget):
     """Launch, resume or skip one run; safe to call again after any interruption."""
     config, resume, run = experiments_modules()
     cfg = config.read_config(config_path)
     run_dir = output_root / cfg["run_id"]
+    _, overlay = run.prepare_runtime(WORKTREE)
+    resume.validate_saved_run(run_dir, cfg, overlay)
     action, step = resume.resume_action(run_dir, cfg["workers"])
     print(f"{cfg['run_id']}: {action} {step if step is not None else ''}", flush=True)
     if action == "skip":
@@ -122,7 +135,7 @@ def run_one(config_path, output_root):
     else:
         resume.truncate_metrics(run_dir / "metrics.jsonl", step)
     try:
-        run.launch(config_path, output_root, WORKTREE, resume=step)
+        run.launch(config_path, output_root, WORKTREE, resume=step, timeout_seconds=budget.seconds_left())
     except subprocess.CalledProcessError:
         for name in ("train.log", "benchmark.log"):  # these go to files, not the Modal logs
             if (run_dir / name).exists():
@@ -171,31 +184,46 @@ def check_pilot(run_dir, workers):
               max_containers=1, timeout=12 * 3600)
 def suite(budget_usd=BUDGET_USD, pilot_only=False):
     config, resume, _ = experiments_modules()
+    with resume.exclusive_writer(writer_locks):
+        volume.reload()
+        legacy = PREPARE_USD + resume.spent_seconds([PILOTS, ARTIFACTS]) * config.NODE_HOUR_USD / 3600
+        with resume.BudgetSession(VOLUME_PATH / "accounting/suite.json", budget_usd,
+                                  config.NODE_HOUR_USD, legacy, volume.commit) as budget:
+            try:
+                return run_suite(budget_usd, pilot_only, budget)
+            except subprocess.TimeoutExpired:
+                return {"status": "stopped_for_budget", "spent_usd": budget.spent()}
+
+
+def run_suite(budget_usd, pilot_only, budget):
+    config, resume, run = experiments_modules()
     os.environ["OMP_NUM_THREADS"] = "1"  # Modal sets this to the CPU count; the launcher's documented default is 1
     configs = {r: config.read_config(suite_config(r)) for r in config.RUNS}
     config.validate_suite(list(configs.values()))
     def spent():
-        return PREPARE_USD + resume.spent_seconds([PILOTS, ARTIFACTS]) * config.NODE_HOUR_USD / 3600
+        return budget.spent()
     def usd(seconds):
         return seconds * config.NODE_HOUR_USD / 3600
 
     # Gates return instead of raising, so Modal doesn't retry a deliberate stop.
     for run_id in PILOT_RUNS:
-        run_one(pilot_config(run_id), PILOTS)
+        run_one(pilot_config(run_id), PILOTS, budget)
     problems, speeds = [], {}
     for run_id in PILOT_RUNS:
         run_dir = PILOTS / f"pilot-{run_id}"
         problems += check_pilot(run_dir, configs[run_id]["workers"])
         speeds[run_id] = resume.pilot_tokens_per_second(run_dir / "metrics.jsonl")
     print("pilot tokens/s:", json.dumps(speeds), flush=True)
-    print(f"GQA-2 / B0 speed: d8 {speeds['d8-gqa2'] / speeds['d8-b0-s1']:.3f}, "
-          f"d12 {speeds['d12-gqa2'] / speeds['d12-b0']:.3f}", flush=True)
+    print(f"GQA-2 / B0 speed: d8 {speeds['d8-gqa2'] / speeds['d8-b0-s1']:.3f}", flush=True)
     if problems:
         return {"status": "pilot_failed", "problems": problems}
 
     # The slower variant at each depth, as the tok/s estimate for every run at that depth.
-    depth_speed = {d: min(speeds[r] for r in PILOT_RUNS if config.RUNS[r]["depth"] == d) for d in config.DEPTHS}
+    depth_speed = {d: min(speeds[r] for r in PILOT_RUNS if config.RUNS[r]["depth"] == d) for d in {config.RUNS[r]["depth"] for r in configs}}
     projected = {r: resume.project_seconds(c, depth_speed[config.RUNS[r]["depth"]]) for r, c in configs.items()}
+    _, overlay = run.prepare_runtime(WORKTREE)
+    for r, cfg in configs.items():
+        resume.validate_saved_run(ARTIFACTS / r, cfg, overlay)
     remaining = [r for r in config.RUNS if resume.resume_action(ARTIFACTS / r, configs[r]["workers"])[0] != "skip"]
     total = spent() + usd(sum(projected[r]["total"] for r in remaining))
     table = {r: {"train_minutes": round(projected[r]["training"] / 60, 1), "usd": round(usd(projected[r]["total"]), 2)}
@@ -208,11 +236,11 @@ def suite(budget_usd=BUDGET_USD, pilot_only=False):
         return {"status": "pilot_ok", "projected_total_usd": total, "runs": table}
 
     for run_id in config.RUNS:
-        # Never start a run that can't finish: Modal's usage limit would kill it partway.
+        # Gate estimates; subprocess deadlines enforce the remaining application budget.
         if run_id in remaining and spent() + usd(projected[run_id]["total"]) > budget_usd:
             return {"status": "stopped_for_budget", "spent_usd": spent(), "next_run": run_id,
                     "not_started": remaining[remaining.index(run_id):]}
-        run_one(suite_config(run_id), ARTIFACTS)
+        run_one(suite_config(run_id), ARTIFACTS, budget)
 
     in_worktree("-m", "experiments.report", "--output-root", str(ARTIFACTS), stdout=subprocess.DEVNULL)
     figures = subprocess.run([PYTHON, "experiments/visualise.py", "--output-root", str(ARTIFACTS)], cwd=WORKTREE)

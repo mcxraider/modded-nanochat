@@ -30,7 +30,7 @@ _MARKERS = ("o", "s", "D", "^", "v", "P")
 
 
 def variant(run_id):
-    """'d8-b0-s2' -> 'b0'; 'd12-gqa2' -> 'gqa2'."""
+    """'d8-b0-s2' -> 'b0'; 'd8-gqa2' -> 'gqa2'."""
     return re.sub(r"-s\d$", "", run_id.split("-", 1)[1])
 
 
@@ -317,31 +317,6 @@ def dose_response(runs, context):
     return fig
 
 
-def scale_transfer(runs, context):
-    """GQA-2 minus MHA final BPB at d8 and d12."""
-    results = {n: r["result"] for n, r in runs.items() if r["result"] is not None}
-    gaps = []
-    for depth, (run, ref) in ((8, ("d8-gqa2", "d8-b0")), (12, ("d12-gqa2", "d12-b0"))):
-        reference = pooled(results, ref)
-        for metric in ("test_bpb", "val_bpb"):
-            if run in results and reference and results[run].get(metric) is not None and reference.get(metric) is not None:
-                gaps.append((depth, metric, results[run][metric] - reference[metric]))
-                break
-    if len(gaps) < 2 or len({m for _, m, _ in gaps}) != 1:
-        return None
-    fig, axes = canvas("Scale transfer", f"{context} · GQA-2 minus MHA, {gaps[0][1].replace('_bpb', '')} BPB; d12 has one seed", 1, 1)
-    ax = axes[0, 0]
-    bars = ax.bar([f"d{d}" for d, _, _ in gaps], [g for _, _, g in gaps], color=["#315A8C", "#B47B15"], width=0.5)
-    ax.bar_label(bars, labels=[f"{g:+.5f}" for _, _, g in gaps], padding=4, fontsize=9)
-    noise = baseline_noise(runs)
-    if noise is not None and gaps[0][1] == "test_bpb":
-        for sign in (-1, 1):
-            ax.axhline(sign * noise["threshold"], color="#526173", linewidth=0.8, linestyle=":")
-    ax.axhline(0, color="#526173", linewidth=0.8)
-    ax.set(ylabel="BPB difference · negative is better", title="Gap persists with size?")
-    return fig
-
-
 def quality_speed(runs, context):
     completed = [(name, run["result"]) for name, run in runs.items() if run["result"] is not None]
     if not completed:
@@ -424,7 +399,6 @@ def render(output_root, output_dir=None, smooth_window=10):
             "inference_comparison" + tag: lambda g=group, c=ctx: inference_comparison(g, c),
         })
     builders["dose_response"] = lambda: dose_response(runs, context)
-    builders["scale_transfer"] = lambda: scale_transfer(runs, context)
     written = []
     for name, build in builders.items():
         if name.startswith(("learning_curves", "training_performance")):

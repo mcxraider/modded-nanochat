@@ -79,8 +79,8 @@ def test_all_plots_export_png_and_svg(artifacts):
     with pytest.warns(UserWarning, match="OOM workloads"):
         paths = v.render(artifacts)
     per_depth = {"learning_curves", "training_performance", "final_comparison", "quality_speed", "inference_comparison"}
-    assert {p.stem for p in paths} == {f"{n}_d{d}" for n in per_depth for d in (8, 12)} | {"dose_response", "scale_transfer"}
-    assert len(paths) == 24
+    assert {p.stem for p in paths} == {f"{n}_d{d}" for n in per_depth for d in (8,)} | {"dose_response"}
+    assert len(paths) == 12
     for path in paths:
         assert path.stat().st_size > 5000
     assert plt.get_fignums() == []
@@ -91,7 +91,7 @@ def test_partial_training_does_not_require_final_results(artifacts):
         (directory / "result.json").unlink()
         (directory / "inference.json").unlink()
     paths = v.render(artifacts)
-    assert {p.stem for p in paths} == {f"{n}_d{d}" for n in ("learning_curves", "training_performance") for d in (8, 12)}
+    assert {p.stem for p in paths} == {f"{n}_d{d}" for n in ("learning_curves", "training_performance") for d in (8,)}
 
 
 def test_smoothing_and_units_preserve_evidence(artifacts):
@@ -142,8 +142,8 @@ def test_known_data_confounds_are_rejected(artifacts):
         v.load_runs(artifacts)
 
 
-def test_data_manifests_may_differ_across_depths_but_not_within(artifacts):
-    runs, verified = v.load_runs(artifacts)  # fixture manifests differ between d8 and d12
+def test_consistent_d8_data_manifests_are_verified(artifacts):
+    runs, verified = v.load_runs(artifacts)
     assert verified and len(runs) == len(RUNS)
 
 
@@ -176,18 +176,13 @@ def test_final_pairwise_differences_follow_the_runs_table_and_use_test_bpb(artif
     plt.close(fig)
 
 
-def test_dose_response_and_scale_transfer_use_final_results(artifacts):
+def test_dose_response_uses_final_results(artifacts):
     runs, _ = v.load_runs(artifacts)
     fig = v.dose_response(runs, "SYNTHETIC TEST")
     assert list(fig.axes[0].lines[0].get_xdata()) == [1, 2, 4]
     assert list(fig.axes[0].lines[0].get_ydata()) == pytest.approx([0.726, 0.723, 0.721])
     assert list(fig.axes[1].lines[0].get_xdata()) == [0.25, 0.75, 1.0]
     plt.close(fig)
-    fig = v.scale_transfer(runs, "SYNTHETIC TEST")
-    assert [bar.get_height() for bar in fig.axes[0].patches] == pytest.approx([0.002, 0.001])
-    plt.close(fig)
-    del runs["d12-gqa2"]
-    assert v.scale_transfer(runs, "SYNTHETIC TEST") is None
 
 
 def test_test_records_are_read_and_validated(tmp_path):
@@ -198,3 +193,19 @@ def test_test_records_are_read_and_validated(tmp_path):
     path.write_text(json.dumps({**record, "test_bpb": float("nan")}).replace("NaN", "NaN") + "\n")
     with pytest.raises(ValueError, match="test_bpb"):
         v.read_metrics(path)
+
+
+@pytest.mark.parametrize("missing", [None, "d8-gqa2-r25"])
+def test_d8_report_omits_scale_transfer_and_tracks_missing_runs(artifacts, monkeypatch, missing):
+    from experiments import report
+    if missing:
+        (artifacts / missing / "result.json").unlink()
+    monkeypatch.setattr(sys, "argv", ["report", "--output-root", str(artifacts)])
+    report.main()
+    payload = json.loads((artifacts / "comparison.json").read_text())
+    assert "scale_transfer" not in payload
+    assert payload["missing_runs"] == ([] if missing is None else [missing])
+    assert len(payload["runs"]) == 8 - (missing is not None)
+    assert payload["noise"]["n"] == 3
+    assert payload["comparisons"]
+    assert (artifacts / "tables.md").is_file()

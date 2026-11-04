@@ -32,6 +32,8 @@ def configs(config_dir):
 
 def test_generated_suite_matches_runs_table_and_batch_policy(config_dir):
     suite = configs(config_dir)
+    assert len(suite) == 8
+    assert {p.stem for p in config_dir.glob("*.json")} == set(RUNS)
     assert [c["run_id"] for c in suite] == list(RUNS)
     validate_suite(suite)
     for config in suite:
@@ -39,7 +41,7 @@ def test_generated_suite_matches_runs_table_and_batch_policy(config_dir):
         micro = config["workers"] * t["device_batch_size"] * m["sequence_len"]
         assert t["total_batch_size"] % micro == 0 and t["target_tokens"] % t["total_batch_size"] == 0
         assert config["model"]["n_embd"] // config["model"]["n_head"] == 128
-    assert {RUNS[r]["depth"] for r in RUNS} == {8, 12}
+    assert {RUNS[r]["depth"] for r in RUNS} == {8}
 
 
 def test_runs_table_references_resolve_and_encode_the_experiment_design():
@@ -48,7 +50,6 @@ def test_runs_table_references_resolve_and_encode_the_experiment_design():
             assert members(ref)
     assert members("d8-b0") == GROUPS["d8-b0"] and len(GROUPS["d8-b0"]) == 3
     assert [model_for(r)["n_kv_head"] for r in ("d8-b0-s1", "d8-gqa2", "d8-gqa4")] == [4, 2, 1]
-    assert [model_for(r)["n_kv_head"] for r in ("d12-b0", "d12-gqa2")] == [6, 3]
     assert model_for("d8-gqa2-pm")["mlp_ratio"] == 4.5 and model_for("d8-gqa2-r25")["rotary_fraction"] == 0.25
     assert sorted(RUNS[r]["seed"] for r in GROUPS["d8-b0"]) == [1, 2, 3]
 
@@ -264,3 +265,101 @@ def test_seed_noise_threshold_and_resolution():
     assert small["resolved"] is False and big["resolved"] is True
     assert big["test_bpb_delta"] == pytest.approx(0.07)
     assert pair_entry(result("d8-gqa2", 1.0, 1.07), reference, None)["resolved"] is None
+
+
+def test_saved_outputs_reject_changed_config_source_and_missing_provenance(tmp_path):
+    from experiments.resume import validate_saved_run
+    cfg, overlay = {"workers": 1}, {"experiments/train.py": "original"}
+    validate_saved_run(tmp_path, cfg, overlay)  # no previous run
+    (tmp_path / "config.json").write_text(json.dumps(cfg))
+    (tmp_path / "launch.json").write_text(json.dumps({"overlay_sha256": overlay}))
+    (tmp_path / "inference.json").write_text("{}")
+    validate_saved_run(tmp_path, cfg, overlay)
+    with pytest.raises(ValueError, match="config.json"):
+        validate_saved_run(tmp_path, {"workers": 2}, overlay)
+    with pytest.raises(ValueError, match="launch.json"):
+        validate_saved_run(tmp_path, cfg, {"experiments/train.py": "changed"})
+    (tmp_path / "launch.json").unlink()
+    with pytest.raises(ValueError, match="missing provenance"):
+        validate_saved_run(tmp_path, cfg, overlay)
+
+
+def test_shared_writer_rejects_another_app_and_releases_after_failure():
+    from experiments.resume import exclusive_writer
+    class SharedDict(dict):
+        def put(self, key, value, *, skip_if_exists):
+            assert skip_if_exists
+            if key in self:
+                return False
+            self[key] = value
+            return True
+    locks = SharedDict()
+    with pytest.raises(ValueError, match="worker failed"):
+        with exclusive_writer(locks):
+            with pytest.raises(RuntimeError, match="another pipeline"):
+                with exclusive_writer(locks):
+                    pytest.fail("second writer acquired lock")
+            assert "writer" in locks
+            raise ValueError("worker failed")
+    assert not locks
+    with exclusive_writer(locks):
+        pass
+
+
+def test_budget_reservation_survives_a_kill_and_deleted_outputs(tmp_path, monkeypatch):
+    from experiments import resume
+    clock = [100.0]
+    monkeypatch.setattr(resume.time, "monotonic", lambda: clock[0])
+    ledger = tmp_path / "accounting/suite.json"
+    commits = []
+    attempt = resume.BudgetSession(ledger, 40, 4, 2, lambda: commits.append(True))
+    attempt.__enter__()  # simulate a hard kill: __exit__ is never reached
+    assert len(commits) == 1
+    assert json.loads(ledger.read_text())["reserved_usd"] == 38
+    clock[0] += 3600
+    assert attempt.spent() == 6
+    assert attempt.seconds_left() == 8.5 * 3600
+    # A fresh output tree / lower legacy count cannot erase the reservation.
+    with pytest.raises(RuntimeError, match="budget exhausted or reserved"):
+        with resume.BudgetSession(ledger, 40, 4, 0, lambda: None):
+            pass
+
+
+def test_budget_settles_elapsed_time_and_counts_retries(tmp_path, monkeypatch):
+    from experiments import resume
+    clock = [0.0]
+    monkeypatch.setattr(resume.time, "monotonic", lambda: clock[0])
+    ledger = tmp_path / "accounting/suite.json"
+    with pytest.raises(ValueError):
+        with resume.BudgetSession(ledger, 40, 4, 2, lambda: None):
+            clock[0] += 1800
+            raise ValueError("training failed")
+    assert json.loads(ledger.read_text()) == {"spent_usd": 4, "reserved_usd": 0}
+    with resume.BudgetSession(ledger, 40, 4, 0, lambda: None) as budget:
+        assert budget.spent() == 4
+        clock[0] += 900
+    assert json.loads(ledger.read_text())["spent_usd"] == 5
+    for invalid in (0, -1, float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="positive finite"):
+            resume.BudgetSession(ledger, invalid, 4, 0, lambda: None)
+
+
+def test_budget_timeout_kills_the_entire_training_process_group(monkeypatch):
+    import signal
+    from unittest.mock import MagicMock
+    process = MagicMock()
+    process.pid = 12345
+    process.wait.side_effect = [subprocess.TimeoutExpired(["torchrun"], 1), -9]
+    process.__enter__.return_value = process
+    popen = MagicMock(return_value=process)
+    monkeypatch.setattr(subprocess, "Popen", popen)
+    killed = []
+    monkeypatch.setattr(run.os, "killpg", lambda pid, sig: killed.append((pid, sig)))
+    with pytest.raises(subprocess.TimeoutExpired):
+        run.run_process(["torchrun"], timeout=1)
+    assert killed == [(12345, signal.SIGKILL)]
+    popen.assert_called_once_with(["torchrun"], start_new_session=True)
+    popen.reset_mock()
+    with pytest.raises(subprocess.TimeoutExpired):
+        run.run_process(["torchrun"], timeout=0)
+    popen.assert_not_called()

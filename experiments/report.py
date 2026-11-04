@@ -156,13 +156,7 @@ def main():
                         raise ValueError(f"inference {field} differs across compared runs")
                 entry["inference_speedups"] = inference_speedups(a["rows"], b["rows"])
             comparisons.append(entry)
-    scale = None
-    gap = {d: next((c["test_bpb_delta"] for c in comparisons if c["run_id"] == r and c["reference"] == ref and "test_bpb_delta" in c), None)
-           for d, (r, ref) in {8: ("d8-gqa2", "d8-b0"), 12: ("d12-gqa2", "d12-b0")}.items()}
-    if None not in gap.values():
-        scale = {"gap_d8": gap[8], "gap_d12": gap[12], "difference": gap[12] - gap[8],
-                 "caveat": "threshold comes from d8 seeds only; d12 has one seed per configuration"}
-    payload = {"runs": list(results.values()), "noise": noise, "comparisons": comparisons, "scale_transfer": scale,
+    payload = {"runs": list(results.values()), "noise": noise, "comparisons": comparisons,
                "missing_runs": [r for r in RUNS if r not in results],
                "caveat": "seed noise from three d8 baseline runs only; unresolved differences are not ties"}
     from experiments.train import write_json

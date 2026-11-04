@@ -11,10 +11,9 @@ from experiments.config import BASE_COMMIT, RUNS, model_for, read_config, valida
 
 # Per-depth policy shared by every run at that depth. PROVISIONAL until the GPU pilot measures
 # tokens/s, peak VRAM, and evaluation cost; edit here and regenerate.
-# target_tokens ~ 10 x scaling params (d8 ~42M, d12 ~110M); micro-batches must tile total_batch_size.
+# target_tokens ~ 10 x scaling params (d8 ~42M); micro-batches must tile total_batch_size.
 DEFAULTS = {
     8: {"target_tokens": 3200 * 131072, "device_batch_size": 32, "eval_every": 400, "save_every": 1600},
-    12: {"target_tokens": 8400 * 131072, "device_batch_size": 16, "eval_every": 700, "save_every": 2100},
 }
 OPTIMIZER = {"embedding_lr": 0.3, "unembedding_lr": 0.004, "matrix_lr": 0.02, "scalar_lr": 0.5, "weight_decay": 0.2,
              "adam_betas": [0.8, 0.95], "reference_batch_size": 524288, "warmup_ratio": 0.0, "warmdown_ratio": 0.5,
