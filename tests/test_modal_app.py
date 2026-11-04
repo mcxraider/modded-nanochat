@@ -135,16 +135,36 @@ def test_recovery_requires_stopped_workers_and_preserves_audit(modal_app, tmp_pa
     modal_app.writer_locks.pop.assert_called_once_with('writer')
 
 
-def test_pilot_rejects_any_inference_oom(modal_app, tmp_path):
+def _pilot_dir(tmp_path, wait=0.001, working_set=4):
     (tmp_path / 'hardware.json').write_text(json.dumps({'gpu': 'NVIDIA H100 80GB HBM3', 'world_size': 1, 'attention_backend': 'FA3'}))
     (tmp_path / 'result.json').write_text(json.dumps({'peak_vram_bytes': 1}))
-    ok = dict(batch_size=1, prompt_tokens=128, status='ok', kv_cache_bytes_allocated=8, kv_cache_bytes_analytic=8)
+    rows = [{'kind': 'train', 'step': s, 'step_seconds': 1.0, 'data_wait_seconds': 0.5 if s <= 2 else wait} for s in range(1, 11)]
+    (tmp_path / 'metrics.jsonl').write_text(''.join(json.dumps(r) + '\n' for r in rows))
+    ok = dict(batch_size=1, prompt_tokens=128, status='ok', kv_cache_bytes_allocated=2**30, kv_cache_bytes_analytic=2**30,
+              decode_working_set_bytes=working_set)
     inference = {'attention_backend': 'FA3', 'rows': [ok]}
     (tmp_path / 'inference.json').write_text(json.dumps(inference))
+    return inference
+
+
+def test_pilot_rejects_any_inference_oom(modal_app, tmp_path):
+    inference = _pilot_dir(tmp_path)
     assert modal_app.check_pilot(tmp_path, 1) == []
     inference['rows'].append(dict(batch_size=64, prompt_tokens=8192, status='oom'))
     (tmp_path / 'inference.json').write_text(json.dumps(inference))
     assert any('bad inference row' in p for p in modal_app.check_pilot(tmp_path, 1))
+
+
+def test_pilot_rejects_expanded_kv_at_decode(modal_app, tmp_path):
+    _pilot_dir(tmp_path, working_set=2**30)  # a cache-sized temporary, as an expanded GQA cache would need
+    assert any('K/V-sized temporary' in p for p in modal_app.check_pilot(tmp_path, 1))
+
+
+def test_pilot_rejects_loader_bound_training(modal_app, tmp_path):
+    _pilot_dir(tmp_path, wait=0.0199)  # compile steps (1-2) are ignored
+    assert modal_app.check_pilot(tmp_path, 1) == []
+    _pilot_dir(tmp_path, wait=0.05)
+    assert any('loader-bound' in p for p in modal_app.check_pilot(tmp_path, 1))
 
 
 def test_full_run_process_failure_stops_suite_without_retry(modal_app, tmp_path, monkeypatch):
@@ -214,10 +234,10 @@ def test_suite_runs_every_run_then_reports_once(modal_app, tmp_path, monkeypatch
 
 def test_gqa2_seeds_count_toward_the_budget_gate(modal_app, tmp_path, monkeypatch):
     launches, finishes, _ = suite_harness(modal_app, tmp_path, monkeypatch)
-    # Each run projects to ~$1.3 here: $17 covers 12 runs but the gate projects all 14 ($18.5), seeds included.
+    # Each run projects to ~$1.35 here: $17 covers 12 runs but the gate projects all 14 ($18.9), seeds included.
     result = modal_app.run_suite(17.0, False, SimpleNamespace(spent=lambda: 0.0, seconds_left=lambda: 1e6))
     assert result["status"] == "stopped_at_gate"
-    assert result["projected_total_usd"] == pytest.approx(18.46, abs=0.05)
+    assert result["projected_total_usd"] == pytest.approx(18.94, abs=0.05)
     assert full_runs(launches) == [] and finishes.call_count == 0
 
 

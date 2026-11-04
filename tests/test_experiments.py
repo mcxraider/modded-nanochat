@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from experiments.config import GROUPS, RUNS, members, model_for, read_config, schedule, validate_suite
+from experiments.config import GROUPS, RUNS, SUITE_BATCH, members, model_for, read_config, schedule, validate_suite
 from experiments import make_configs, run, run_all
 from experiments.report import compare, matched_observations
 from experiments.resume import pilot_tokens_per_second, project_seconds, resume_action, spent_seconds, truncate_metrics
@@ -57,15 +57,44 @@ def test_flop_budget_is_b0s_usage_and_iso_runs_fill_it(config_dir):
             assert target * fpt > 0.999 * budget
         else:
             assert target == suite[FIRST]["training"]["target_tokens"]
-    assert {r: suite[r]["training"]["target_tokens"] // 131072 for r in ("d8-gqa2-iso", "d8-gqa4-iso")} == {
-        "d8-gqa2-iso": 3333, "d8-gqa4-iso": 3404}
+    assert {r: suite[r]["training"]["target_tokens"] // SUITE_BATCH for r in ("d8-gqa2-iso", "d8-gqa4-iso")} == {
+        "d8-gqa2-iso": 1750, "d8-gqa4-iso": 1787}
+
+
+def _upstream_scaling_params(**overrides):
+    """Independent of make_configs: build the upstream (324e69c) model shape and count matrices + lm_head."""
+    import torch
+    from nanochat.modified_gpt import GPT, GPTConfig
+    with torch.device("meta"):
+        counts = GPT(GPTConfig(**{**model_for(FIRST), **overrides})).num_scaling_params()
+    return counts["transformer_matrices"] + counts["lm_head"]
+
+
+def test_b0_follows_upstream_base_train_recipe(config_dir):
+    """base_train.py at 324e69c, lines 264-297, recomputed by hand for d8."""
+    import math
+    from dataclasses import replace
+    from nanochat.modified_gpt import GPTConfig
+    from experiments.train import scaled_weight_decay
+    ratio, b_ref = 10.5, 2**19
+    sp, sp_d12 = _upstream_scaling_params(), _upstream_scaling_params(n_layer=12, n_embd=768, n_head=6, n_kv_head=6)
+    target, d_ref = int(ratio * sp), ratio * sp_d12
+    batch = 2 ** round(math.log2(b_ref * (target / d_ref) ** 0.383))
+    assert batch == SUITE_BATCH == 262144
+    for c in configs(config_dir):
+        t, o = c["training"], c["optimizer"]
+        assert t["total_batch_size"] == batch and t["tokens_per_scaling_param"] == ratio
+        if RUNS[c["run_id"]]["budget"] == "tokens":
+            assert t["target_tokens"] == target // batch * batch == 1680 * batch
+        expected = o["weight_decay"] * math.sqrt(batch / b_ref) * d_ref / target  # B0's, for every variant
+        assert scaled_weight_decay(o, t, GPTConfig(**c["model"])) == pytest.approx(expected, rel=1e-12)
 
 
 def test_suite_allows_token_target_drift_only_on_flop_budget_runs(config_dir):
     suite = configs(config_dir)
     index = {c["run_id"]: i for i, c in enumerate(suite)}
     drifted = copy.deepcopy(suite)
-    drifted[index["d8-gqa2-r75"]]["training"]["target_tokens"] += 131072
+    drifted[index["d8-gqa2-r75"]]["training"]["target_tokens"] += SUITE_BATCH
     with pytest.raises(ValueError, match="may differ only"):
         validate_suite(drifted)
     budget = copy.deepcopy(suite)
@@ -241,7 +270,7 @@ def test_budget_helpers(tmp_path, config_dir):
     config = read_config(config_dir / f"{FIRST}.json")
     t, e = config["training"], config["evaluation"]
     projected = project_seconds(config, 1000)
-    assert projected["training"] == pytest.approx((t["target_tokens"] + 7 * e["interim_tokens"]) / 1000)  # 3200 updates, every 400, none on the last
+    assert projected["training"] == pytest.approx((t["target_tokens"] + 8 * e["interim_tokens"]) / 1000)  # 1680 updates, every 200, none on the last
     assert projected["total"] > projected["training"] + (e["final_tokens"] + e["test_tokens"]) / 1000
 
 

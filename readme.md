@@ -4,7 +4,7 @@
 RoPE cost or buy in validation quality, training speed, and inference memory and speed?
 
 The full pre-registered plan (hypotheses, budget, comparison rules) is in
-[`experiments/experiments.md`](experiments/experiments.md). The report is in [`report/`](report/), and group members are listed in
+[`experiments/experiments.md`](experiments/experiments.md). The written report is not in the repository yet. Group members are listed in
 [`authors.md`](authors.md). This repository is a fork of Karpathy's nanochat, whose original README is now
 [`nanochat_readme.md`](nanochat_readme.md).
 
@@ -13,8 +13,8 @@ The full pre-registered plan (hypotheses, budget, comparison rules) is in
 ```
 ├── readme.md                 # this file
 ├── authors.md                # group members and student IDs
-├── report/                   # report source (LaTeX), bibliography, figures
-├── nanochat/modified_gpt.py  # configurable GPT: n_kv_head, rotary_fraction, mlp_ratio
+├── report/figures/           # placeholder for report figures (report itself to be added)
+├── nanochat/modified_gpt.py  # configurable GPT: n_kv_head, rotary_fraction, mlp_ratio, value_embeds
 ├── experiments/
 │   ├── config.py             # RUNS table: single source of truth for every run
 │   ├── make_configs.py       # generates experiments/configs/*.json from RUNS
@@ -66,14 +66,14 @@ this worktree.
 ```bash
 modal run modal_app.py::image_check                       # CPU: image builds, configs resolve
 modal run modal_app.py::gpu_check                         # H100 available, FA3 loads
-modal run modal_app.py --pilot-only --experiment d8-v2    # data, numerical preflight, 6 pilots, cost table
-modal run --detach modal_app.py --experiment d8-v2        # full suite: 8 core runs (+ optional GQA-2 seeds)
+modal run modal_app.py --pilot-only --experiment d8-v4    # data, numerical preflight, 8 pilots, cost table
+modal run --detach modal_app.py --experiment d8-v4        # full suite: 14 runs
 ```
 
 **2. Download the results.**
 
 ```bash
-modal volume get nanochat-experiments experiments/d8-v2/results.tar.gz .
+modal volume get nanochat-experiments experiments/d8-v4/results.tar.gz .
 mkdir -p experiments/artifacts && tar xzf results.tar.gz -C experiments/artifacts
 ```
 
@@ -96,18 +96,22 @@ python experiments/run_all.py             # all core runs; --runs <ids> for a su
 
 ### Run list
 
-All runs use d8 (8 layers, width 512, 4 heads of dimension 128), context 2,048, and a global batch of 131,072 tokens.
-They are trained from random initialisation on the same number of tokens. The runs are defined in `experiments/config.py`.
+All runs use d8 (8 layers, width 512, 4 heads of dimension 128), context 2,048, and a global batch of 262,144 tokens (upstream nanochat's own batch rule at d8).
+They are trained from random initialisation. The E1–E5 runs use B0's 1,680 updates, 10.5 tokens per scaling parameter (matched tokens). The E6 runs use the
+most updates that fit B0's FLOP budget (matched compute). The 14 runs cover 8 distinct architectures and are defined in `experiments/config.py`.
 
-| Run ID | Exp. | KV heads | Rotary fraction | MLP ratio | Seed |
-|---|---|---|---|---|---|
-| `d8-b0-s1/s2/s3` | E1 noise floor | 4 | 1.0 | 4.0 | 1/2/3 |
-| `d8-gqa2-s1` | E2 | 2 | 1.0 | 4.0 | 1 |
-| `d8-gqa2-r75` | E2 | 2 | 0.75 | 4.0 | 1 |
-| `d8-gqa2-pm` | E3 param-matched | 2 | 1.0 | 4.5 | 1 |
-| `d8-gqa4` | E4 | 1 | 1.0 | 4.0 | 1 |
-| `d8-gqa2-r25` | E4 | 2 | 0.25 | 4.0 | 1 |
-| `d8-gqa2-s2/s3` | E2 (optional) | 2 | 1.0 | 4.0 | 2/3 |
+| Run ID | Exp. | KV heads | Rotary fraction | MLP ratio | Value embeds | Budget (updates) | Seed |
+|---|---|---|---|---|---|---|---|
+| `d8-b0-s1/s2/s3` | E1 noise floor | 4 | 1.0 | 4.0 | on | tokens (1,680) | 1/2/3 |
+| `d8-gqa2-s1/s2/s3` | E2 | 2 | 1.0 | 4.0 | on | tokens (1,680) | 1/2/3 |
+| `d8-gqa2-r75` | E2 | 2 | 0.75 | 4.0 | on | tokens (1,680) | 1 |
+| `d8-gqa2-pm` | E3 param-matched | 2 | 1.0 | 4.5 | on | tokens (1,680) | 1 |
+| `d8-gqa4` | E4 | 1 | 1.0 | 4.0 | on | tokens (1,680) | 1 |
+| `d8-gqa2-r25` | E4 | 2 | 0.25 | 4.0 | on | tokens (1,680) | 1 |
+| `d8-b0-nove` | E5 value-embed 2×2 | 4 | 1.0 | 4.0 | off | tokens (1,680) | 1 |
+| `d8-gqa2-nove` | E5 value-embed 2×2 | 2 | 1.0 | 4.0 | off | tokens (1,680) | 1 |
+| `d8-gqa2-iso` | E6 fixed compute | 2 | 1.0 | 4.0 | on | FLOPs (1,750) | 1 |
+| `d8-gqa4-iso` | E6 fixed compute | 1 | 1.0 | 4.0 | on | FLOPs (1,787) | 1 |
 
 The primary metric is test bits per byte (BPB). A difference counts as resolved only if it exceeds `2√2·s`, where
 `s` is the seed standard deviation of the three B0 runs.

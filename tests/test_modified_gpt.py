@@ -202,3 +202,45 @@ def test_benchmark_kv_bytes_match_allocated_cache_and_scale_with_kv_heads():
         assert kv_cache_bytes_allocated(cache) == analytic
         sizes[kv] = analytic
     assert sizes[4] == 2 * sizes[2] == 4 * sizes[1]
+
+
+def test_benchmark_host_position_cache_decodes_like_the_pinned_cache():
+    from experiments.benchmark import host_position_cache
+    torch.manual_seed(0)
+    model = tiny(2)
+    ids = torch.randint(0, model.config.vocab_size, (2, 12))
+    outputs = []
+    for cls in (KVCache, host_position_cache()):
+        cache = cls(2, 2, 16, 16, model.config.n_layer, torch.device("cpu"), torch.float32)
+        with torch.inference_mode():
+            steps = [model(ids[:, :8], kv_cache=cache, last_token_only=True)]
+            steps += [model(ids[:, i:i + 1], kv_cache=cache, last_token_only=True) for i in range(8, 12)]
+        assert cache.get_pos() == 12 and cache.cache_seqlens.tolist() == [12, 12]
+        cache.reset()
+        assert cache.get_pos() == 0 and cache.cache_seqlens.tolist() == [0, 0]
+        outputs.append(torch.cat(steps, 1))
+    assert torch.equal(*outputs)
+
+
+def test_benchmark_cast_once_matches_per_call_cast():
+    from experiments.benchmark import cast_linears
+    torch.manual_seed(0)
+    model = tiny(2)
+    ids = torch.randint(0, model.config.vocab_size, (1, 8))
+    with torch.inference_mode():
+        before = model.transformer.h[0].mlp.c_fc(model.transformer.wte(ids).bfloat16())
+        cast_linears(model, torch.bfloat16)
+        assert all(m.weight.dtype == torch.bfloat16 for m in model.modules() if isinstance(m, torch.nn.Linear))
+        assert model.resid_lambdas.dtype == torch.float32  # scalars untouched
+        after = model.transformer.h[0].mlp.c_fc(model.transformer.wte(ids).bfloat16())
+    assert torch.equal(before, after)
+
+
+def test_benchmark_kv_reads_plateau_at_the_window():
+    from experiments.benchmark import kv_bytes_read_per_token
+    windows = [(1024, 0), (1024, 0), (1024, 0), (2048, 0)]
+    read = lambda p: kv_bytes_read_per_token(windows, 1, p, 2, 128)
+    per_key = 2 * 2 * 128 * 2
+    assert read(512) == 4 * 512 * per_key  # every layer still reads the whole prefix
+    assert read(2048) == (3 * 1025 + 2048) * per_key
+    assert read(8448) == read(4096) == (3 * 1025 + 2049) * per_key  # capped by the windows

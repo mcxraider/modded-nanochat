@@ -16,13 +16,14 @@
     "value_embeds": true
   },
   "training": {
-    "target_tokens": 419430400,
-    "flop_budget": 131942683823308800,
+    "target_tokens": 440401920,
+    "tokens_per_scaling_param": 10.5,
+    "flop_budget": 138539818014474240,
     "wallclock_cap_seconds": 7200,
     "device_batch_size": 32,
-    "total_batch_size": 131072,
+    "total_batch_size": 262144,
     "save_every": 400,
-    "eval_every": 400,
+    "eval_every": 200,
     "max_steps": null,
     "compile": true
   },
@@ -55,7 +56,7 @@
     ],
     "prompt_lengths": [
       128,
-      2048,
+      1792,
       8192
     ],
     "decode_tokens": 256,

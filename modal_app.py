@@ -29,6 +29,12 @@ VRAM_BYTES = 80e9
 # Per-run deadline as a multiple of the pilot projection, which already includes evaluation,
 # benchmark and overhead: generous for noise, but a slow run cannot eat the whole budget.
 RUN_DEADLINE_FACTOR = 1.5
+# A pilot update may spend at most this share blocked on the data worker; above it, training
+# throughput measures the CPU loader, not the architecture (H2b/H2c would be uninformative).
+DATA_WAIT_LIMIT = 0.02
+# Decode may allocate only per-token activations and logits beyond the cache. Expanding K/V to the
+# query heads would need >= 1x the cache (GQA-2: n_head / n_kv_head = 2x), so half the cache separates them.
+DECODE_SLACK_BYTES = 64 * 2**20
 
 REPO = Path("/root/modded-nanochat")
 if REPO.exists() and str(REPO) not in sys.path:
@@ -199,6 +205,7 @@ def pilot_for(run_id):
 
 def check_pilot(run_dir, workers):
     """Everything that makes the full runs invalid or pointless; returns a list of problems."""
+    _, resume, _ = experiments_modules()
     hardware = read_run_json(run_dir, "hardware.json")
     result = read_run_json(run_dir, "result.json")
     inference = read_run_json(run_dir, "inference.json")
@@ -212,8 +219,15 @@ def check_pilot(run_dir, workers):
     # Last-token prefill keeps the largest d8 workload near 12 GiB on an 80 GB H100,
     # so any OOM here is a regression that would leave holes in the full grid.
     for row in inference["rows"]:
+        # allocated == analytic is bookkeeping (both follow n_kv_head); the decode working set is the real
+        # evidence that attention reads the shared K/V heads without materializing expanded copies.
         if row["status"] != "ok" or row["kv_cache_bytes_allocated"] != row["kv_cache_bytes_analytic"]:
             problems.append(f"bad inference row: {row}")
+        elif row["decode_working_set_bytes"] > 0.5 * row["kv_cache_bytes_allocated"] + DECODE_SLACK_BYTES:
+            problems.append(f"decode allocates a K/V-sized temporary (expanded heads?): {row}")
+    wait = resume.pilot_data_wait_fraction(run_dir / "metrics.jsonl")
+    if wait > DATA_WAIT_LIMIT:
+        problems.append(f"loader-bound: {wait:.1%} of each update waits for data (limit {DATA_WAIT_LIMIT:.0%})")
     peak, phase = max((result["peak_vram_bytes"], "training"), (result.get("eval_peak_vram_bytes") or 0, "evaluation"))
     if peak > 0.9 * VRAM_BYTES:
         problems.append(f"{phase} peak VRAM {peak / 1e9:.1f} GB is above 90%")

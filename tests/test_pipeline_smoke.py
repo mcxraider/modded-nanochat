@@ -47,6 +47,8 @@ def test_pinned_training_completed_resume_preserves_saved_evidence(tmp_path, val
         assert resumed_hardware['resume_replay_batches'] == 0
         result=json.loads((output/'result.json').read_text())
         assert result['steady_tokens_per_second'] is None and result['eval_peak_vram_bytes'] == 0
+        trains=[json.loads(l) for l in (output/'metrics.jsonl').read_text().splitlines() if '"train"' in l]
+        assert trains and all(r['data_wait_seconds'] >= 0 for r in trains)
         # Mid-run resume from the retained step-1 fallback replays data and must reproduce step 2 exactly.
         mid=root/'mid'; shutil.copytree(output,mid,ignore=shutil.ignore_patterns('*000002*','result.json','training_complete.json'))
         third=subprocess.run(cmd[:-4]+['--output',str(mid),'--device-type','cpu','--resume','1'],cwd=runtime,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)

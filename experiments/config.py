@@ -10,6 +10,8 @@ NODE_HOUR_USD = 4.43  # Modal: H100 + 6 cores + 24 GiB; see modal_app.py
 # Depth -> (n_layer, n_embd, n_head). nanochat uses n_embd = 64 * depth rounded up to a multiple of head_dim=128.
 DEPTHS = {8: (8, 512, 4), 12: (12, 768, 6)}
 SEQUENCE_LEN, VOCAB_SIZE, WINDOW_PATTERN = 2048, 32768, "SSSL"
+# Upstream base_train.py auto batch rule at d8: 2^round(log2(2^19 * (D / D_REF)^0.383)) = 2^18 (tests recompute it).
+SUITE_BATCH = 262144
 
 
 def _run(depth, gqa, rotary, mlp, seed, experiment, compare_to, ve=True, budget="tokens"):
@@ -72,7 +74,7 @@ def read_config(path):
         raise ValueError("run_id must be a nonempty directory-safe identifier")
     schemas = {
         "model": {"sequence_len", "vocab_size", "n_layer", "n_head", "n_kv_head", "n_embd", "window_pattern", "rotary_fraction", "mlp_ratio", "value_embeds"},
-        "training": {"target_tokens", "flop_budget", "wallclock_cap_seconds", "device_batch_size", "total_batch_size", "save_every", "eval_every", "max_steps", "compile"},
+        "training": {"target_tokens", "tokens_per_scaling_param", "flop_budget", "wallclock_cap_seconds", "device_batch_size", "total_batch_size", "save_every", "eval_every", "max_steps", "compile"},
         "optimizer": {"embedding_lr", "unembedding_lr", "matrix_lr", "scalar_lr", "weight_decay", "adam_betas", "reference_batch_size", "warmup_ratio", "warmdown_ratio", "final_lr_frac"},
         "evaluation": {"interim_tokens", "final_tokens", "test_tokens"},
         "benchmark": {"batch_sizes", "prompt_lengths", "decode_tokens", "warmup", "repeats"},
@@ -118,6 +120,8 @@ def read_config(path):
         raise ValueError("max_steps must be null or positive (pilot only)")
     if type(t["wallclock_cap_seconds"]) not in (int, float) or not math.isfinite(t["wallclock_cap_seconds"]) or t["wallclock_cap_seconds"] <= 0:
         raise ValueError("wallclock_cap_seconds must be finite and positive")
+    if type(t["tokens_per_scaling_param"]) not in (int, float) or not math.isfinite(t["tokens_per_scaling_param"]) or t["tokens_per_scaling_param"] <= 0:
+        raise ValueError("tokens_per_scaling_param must be a positive finite number")
     if not positive_int(t["flop_budget"]):
         raise ValueError("flop_budget must be a positive integer (estimated training FLOPs per run)")
     if not positive_int(t["target_tokens"]) or t["target_tokens"] % t["total_batch_size"]:
@@ -169,8 +173,8 @@ def validate_suite(configs):
         if config["model"] != model_for(run_id) or config["seed"] != RUNS[run_id]["seed"]:
             raise ValueError(f"{run_id} model or seed differs from the RUNS table")
         t = config["training"]
-        if config["workers"] != 1 or t["total_batch_size"] != 131072 or t["max_steps"] is not None:
-            raise ValueError("suite requires one worker, batch 131072, and no step cap")
+        if config["workers"] != 1 or t["total_batch_size"] != SUITE_BATCH or t["max_steps"] is not None:
+            raise ValueError(f"suite requires one worker, batch {SUITE_BATCH}, and no step cap")
         # Everything but the token target must match at a depth. Token-budget runs must also share one target;
         # a FLOP-budget run's target is derived from the shared flop_budget instead.
         rest = {k: v for k, v in config.items() if k not in ("run_id", "seed", "model")}

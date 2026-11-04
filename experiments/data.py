@@ -7,6 +7,10 @@ substitutes the loader's `list_parquet_files` so its own slicing picks the inten
 import itertools
 import re
 
+import torch
+
+# One batch takes well under a second to pack; a stuck worker fails fast instead of waiting for the stall watchdog.
+WORKER_TIMEOUT_SECONDS = 300
 TEST_INDEX = 6541  # shard_06541.parquet; validation is the highest shard (06542, always fetched by nanochat.dataset)
 _SHARD = re.compile(r"shard_(\d+)\.parquet$")
 
@@ -58,3 +62,35 @@ def make_loader(dataloader, tokenizer, B, T, split, device, paths, seed, **kwarg
     finally:
         dataloader.list_parquet_files = original
     return itertools.chain([first], generator)
+
+
+class TrainStream(torch.utils.data.IterableDataset):
+    """The historical train loader, run inside one DataLoader worker process so that tokenizing and best-fit
+    packing overlap GPU work instead of sitting between microbatches."""
+
+    def __init__(self, B, T, paths, seed):
+        super().__init__()
+        self.B, self.T, self.paths, self.seed = B, T, list(paths), seed
+
+    def __iter__(self):
+        import nanochat.dataloader as dataloader
+        from nanochat.tokenizer import get_tokenizer
+        for x, y, state in make_loader(dataloader, get_tokenizer(), self.B, self.T, "train", torch.device("cpu"),
+                                       self.paths, self.seed):
+            # The historical loader refills one buffer in place: hand off copies, never views of it.
+            yield x.clone(), y.clone(), state
+
+
+def train_stream(B, T, paths, seed, device, pin):
+    """Yield `(x, y, state)` on `device`, in exactly the historical order (one worker, one stream).
+
+    spawn: the parent has already initialized CUDA. The private generator keeps the DataLoader from drawing
+    its worker seed from the global torch RNG, so model-side randomness is unchanged."""
+    loader = torch.utils.data.DataLoader(
+        TrainStream(B, T, paths, seed), batch_size=None, num_workers=1, multiprocessing_context="spawn",
+        prefetch_factor=4, pin_memory=pin, generator=torch.Generator().manual_seed(seed),
+        timeout=WORKER_TIMEOUT_SECONDS)
+    for x, y, state in loader:
+        yield x.to(device, non_blocking=True), y.to(device, non_blocking=True), state
+    # The historical stream is infinite (multi-epoch); an end means the worker failed to deliver.
+    raise RuntimeError("training data worker stopped producing batches")

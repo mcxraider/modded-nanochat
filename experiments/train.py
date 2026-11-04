@@ -18,7 +18,7 @@ import time
 from experiments.config import BASE_COMMIT, MODEL_TYPE, NODE_HOUR_USD, read_config, schedule
 from experiments.backend import require_fa3, kernel_provenance
 from experiments.checkpoints import prune, publish, valid as valid_checkpoint
-from experiments.data import make_loader, shard_index, split_paths
+from experiments.data import make_loader, shard_index, split_paths, train_stream
 
 STEADY_SKIP_STEPS = 20  # excludes compile warmup from steady_tokens_per_second
 
@@ -54,8 +54,27 @@ def data_manifest(base_dir, paths):
         "test_shard": Path(test).name, "test_sha256": sha256(test),
         "tokenizer": {name: sha256(Path(base_dir) / "tokenizer" / name)
                       for name in ("tokenizer.pkl", "token_bytes.pt")},
-        "loader": "historical BOS best-fit; tokenizer_threads=4, tokenizer_batch_size=128, buffer_size=1000",
+        "loader": "historical BOS best-fit; tokenizer_threads=4, tokenizer_batch_size=128, buffer_size=1000; "
+                  "train split in one DataLoader worker (same order)",
     }
+
+
+def scaled_weight_decay(optimizer, training, model_config):
+    """Upstream base_train.py (324e69c, line 297): wd * sqrt(B / B_REF) * D_REF / D, with D_REF = ratio * sp(d12)
+    and D = int(ratio * sp(model)). Frozen to the depth's MHA B0 (historical MLP, value embeddings, full RoPE),
+    so every variant at one depth gets B0's weight decay. Like upstream, D is the ratio horizon even when a
+    FLOP budget sets the actual number of updates."""
+    import torch
+    from nanochat.modified_gpt import GPT
+    with torch.device("meta"):
+        baseline = GPT(replace(model_config, n_kv_head=model_config.n_head, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
+        reference = GPT(replace(model_config, n_layer=12, n_embd=768, n_head=6, n_kv_head=6, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
+    def scaling_params(m):
+        counts = m.num_scaling_params()
+        return counts["transformer_matrices"] + counts["lm_head"]
+    ratio = training["tokens_per_scaling_param"]
+    batch_scale = math.sqrt(training["total_batch_size"] / optimizer["reference_batch_size"])
+    return optimizer["weight_decay"] * batch_scale * (ratio * scaling_params(reference)) / int(ratio * scaling_params(baseline))
 
 
 def nvidia_info(arguments):
@@ -152,17 +171,11 @@ def main():
     token_bytes = get_token_bytes(device=device)
     with torch.device("meta"):
         model = GPT(model_config)
-        # Freeze historical scaling against MHA B0, including for both GQA variants.
-        baseline = GPT(replace(model_config, n_kv_head=model_config.n_head, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
-        reference = GPT(replace(model_config, n_layer=12, n_embd=768, n_head=6, n_kv_head=6, rotary_fraction=1.0, mlp_ratio=4.0, value_embeds=True))
-    def scaling_params(m):
-        counts = m.num_scaling_params()
-        return counts["transformer_matrices"] + counts["lm_head"]
     o, t = config["optimizer"], config["training"]
     batch_scale = math.sqrt(t["total_batch_size"] / o["reference_batch_size"])
-    weight_decay = o["weight_decay"] * batch_scale * scaling_params(reference) / scaling_params(baseline)
-    scaling_parameter_count = scaling_params(model)
-    del reference, baseline
+    weight_decay = scaled_weight_decay(o, t, model_config)
+    counts = model.num_scaling_params()
+    scaling_parameter_count = counts["transformer_matrices"] + counts["lm_head"]
     model.to_empty(device=device)
     model.init_weights()
     optimizer = model.setup_optimizer(
@@ -197,7 +210,8 @@ def main():
     completed_path = output / "training_complete.json"
     completed = json.loads(completed_path.read_text()) if args.resume is not None and completed_path.exists() else None
     completed = completed if completed and completed["step"] == step else None
-    train_loader = new_loader("train") if completed is None else None
+    train_loader = (train_stream(t["device_batch_size"], model_config.sequence_len, paths, config["seed"], device,
+                                 pin=args.device_type == "cuda") if completed is None else None)
     data_epoch = completed["data_epoch"] if completed else 1
     total_steps = t["target_tokens"] // t["total_batch_size"]
     # The historical loader exposes only approximate row-group resume. Replay keeps exact
@@ -209,10 +223,8 @@ def main():
             print(f"replayed {replayed + 1}/{step * accum} batches", flush=True)  # liveness for the stall watchdog
     replay_seconds = time.monotonic() - replay_started
     # Prefetch one ahead like historical base_train: batch step*accum+i still feeds microbatch i of each step.
+    # Packing runs in the worker; each batch is a fresh pinned tensor copied asynchronously, so nothing is reused.
     x, y, state = next(train_loader) if completed is None else (None, None, None)
-    # Safe only because the loader's `device == "cuda"` is False for a torch.device (torch 2.9.1): its cpu_buffer is
-    # unpinned and the HtoD copy_ is blocking (it waits for queued work), so a repack never races the previous copy.
-    # The cost: one stream drain per microbatch remains; only CPU packing overlaps the queued backward (as historically).
     if restored_rng:
         torch.set_rng_state(restored_rng["torch_rng"])
         random.setstate(restored_rng["python_rng"])
@@ -228,6 +240,7 @@ def main():
                 "flops_per_token": flops_per_token, "flop_budget": t["flop_budget"],
                 "flops_formula": "6 * matmul_parameters + sum_layers(12 * query_heads * head_dim * effective_window); excludes lookup, norm, softmax, rotary elementwise ops",
                 "unique_data_estimate": None, "unique_data_note": "packing/cropping prevents inference of unique tokens from total tokens",
+                "data_loader": "historical loader in 1 spawned DataLoader worker, prefetch_factor=4, pinned, non_blocking HtoD",
                 "gradient_accumulation": accum, "resume_replay_batches": step * accum if completed is None else 0, "resume_replay_seconds": replay_seconds,
                 "nvidia_smi": gpu_utilization(),
                 "gpu_topology": nvidia_info(["topo", "-m"]),
@@ -307,18 +320,19 @@ def main():
                 group["momentum"] = 0.85 + 0.10 * min(step / 300, 1.0)
                 group["weight_decay"] = weight_decay * wd_scale
         step_started = time.monotonic()
-        loss_sum = 0.0
+        loss_sum, data_wait = 0.0, 0.0
         for _ in range(accum):
             data_epoch = max(data_epoch, state["epoch"])  # epoch of the batch trained on, not the prefetched one
             with autocast():
                 loss = train_model(x, targets=y)
             loss_sum = loss_sum + loss.detach() / accum
             (loss / accum).backward()
-            # x/y are views of the loader's reused GPU buffer: never read them after this refill.
-            x, y, state = next(train_loader)  # CPU packing overlaps the queued backward
+            waited = time.monotonic()
+            x, y, state = next(train_loader)  # time blocked on the worker: it must stay near zero (pilot gate)
+            data_wait += time.monotonic() - waited
         optimizer.step()
         model.zero_grad(set_to_none=True)
-        loss_sum = loss_sum.item()  # one loss readback per step (the loader's blocking copy also syncs); raising here still precedes any checkpoint/eval
+        loss_sum = loss_sum.item()  # the step's only host sync before sync(); raising here still precedes any checkpoint/eval
         if not math.isfinite(loss_sum):
             raise FloatingPointError("nonfinite training loss")
         step += 1
@@ -327,7 +341,7 @@ def main():
         seconds = elapsed()
         log({"kind": "train", "step": step, "training_seconds": seconds, "tokens": step * t["total_batch_size"],
              "estimated_flops": step * t["total_batch_size"] * flops_per_token, "loss": loss_sum,
-             "step_seconds": dt, "tokens_per_second": t["total_batch_size"] / dt,
+             "step_seconds": dt, "tokens_per_second": t["total_batch_size"] / dt, "data_wait_seconds": maximum(data_wait),
              "whole_phase_tokens_per_second": (step * t["total_batch_size"]) / seconds,
              "lr_multiplier": lr_scale, "peak_vram_bytes": memory(),
              "gpu_samples": gpu_utilization() if rank == 0 and step % 10 == 0 else None})
@@ -340,6 +354,7 @@ def main():
         if t["save_every"] > 0 and step % t["save_every"] == 0:
             checkpoint()
             last_saved = step
+    train_loader = None  # stop the loader worker before the final checkpoint and evaluations
     # A resumed completed checkpoint needs no duplicate write. The final evaluation is outside the training clock.
     training_seconds = checkpoint() if last_saved != step else elapsed()
     if args.resume == step:
@@ -383,7 +398,7 @@ def main():
               "training_cost_usd": training_seconds * NODE_HOUR_USD / 3600,
               "checkpoint_dir": str(checkpoints), "checkpoint_step": step}
     if rank == 0:
-        speeds = {}  # keyed by step: a row repeated after resume counts once
+        speeds, waits = {}, {}  # keyed by step: a row repeated after resume counts once
         for line in metrics_path.read_text().splitlines():
             try:
                 row = json.loads(line)
@@ -391,7 +406,10 @@ def main():
                 continue  # a line torn by an earlier crash
             if row["kind"] == "train" and row["step"] > STEADY_SKIP_STEPS:
                 speeds[row["step"]] = row["tokens_per_second"]
+                if "data_wait_seconds" in row:
+                    waits[row["step"]] = row["data_wait_seconds"] / row["step_seconds"]
         result["steady_tokens_per_second"] = statistics.median(speeds.values()) if speeds else None
+        result["steady_data_wait_fraction"] = statistics.median(waits.values()) if waits else None
         write_json(output / "result.json", result)
     barrier()
     compute_cleanup()

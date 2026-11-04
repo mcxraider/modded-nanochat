@@ -65,6 +65,12 @@ def pilot_tokens_per_second(metrics_path):
     return statistics.median(r["tokens_per_second"] for r in rows if r["kind"] == "train" and r["step"] > 2)
 
 
+def pilot_data_wait_fraction(metrics_path):
+    """Median share of each pilot update spent blocked on the data worker (compile steps skipped)."""
+    rows = [json.loads(line) for line in Path(metrics_path).read_text().splitlines()]
+    return statistics.median(r["data_wait_seconds"] / r["step_seconds"] for r in rows if r["kind"] == "train" and r["step"] > 2)
+
+
 def project_seconds(config, tokens_per_second, evaluation_tokens_per_second=None, benchmark_seconds=None):
     """Projected time for a full run. `training` is what counts toward the wall-clock cap (it includes interim validation)."""
     t, e = config["training"], config["evaluation"]
