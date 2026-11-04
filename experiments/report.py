@@ -9,6 +9,23 @@ from experiments.config import RUNS, members
 SIGNIFICANCE_FACTOR = 2 * math.sqrt(2)  # two-sigma on a difference of two single runs
 
 
+def comparison_eligibility(result, config=None):
+    """Final comparisons require the configured token budget without data repetition."""
+    if result is None:
+        return {"eligible": False, "reasons": ["no final result"]}
+    reasons = []
+    if result.get("stop_reason") != "token_target":
+        reasons.append(f"stop_reason={result.get('stop_reason', 'missing')}")
+    target = config["training"]["target_tokens"] if config else result.get("target_tokens")
+    if type(target) is not int or target <= 0:
+        reasons.append("missing or invalid target_tokens")
+    elif result.get("target_tokens") != target or result.get("tokens") != target:
+        reasons.append("tokens/target_tokens do not match the configured token target")
+    if result.get("data_epoch") != 1:
+        reasons.append("training data was repeated or data_epoch is missing")
+    return {"eligible": not reasons, "reasons": reasons}
+
+
 def compare(result, reference, metric="val_bpb"):
     delta = result[metric] - reference[metric]
     return {"reference": reference["run_id"], "bpb_delta": delta,
@@ -102,6 +119,9 @@ def tables(payload):
         lines.append(f"| {r['run_id']} | {RUNS[r['run_id']]['experiment']} | {fmt(r.get('parameters'), ',')} / {fmt(r.get('scaling_parameters'), ',')} | "
                      f"{fmt(r.get('tokens'), ',')} | {fmt(r.get('test_bpb'), '.4f')} | {fmt(r.get('val_bpb'), '.4f')} | "
                      f"{fmt(r.get('training_tokens_per_second'), ',.0f')} |")
+    lines += ["", "Comparison exclusions:"]
+    exclusions = [f"- {name}: {'; '.join(status['reasons'])}" for name, status in payload["eligibility"].items() if not status["eligible"]]
+    lines += exclusions or ["None."]
     noise = payload["noise"]
     lines += ["", "Seed noise (d8-b0, test BPB): " + ("not yet available (needs >= 2 seeds)" if noise is None else
               f"n={noise['n']}, mean={noise['mean']:.4f}, s={noise['std']:.4f}, resolution threshold 2*sqrt(2)*s = {noise['threshold']:.4f}"),
@@ -134,17 +154,25 @@ def main():
     from experiments.config import validate_suite
     validate_suite([item["config"] for item in loaded.values()])
     check_consistency(loaded)
-    results = {run_id: item["result"] for run_id, item in loaded.items()}
+    raw_results = {run_id: item["result"] for run_id, item in loaded.items()}
+    eligibility = {run_id: comparison_eligibility(item["result"], item["config"]) for run_id, item in loaded.items()}
+    results = {run_id: result for run_id, result in raw_results.items() if eligibility[run_id]["eligible"]}
     noise = seed_noise([results[r]["test_bpb"] for r in members("d8-b0") if r in results and results[r].get("test_bpb") is not None])
     threshold = None if noise is None else noise["threshold"]
     comparisons = []
     for run_id, item in loaded.items():
+        if run_id not in results:
+            continue
         for ref_name in RUNS[run_id]["compare_to"]:
             reference = pooled(results, ref_name)
             if reference is None or reference["val_bpb"] is None:
                 continue
             entry = pair_entry(results[run_id], reference, threshold)
             ref_id = reference["members"][0]
+            # These ancillary measurements use one actual run, whereas final
+            # quality and throughput use the explicitly named group mean.
+            entry["field_references"] = {field: ref_id for field in (
+                "matched_tokens", "matched_estimated_flops", "elapsed_seconds_difference", "inference_speedups")}
             entry["matched_tokens"] = matched_observations(item["curves"], loaded[ref_id]["curves"], "tokens")
             entry["matched_estimated_flops"] = matched_observations(item["curves"], loaded[ref_id]["curves"], "estimated_flops")
             entry["elapsed_seconds_difference"] = results[run_id]["training_seconds"] - results[ref_id]["training_seconds"]
@@ -156,8 +184,8 @@ def main():
                         raise ValueError(f"inference {field} differs across compared runs")
                 entry["inference_speedups"] = inference_speedups(a["rows"], b["rows"])
             comparisons.append(entry)
-    payload = {"runs": list(results.values()), "noise": noise, "comparisons": comparisons,
-               "missing_runs": [r for r in RUNS if r not in results],
+    payload = {"runs": list(raw_results.values()), "eligibility": eligibility, "noise": noise, "comparisons": comparisons,
+               "missing_runs": [r for r in RUNS if r not in raw_results],
                "caveat": "seed noise from three d8 baseline runs only; unresolved differences are not ties"}
     from experiments.train import write_json
     write_json(args.output_root / "comparison.json", payload)

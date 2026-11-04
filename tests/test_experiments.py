@@ -142,12 +142,14 @@ def test_run_all_rejects_unknown_runs(config_dir, tmp_path, monkeypatch):
 
 def write_checkpoint(directory, step, workers=1, skip=()):
     directory.mkdir(parents=True, exist_ok=True)
-    names = [f"model_{step:06d}.pt", f"meta_{step:06d}.json", f"timing_{step:06d}.json"]
-    for rank in range(workers):
-        names += [f"optim_{step:06d}_rank{rank}.pt", f"runtime_{step:06d}_rank{rank}.pt"]
+    from experiments.checkpoints import filenames, digest
+    names = filenames(step, workers)
     for name in names:
         if name not in skip:
             (directory / name).write_text("{}")
+    if f"timing_{step:06d}.json" not in skip:
+        checksums = {name: digest(directory / name) for name in names if (directory / name).exists()}
+        (directory / f"timing_{step:06d}.json").write_text(json.dumps({"sha256": checksums, "training_seconds": 1}))
 
 
 def test_resume_action_picks_newest_complete_checkpoint(tmp_path):
@@ -193,7 +195,7 @@ def test_budget_helpers(tmp_path, config_dir):
     config = read_config(config_dir / f"{FIRST}.json")
     t, e = config["training"], config["evaluation"]
     projected = project_seconds(config, 1000)
-    assert projected["training"] == (t["target_tokens"] + 7 * e["interim_tokens"]) / 1000  # 3200 updates, every 400, none on the last
+    assert projected["training"] == pytest.approx((t["target_tokens"] + 7 * e["interim_tokens"]) / 1000)  # 3200 updates, every 400, none on the last
     assert projected["total"] > projected["training"] + (e["final_tokens"] + e["test_tokens"]) / 1000
 
 

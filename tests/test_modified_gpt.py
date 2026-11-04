@@ -59,6 +59,40 @@ def test_partial_rotary_changes_prefix_and_preserves_suffix():
 
 
 @pytest.mark.parametrize("kv,fraction", [(4, 1.0), (2, 1.0), (2, 0.75)])
+def test_last_token_logits_match_full_prefill_and_update_entire_cache(kv, fraction):
+    torch.manual_seed(23)
+    model = tiny(kv, fraction).eval()
+    ids = torch.randint(0, model.config.vocab_size, (2, 16))
+    cache = KVCache(2, kv, 32, 16, model.config.n_layer, "cpu", torch.float32)
+    projected_shapes = []
+    with torch.inference_mode():
+        full = model(ids)
+        hook = model.lm_head.register_forward_pre_hook(
+            lambda module, args: projected_shapes.append(tuple(args[0].shape)))
+        try:
+            prefill = model(ids[:, :11], kv_cache=cache, last_token_only=True)
+            assert cache.get_pos() == 11
+            decode = model(ids[:, 11:12], kv_cache=cache, last_token_only=True)
+            uncached = model(ids, last_token_only=True)
+        finally:
+            hook.remove()
+    # Check the head's input, not merely the returned slice: this prevents B x T x V allocation.
+    assert projected_shapes == [(2, 1, 64)] * 3
+    assert prefill.shape == decode.shape == uncached.shape == (2, 1, 64)
+    assert cache.get_pos() == 12
+    torch.testing.assert_close(prefill, full[:, 10:11], rtol=1e-4, atol=1e-5)
+    torch.testing.assert_close(decode, full[:, 11:12], rtol=1e-4, atol=1e-5)
+    torch.testing.assert_close(uncached, full[:, -1:], rtol=1e-4, atol=1e-5)
+
+
+def test_last_token_logits_reject_loss_targets():
+    model = tiny()
+    ids = torch.zeros((1, 4), dtype=torch.long)
+    with pytest.raises(ValueError, match="targets"):
+        model(ids, targets=ids, last_token_only=True)
+
+
+@pytest.mark.parametrize("kv,fraction", [(4, 1.0), (2, 1.0), (2, 0.75)])
 def test_cached_decoding_and_projection_shapes(kv, fraction):
     torch.manual_seed(23)
     model = tiny(kv, fraction).eval()

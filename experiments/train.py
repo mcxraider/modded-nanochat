@@ -10,10 +10,13 @@ import os
 from pathlib import Path
 import platform
 import random
+import shutil
 import subprocess
 import time
 
 from experiments.config import BASE_COMMIT, MODEL_TYPE, NODE_HOUR_USD, read_config, schedule
+from experiments.backend import require_fa3, kernel_provenance
+from experiments.checkpoints import publish, valid as valid_checkpoint
 from experiments.data import make_loader, shard_index, split_paths
 
 
@@ -97,6 +100,8 @@ def main():
         raise ValueError("launched worker count differs from configuration")
     if args.device_type == "cuda" and not torch.cuda.is_bf16_supported():
         raise ValueError("suite requires BF16-capable GPUs; FP8 is disabled")
+    if args.device_type == "cuda":
+        require_fa3()
     torch.manual_seed(config["seed"])
     random.seed(config["seed"])
     if args.device_type == "cuda":
@@ -164,6 +169,8 @@ def main():
     step, elapsed_before, val_bpb = 0, 0.0, None
     restored_rng = None
     if args.resume is not None:
+        if not valid_checkpoint(checkpoints, args.resume, world):
+            raise ValueError("checkpoint integrity check failed")
         weights, opt_state, meta = load_checkpoint(str(checkpoints), args.resume, device, load_optimizer=True, rank=rank)
         if meta.get("experiment_config") != config or meta.get("model_type") != MODEL_TYPE:
             raise ValueError("checkpoint does not match experiment configuration")
@@ -177,13 +184,16 @@ def main():
     accum = t["total_batch_size"] // (world * t["device_batch_size"] * model_config.sequence_len)
     def new_loader(split):
         return make_loader(dataloader, tokenizer, t["device_batch_size"], model_config.sequence_len, split, device, paths, config["seed"])
-    train_loader = new_loader("train")
-    data_epoch = 1
+    completed_path = output / "training_complete.json"
+    completed = json.loads(completed_path.read_text()) if args.resume is not None and completed_path.exists() else None
+    completed = completed if completed and completed["step"] == step else None
+    train_loader = new_loader("train") if completed is None else None
+    data_epoch = completed["data_epoch"] if completed else 1
     total_steps = t["target_tokens"] // t["total_batch_size"]
     # The historical loader exposes only approximate row-group resume. Replay keeps exact
     # document packing/data order without changing the historical loader implementation.
     replay_started = time.monotonic()
-    for _ in range(step * accum):
+    for _ in range(step * accum if completed is None else 0):
         data_epoch = max(data_epoch, next(train_loader)[2]["epoch"])
     replay_seconds = time.monotonic() - replay_started
     if restored_rng:
@@ -192,7 +202,7 @@ def main():
         if args.device_type == "cuda":
             torch.cuda.set_rng_state(restored_rng["cuda_rng"], device)
     train_model = torch.compile(model, dynamic=False) if t["compile"] else model
-    hardware = {"python": platform.python_version(), "torch": torch.__version__, "cuda": torch.version.cuda,
+    hardware = {"attention_kernel": kernel_provenance(), "python": platform.python_version(), "torch": torch.__version__, "cuda": torch.version.cuda,
                 "world_size": world, "device": str(device), "attention_backend": "FA3" if HAS_FA3 else "SDPA",
                 "precision": "BF16 autocast; FP32 linear weights, BF16 embeddings" if args.device_type == "cuda" else "FP32 CPU smoke test",
                 "gpu": torch.cuda.get_device_name(device) if args.device_type == "cuda" else platform.processor(),
@@ -201,7 +211,7 @@ def main():
                 "flops_per_token": flops_per_token,
                 "flops_formula": "6 * matmul_parameters + sum_layers(12 * query_heads * head_dim * effective_window); excludes lookup, norm, softmax, rotary elementwise ops",
                 "unique_data_estimate": None, "unique_data_note": "packing/cropping prevents inference of unique tokens from total tokens",
-                "gradient_accumulation": accum, "resume_replay_batches": step * accum, "resume_replay_seconds": replay_seconds,
+                "gradient_accumulation": accum, "resume_replay_batches": step * accum if completed is None else 0, "resume_replay_seconds": replay_seconds,
                 "nvidia_smi": gpu_utilization(),
                 "gpu_topology": nvidia_info(["topo", "-m"]),
                 "gpu_driver": nvidia_info(["--query-gpu=name,driver_version,memory.total", "--format=csv,noheader"]),
@@ -235,23 +245,31 @@ def main():
                 stream.write(json.dumps(record, allow_nan=False) + "\n")
             print(json.dumps(record), flush=True)
     def checkpoint():
+        staging = checkpoints / f".pending_{step:06d}"
+        if rank == 0:
+            shutil.rmtree(staging, ignore_errors=True)
+            staging.mkdir(parents=True)
+        barrier()
         seconds = elapsed()
-        save_checkpoint(str(checkpoints), step, model.state_dict(), optimizer.state_dict(), {
+        save_checkpoint(str(staging), step, model.state_dict(), optimizer.state_dict(), {
             "model_type": MODEL_TYPE, "model_config": asdict(model_config), "experiment_config": config,
             "step": step, "val_bpb": val_bpb, "training_seconds_before_save": seconds,
             "tokens": step * t["total_batch_size"], "estimated_flops": step * t["total_batch_size"] * flops_per_token,
         }, rank=rank)
         torch.save({"step": step, "torch_rng": torch.get_rng_state(), "python_rng": random.getstate(),
                     "cuda_rng": torch.cuda.get_rng_state(device) if args.device_type == "cuda" else None},
-                   checkpoints / f"runtime_{step:06d}_rank{rank}.pt")
+                   staging / f"runtime_{step:06d}_rank{rank}.pt")
         barrier()
         seconds = elapsed()
         if rank == 0:
-            write_json(checkpoints / f"timing_{step:06d}.json", {"training_seconds": seconds})
+            publish(staging, checkpoints, step, world, {"training_seconds": seconds})
         barrier()
         return elapsed()
-    last_saved = None
+    last_saved = args.resume
     while True:
+        if completed is not None:
+            stop_reason = completed["stop_reason"]
+            break
         if step >= total_steps:
             stop_reason = "token_target"
             break
@@ -301,11 +319,28 @@ def main():
             last_saved = step
     # A resumed completed checkpoint needs no duplicate write. The final evaluation is outside the training clock.
     training_seconds = checkpoint() if last_saved != step else elapsed()
-    peak_vram = memory()
-    evaluation_started = time.monotonic()
-    final_bpb = evaluate("val", e["final_tokens"])
-    test_bpb = evaluate("test", e["test_tokens"])
-    evaluation_seconds = maximum(time.monotonic() - evaluation_started)
+    if args.resume == step:
+        training_seconds = elapsed_before
+    peak_vram = completed["peak_vram_bytes"] if completed else memory()
+    if completed:
+        training_seconds = completed["training_seconds"]
+    if rank == 0:
+        write_json(completed_path, {"step": step, "stop_reason": stop_reason, "data_epoch": data_epoch,
+                                   "training_seconds": training_seconds, "peak_vram_bytes": peak_vram})
+    barrier()
+    # Publish each split independently so an inference/evaluation retry never repeats completed test work.
+    evaluation_path = output / f"evaluation_{step:06d}.json"
+    evaluation = json.loads(evaluation_path.read_text()) if evaluation_path.exists() else {}
+    for split, size in (("val", e["final_tokens"]), ("test", e["test_tokens"])):
+        if split not in evaluation:
+            evaluation_started = time.monotonic()
+            value = evaluate(split, size)
+            evaluation[split] = {"bpb": value, "seconds": maximum(time.monotonic() - evaluation_started)}
+            if rank == 0:
+                write_json(evaluation_path, evaluation)
+            barrier()
+    final_bpb, test_bpb = evaluation["val"]["bpb"], evaluation["test"]["bpb"]
+    evaluation_seconds = sum(row["seconds"] for row in evaluation.values())
     final_record = {"step": step, "training_seconds": training_seconds, "tokens": step * t["total_batch_size"],
                     "estimated_flops": step * t["total_batch_size"] * flops_per_token}
     log({"kind": "validation", "final": True, "val_bpb": final_bpb, **final_record})
@@ -324,11 +359,6 @@ def main():
               "checkpoint_dir": str(checkpoints), "checkpoint_step": step}
     if rank == 0:
         write_json(output / "result.json", result)
-        meta_path = checkpoints / f"meta_{step:06d}.json"
-        meta = json.loads(meta_path.read_text())
-        meta["val_bpb"] = final_bpb
-        meta["training_seconds"] = training_seconds
-        write_json(meta_path, meta)
     barrier()
     compute_cleanup()
 

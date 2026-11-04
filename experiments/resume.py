@@ -8,23 +8,26 @@ from pathlib import Path
 import re
 import statistics
 
-# Compilation, checkpoints and the benchmark grid. A guess until a real run measures it.
+from experiments.checkpoints import valid as valid_checkpoint
+
+# Reserve for compilation, checkpoint IO, and export, beyond measured evaluation/inference.
 OVERHEAD_SECONDS = 420
 
 
 def resume_action(run_dir, workers):
-    """Return ("skip", None), ("resume", step) from the newest complete checkpoint, or ("fresh", None)."""
+    """Return skip, benchmark-only, training/evaluation resume, or fresh from verified evidence."""
     run_dir = Path(run_dir)
     if (run_dir / "inference.json").exists():  # written last by the launcher
         return "skip", None
     checkpoints = run_dir / "checkpoints"
     steps = [int(m.group(1)) for m in (re.fullmatch(r"timing_(\d+)\.json", p.name) for p in checkpoints.glob("timing_*.json")) if m]
     for step in sorted(steps, reverse=True):
-        # train.py writes timing after every rank has saved, but a lost commit could still leave gaps.
-        names = [f"model_{step:06d}.pt", f"meta_{step:06d}.json"]
-        for rank in range(workers):
-            names += [f"optim_{step:06d}_rank{rank}.pt", f"runtime_{step:06d}_rank{rank}.pt"]
-        if all((checkpoints / name).is_file() for name in names):
+        if valid_checkpoint(checkpoints, step, workers):
+            result_path = run_dir / "result.json"
+            if result_path.exists():
+                result = json.loads(result_path.read_text())
+                if result.get("checkpoint_step") == step:
+                    return "benchmark", step
             return "resume", step
     return "fresh", None
 
@@ -51,7 +54,7 @@ def spent_seconds(roots):
     """Legacy accounting, used once to seed the durable Modal budget ledger."""
     total = 0.0
     for root in roots:
-        for path in Path(root).glob("*/rental_accounting.json"):
+        for path in Path(root).rglob("rental_accounting.json"):
             total += json.loads(path.read_text()).get("total_pipeline_node_seconds", 0)
     return total
 
@@ -62,14 +65,17 @@ def pilot_tokens_per_second(metrics_path):
     return statistics.median(r["tokens_per_second"] for r in rows if r["kind"] == "train" and r["step"] > 2)
 
 
-def project_seconds(config, tokens_per_second):
+def project_seconds(config, tokens_per_second, evaluation_tokens_per_second=None, benchmark_seconds=None):
     """Projected time for a full run. `training` is what counts toward the wall-clock cap (it includes interim validation)."""
     t, e = config["training"], config["evaluation"]
     updates = t["target_tokens"] // t["total_batch_size"]
-    # The loop skips the interim evaluation on the final update. Evaluation is charged at the training rate, which overestimates it.
+    # The loop skips interim evaluation on the final update. Prefer measured evaluation speed.
     interims = (updates - 1) // t["eval_every"] if t["eval_every"] > 0 else 0
-    training = (t["target_tokens"] + interims * e["interim_tokens"]) / tokens_per_second
-    total = training + (e["final_tokens"] + e["test_tokens"]) / tokens_per_second + OVERHEAD_SECONDS
+    eval_speed = evaluation_tokens_per_second or tokens_per_second
+    training = t["target_tokens"] / tokens_per_second + interims * e["interim_tokens"] / eval_speed
+    total = training + (e["final_tokens"] + e["test_tokens"]) / eval_speed + OVERHEAD_SECONDS
+    if benchmark_seconds is not None:
+        total += benchmark_seconds * 1.25  # timing variance and longer steady-state runs
     return {"training": training, "total": total}
 
 
@@ -86,7 +92,7 @@ def validate_saved_run(run_dir, config, overlay):
         if name == "launch.json":
             saved = saved["overlay_sha256"]
         if saved != expected:
-            raise ValueError(f"saved {name} differs from current run: {run_dir}; use a new Volume")
+            raise ValueError(f"saved {name} differs from current run: {run_dir}; use a new experiment namespace")
 
 
 @contextmanager

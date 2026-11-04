@@ -16,10 +16,12 @@ def kv_cache_bytes_allocated(cache):
 
 def benchmark(model, config, device):
     import torch
+    from experiments.backend import kernel_provenance, require_fa3
     from nanochat.engine import KVCache
     from nanochat.flash_attention import HAS_FA3
     if device.type != "cuda" or not torch.cuda.is_available():
         raise ValueError("inference timing requires one CUDA GPU")
+    require_fa3()
     b = config["benchmark"]
     cfg = model.config
     dtype = torch.bfloat16
@@ -43,7 +45,7 @@ def benchmark(model, config, device):
                         torch.cuda.reset_peak_memory_stats(device)
                     started = time.perf_counter()
                     with torch.inference_mode(), torch.autocast("cuda", dtype=dtype):
-                        logits = model(ids, kv_cache=cache)
+                        logits = model(ids, kv_cache=cache, last_token_only=True)
                         torch.cuda.synchronize(device)
                         prefill_end = time.perf_counter()
                         next_id = logits[:, -1].argmax(-1, keepdim=True)
@@ -51,7 +53,7 @@ def benchmark(model, config, device):
                         torch.cuda.synchronize(device)
                         first_token = time.perf_counter()
                         for _ in range(b["decode_tokens"] - 1):
-                            logits = model(next_id, kv_cache=cache)
+                            logits = model(next_id, kv_cache=cache, last_token_only=True)
                             next_id = logits[:, -1].argmax(-1, keepdim=True)
                         torch.cuda.synchronize(device)
                         finished = time.perf_counter()
@@ -75,6 +77,7 @@ def benchmark(model, config, device):
                 cache = ids = logits = next_id = None
                 torch.cuda.empty_cache()
     return {"device": torch.cuda.get_device_name(device), "attention_backend": "FA3" if HAS_FA3 else "SDPA",
+            "attention_kernel": kernel_provenance(),
             "torch": torch.__version__, "cuda": torch.version.cuda, "sampling": "greedy, fixed length, no EOS early exit",
             "precision": "BF16 autocast", "warmup": b["warmup"], "repeats": b["repeats"],
             "decode_definition": "first token included in TTFT; remaining decode_tokens-1 tokens timed as decode",

@@ -6,6 +6,9 @@
     modal run --detach modal_app.py           # everything; re-running skips finished work
 """
 import json
+import hashlib
+import math
+import time
 import os
 from pathlib import Path
 import shutil
@@ -15,22 +18,25 @@ import tarfile
 
 import modal
 
+
 GPU = "H100!"  # "!" blocks Modal's H200 upgrade; report.py rejects mixed GPUs across runs
 CPU_CORES, MEMORY_GIB = 6, 24  # priced into config.NODE_HOUR_USD; change them together
 SHARDS = 48  # training pool, shards 0..47; prepare() checks it covers the largest run
-BUDGET_USD = 40.0  # application estimate; also configure a workspace usage limit
+BUDGET_USD = 42.0  # application estimate; also configure a workspace usage limit
 PREPARE_USD = 0.5  # CPU preparation is not in the rental accounting
 VRAM_BYTES = 80e9
-FA3_REPO = "varunneal/flash-attention-3"
 
 REPO = Path("/root/modded-nanochat")
+if REPO.exists() and str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+from experiments.backend import FA3_REPO, FA3_REVISION
 WORKTREE = Path("/root/modded-nanochat-experiments-324e69c")
 PYTHON = str(WORKTREE / ".venv/bin/python")
 VOLUME_PATH = Path("/vol")
 BASE_DIR = VOLUME_PATH / "nanochat"
 ARTIFACTS = VOLUME_PATH / "artifacts"
 PILOTS = VOLUME_PATH / "pilots"
-PILOT_RUNS = ("d8-b0-s1", "d8-gqa2")
+PILOT_RUNS = ("d8-b0-s1", "d8-gqa2", "d8-gqa2-r75", "d8-gqa2-pm", "d8-gqa4", "d8-gqa2-r25")
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -46,7 +52,7 @@ image = (
         f"python {REPO}/experiments/run.py --config {REPO}/experiments/configs/d8-b0-s1.json --prepare-only",
         f"uv sync --frozen --no-dev --extra gpu --project {WORKTREE}",
         # Baked in so containers don't fetch ~800 MB on every start. No GPU here, so nothing is loaded yet.
-        f"""{PYTHON} -c "from kernels import install_kernel; install_kernel('{FA3_REPO}', revision='main')" """,
+        f"""{PYTHON} -c "from kernels import install_kernel; install_kernel('{FA3_REPO}', revision='{FA3_REVISION}')" """,
     )
     .env({"NANOCHAT_BASE_DIR": str(BASE_DIR)})
 )
@@ -77,6 +83,14 @@ def experiments_modules():
 
 def suite_config(run_id):
     return REPO / "experiments/configs" / f"{run_id}.json"
+
+
+def configure_namespace(name):
+    if not name or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in name):
+        raise ValueError("experiment must be a directory-safe name")
+    global ARTIFACTS, PILOTS
+    ARTIFACTS = VOLUME_PATH / "experiments" / name / "artifacts"
+    PILOTS = VOLUME_PATH / "experiments" / name / "pilots"
 
 
 def read_run_json(run_dir, name):
@@ -132,7 +146,7 @@ def run_one(config_path, output_root, budget):
         return
     if action == "fresh":
         shutil.rmtree(run_dir, ignore_errors=True)
-    else:
+    elif action == "resume":
         resume.truncate_metrics(run_dir / "metrics.jsonl", step)
     try:
         run.launch(config_path, output_root, WORKTREE, resume=step, timeout_seconds=budget.seconds_left())
@@ -145,15 +159,15 @@ def run_one(config_path, output_root, budget):
         volume.commit()
 
 
-def pilot_config(run_id):
+def pilot_config(run_id, pilot_root=None):
     """The documented 10-update pilot, under its own run ID so it never counts as a suite run."""
     config, _, _ = experiments_modules()
     cfg = config.read_config(suite_config(run_id))
     cfg["run_id"] = f"pilot-{run_id}"
     cfg["training"].update(max_steps=10, eval_every=-1, save_every=-1)
     cfg["evaluation"].update(interim_tokens=131072, final_tokens=131072, test_tokens=131072)
-    cfg["benchmark"].update(batch_sizes=[1], prompt_lengths=[128], decode_tokens=16, warmup=1, repeats=1)
-    path = PILOTS / "configs" / f"{cfg['run_id']}.json"
+    cfg["benchmark"].update(warmup=1, repeats=1)  # full shapes and decode length, fewer timing repeats
+    path = (pilot_root or PILOTS) / "configs" / f"{cfg['run_id']}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(cfg, indent=2) + "\n")
     return path
@@ -171,6 +185,8 @@ def check_pilot(run_dir, workers):
     for label, backend in (("training", hardware["attention_backend"]), ("inference", inference["attention_backend"])):
         if backend != "FA3":
             problems.append(f"{label} backend is {backend}, expected FA3")
+    # Last-token prefill keeps the largest d8 workload near 12 GiB on an 80 GB H100,
+    # so any OOM here is a regression that would leave holes in the full grid.
     for row in inference["rows"]:
         if row["status"] != "ok" or row["kv_cache_bytes_allocated"] != row["kv_cache_bytes_analytic"]:
             problems.append(f"bad inference row: {row}")
@@ -182,11 +198,12 @@ def check_pilot(run_dir, workers):
 @app.function(gpu=GPU, cpu=float(CPU_CORES), memory=MEMORY_GIB * 1024, volumes={VOLUME_PATH: volume},
               retries=modal.Retries(initial_delay=0.0, max_retries=5), single_use_containers=True,
               max_containers=1, timeout=12 * 3600)
-def suite(budget_usd=BUDGET_USD, pilot_only=False):
+def suite(budget_usd=BUDGET_USD, pilot_only=False, experiment="default"):
+    configure_namespace(experiment)
     config, resume, _ = experiments_modules()
     with resume.exclusive_writer(writer_locks):
         volume.reload()
-        legacy = PREPARE_USD + resume.spent_seconds([PILOTS, ARTIFACTS]) * config.NODE_HOUR_USD / 3600
+        legacy = PREPARE_USD + resume.spent_seconds([VOLUME_PATH / "pilots", VOLUME_PATH / "artifacts", VOLUME_PATH / "experiments"]) * config.NODE_HOUR_USD / 3600
         with resume.BudgetSession(VOLUME_PATH / "accounting/suite.json", budget_usd,
                                   config.NODE_HOUR_USD, legacy, volume.commit) as budget:
             try:
@@ -205,25 +222,43 @@ def run_suite(budget_usd, pilot_only, budget):
     def usd(seconds):
         return seconds * config.NODE_HOUR_USD / 3600
 
-    # Gates return instead of raising, so Modal doesn't retry a deliberate stop.
+    _, overlay = run.prepare_runtime(WORKTREE)
+    for r, cfg in configs.items():
+        resume.validate_saved_run(ARTIFACTS / r, cfg, overlay)
+    fingerprint = hashlib.sha256(json.dumps({"configs": configs, "overlay": overlay}, sort_keys=True).encode()).hexdigest()[:16]
+    pilot_root = PILOTS / fingerprint
+    pilot_root.mkdir(parents=True, exist_ok=True)
+    # Recheck the current container even if pilot artifacts were completed earlier.
+    try:
+        run.run_process([PYTHON, "-m", "experiments.preflight", "--output", str(pilot_root / "preflight.json")],
+                        cwd=WORKTREE, timeout=budget.seconds_left())
+    except subprocess.CalledProcessError:
+        return {"status": "preflight_failed", "problems": ["GPU correctness check failed; see Modal logs"]}
+    problems, speeds, pilot_results, pilot_inference = [], {}, {}, {}
     for run_id in PILOT_RUNS:
-        run_one(pilot_config(run_id), PILOTS, budget)
-    problems, speeds = [], {}
-    for run_id in PILOT_RUNS:
-        run_dir = PILOTS / f"pilot-{run_id}"
+        try:
+            run_one(pilot_config(run_id, pilot_root), pilot_root, budget)
+        except subprocess.CalledProcessError:
+            return {"status": "pilot_failed", "problems": [f"{run_id}: pilot process failed; see logs"]}
+        run_dir = pilot_root / f"pilot-{run_id}"
         problems += check_pilot(run_dir, configs[run_id]["workers"])
+        if problems:
+            return {"status": "pilot_failed", "problems": problems}
         speeds[run_id] = resume.pilot_tokens_per_second(run_dir / "metrics.jsonl")
+        pilot_results[run_id] = read_run_json(run_dir, "result.json")
+        pilot_inference[run_id] = read_run_json(run_dir, "inference.json")
     print("pilot tokens/s:", json.dumps(speeds), flush=True)
     print(f"GQA-2 / B0 speed: d8 {speeds['d8-gqa2'] / speeds['d8-b0-s1']:.3f}", flush=True)
     if problems:
         return {"status": "pilot_failed", "problems": problems}
 
-    # The slower variant at each depth, as the tok/s estimate for every run at that depth.
-    depth_speed = {d: min(speeds[r] for r in PILOT_RUNS if config.RUNS[r]["depth"] == d) for d in {config.RUNS[r]["depth"] for r in configs}}
-    projected = {r: resume.project_seconds(c, depth_speed[config.RUNS[r]["depth"]]) for r, c in configs.items()}
-    _, overlay = run.prepare_runtime(WORKTREE)
+    projected = {}
     for r, cfg in configs.items():
-        resume.validate_saved_run(ARTIFACTS / r, cfg, overlay)
+        pilot = r if r in speeds else "d8-b0-s1"  # baseline seed replicates use the B0 pilot
+        projected[r] = resume.project_seconds(cfg, speeds[pilot],
+            evaluation_tokens_per_second=262144 / pilot_results[pilot]["evaluation_seconds"],
+            benchmark_seconds=pilot_inference[pilot]["elapsed_seconds"] *
+                (cfg["benchmark"]["warmup"] + cfg["benchmark"]["repeats"]) / 2)
     remaining = [r for r in config.RUNS if resume.resume_action(ARTIFACTS / r, configs[r]["workers"])[0] != "skip"]
     total = spent() + usd(sum(projected[r]["total"] for r in remaining))
     table = {r: {"train_minutes": round(projected[r]["training"] / 60, 1), "usd": round(usd(projected[r]["total"]), 2)}
@@ -242,21 +277,54 @@ def run_suite(budget_usd, pilot_only, budget):
                     "not_started": remaining[remaining.index(run_id):]}
         run_one(suite_config(run_id), ARTIFACTS, budget)
 
-    in_worktree("-m", "experiments.report", "--output-root", str(ARTIFACTS), stdout=subprocess.DEVNULL)
-    figures = subprocess.run([PYTHON, "experiments/visualise.py", "--output-root", str(ARTIFACTS)], cwd=WORKTREE)
-    if figures.returncode:
+    run.run_process([PYTHON, "-m", "experiments.report", "--output-root", str(ARTIFACTS)],
+                    cwd=WORKTREE, timeout=budget.seconds_left())
+    try:
+        run.run_process([PYTHON, "experiments/visualise.py", "--output-root", str(ARTIFACTS)],
+                        cwd=WORKTREE, timeout=budget.seconds_left())
+    except subprocess.CalledProcessError:
         print("visualise failed; the results themselves are intact. Rerun it locally on the tarball.", flush=True)
-    with tarfile.open(VOLUME_PATH / "results.tar.gz", "w:gz") as tar:
+    with tarfile.open(ARTIFACTS.parent / "results.tar.gz", "w:gz") as tar:
         tar.add(ARTIFACTS, arcname="artifacts", filter=lambda m: None if "/checkpoints" in m.name else m)
+    with tarfile.open(ARTIFACTS.parent / "checkpoints.tar", "w") as tar:
+        for r in config.RUNS:
+            result = read_run_json(ARTIFACTS / r, "result.json")
+            step = result["checkpoint_step"]
+            from experiments.checkpoints import filenames
+            for name in [*filenames(step, configs[r]["workers"]), f"timing_{step:06d}.json"]:
+                tar.add(ARTIFACTS / r / "checkpoints" / name, arcname=f"artifacts/{r}/checkpoints/{name}")
     volume.commit()
-    return {"status": "complete", "spent_usd": spent(), "results": "results.tar.gz"}
+    return {"status": "complete", "spent_usd": spent(), "results": str((ARTIFACTS.parent / "results.tar.gz").relative_to(VOLUME_PATH)),
+            "checkpoints": str((ARTIFACTS.parent / "checkpoints.tar").relative_to(VOLUME_PATH))}
+
+
+@app.function(volumes={VOLUME_PATH: volume}, timeout=600)
+def recover(spent_usd: float, confirm_all_stopped: bool = False):
+    """Manual hard-crash recovery; stop all old Apps and reconcile actual spend first."""
+    if not confirm_all_stopped:
+        raise ValueError("stop all old Apps, then pass --confirm-all-stopped")
+    if not math.isfinite(spent_usd) or spent_usd < 0:
+        raise ValueError("spent_usd must be the reconciled nonnegative total, including earlier attempts")
+    volume.reload()
+    ledger = VOLUME_PATH / "accounting/suite.json"
+    previous = json.loads(ledger.read_text()) if ledger.exists() else None
+    lock = writer_locks.get("writer", None)
+    from experiments.train import write_json
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    write_json(ledger.parent / f"recovery_{time.time_ns()}.json",
+               {"previous": previous, "previous_writer": lock, "reconciled_spent_usd": spent_usd})
+    write_json(ledger, {"spent_usd": spent_usd, "reserved_usd": 0})
+    volume.commit()
+    if lock is not None:
+        writer_locks.pop("writer")
+    return {"status": "reconciled", "spent_usd": spent_usd}
 
 
 @app.function(timeout=24 * 3600)
-def pipeline(budget_usd=BUDGET_USD, pilot_only=False):
+def pipeline(budget_usd=BUDGET_USD, pilot_only=False, experiment="default"):
     """Remote, so the next step still starts after the laptop that launched it goes away."""
     prepare.remote()
-    return suite.remote(budget_usd, pilot_only)
+    return suite.remote(budget_usd, pilot_only, experiment)
 
 
 @app.function(timeout=600)
@@ -269,11 +337,11 @@ def image_check():
 @app.function(gpu=GPU, timeout=300)
 def gpu_check():
     subprocess.run(["nvidia-smi"], check=True)
-    in_worktree("-c", "from nanochat.flash_attention import HAS_FA3; print('FA3 loaded:', HAS_FA3); assert HAS_FA3")
+    in_worktree("-c", "from experiments.backend import require_fa3, kernel_provenance; require_fa3(); print(kernel_provenance())")
 
 
 @app.local_entrypoint()
-def main(pilot_only: bool = False, budget_usd: float = BUDGET_USD):
-    call = pipeline.spawn(budget_usd, pilot_only)
+def main(pilot_only: bool = False, budget_usd: float = BUDGET_USD, experiment: str = "default"):
+    call = pipeline.spawn(budget_usd, pilot_only, experiment)
     print(f"Started {call.object_id}; safe to close this terminal if launched with --detach.")
     print(json.dumps(call.get(), indent=2))

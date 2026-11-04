@@ -99,12 +99,12 @@ These are estimates from FLOPs, not measurements. Replace them with pilot number
 | Block | Time | Cost at $4.43/h |
 |---|---|---|
 | Data and tokenizer (CPU only) | ≈ 0.5 h | under $0.50 |
-| Pilots, 2 (including pilot evaluation and inference) | ≈ 0.1–0.2 h | ≈ $0.4–0.9 |
+| Pilots, 6 architectures (full inference grid, reduced repeats) | measure on GPU | measure on GPU |
 | Training, 8 runs (optimizer updates only) | ≈ 0.67–1.33 h | ≈ $3–6 |
 | Interim + final validation and test, 8 runs | ≈ 0.15–0.3 h | ≈ $0.7–1.3 |
 | Inference benchmarks, 8 | ≈ 0.24–0.64 h | ≈ $1.1–2.8 |
 
-Provisional planning allowance: roughly **1.2–2.5 GPU-hours, $6–12 including CPU preparation**, plus about 0.5 h of CPU preparation. Evaluation and pilot allowances are placeholders, not measured predictions; replace these and training/inference estimates with the d8 pilot's measured costs before relying on the total. The application budget defaults to $40: projections gate the full suite, and training/benchmark subprocesses have a deadline based on the remaining budget. Configure the intended $42.50 workspace usage limit separately in Modal; the script does not set or verify it. Accounting uses the configured hourly estimate and a $0.50 CPU-preparation allowance, so it is not an exact billing cap. Image builds, repeated preparation, GPU checks, other Apps, and storage can add charges.
+Provisional planning allowance: **the earlier 1.2–2.5 GPU-hour / $6–12 estimate is no longer a launch budget**: the expanded six-architecture pilots and numerical preflight add work; use their measured cost table, plus about 0.5 h of CPU preparation. Evaluation and pilot allowances are placeholders, not measured predictions; replace these and training/inference estimates with the d8 pilot's measured costs before relying on the total. The application budget defaults to $40: projections gate the full suite, and training/benchmark subprocesses have a deadline based on the remaining budget. Configure the intended $42.50 workspace usage limit separately in Modal; the script does not set or verify it. Accounting uses the configured hourly estimate and a $0.50 CPU-preparation allowance, so it is not an exact billing cap. Image builds, repeated preparation, GPU checks, other Apps, and storage can add charges.
 
 If the d8 pilot projects excessive cost or cannot fit the declared settings, stop and revise the plan before launching the full suite. No replacement runs or reduced-token d12 runs are included.
 
@@ -138,14 +138,14 @@ Implemented and covered by CPU tests (`tests/test_experiments.py`, `test_data.py
 - `benchmark.py`: analytic and allocated KV-cache bytes per workload; wider batch/prompt sweep in the generated configs.
 - `report.py` / `visualise.py`: seed noise `s`, threshold `2√2·s`, resolved flags, per-depth figures, `dose_response`.
 
-Still to do on the GPU node (not verifiable locally): download the pool and test shard, run the two d8 pilots, freeze `DEFAULTS` and regenerate configs, check that FA3 is selected, so GQA runs without expanding K/V, and confirm `kv_cache_bytes_allocated` equals the analytic value on GPU.
+Still to do on the GPU node (not verifiable locally): download the pool and test shard, run the six architecture pilots, freeze `DEFAULTS` and regenerate configs, check that FA3 is selected, so GQA runs without expanding K/V, and confirm `kv_cache_bytes_allocated` equals the analytic value on GPU.
 
 Known confounds to report: the historical value embeddings shrink with KV heads (total parameters cannot be matched in E3); Muon rescales the `c_fc` learning rate with its aspect ratio (about +6% in the 4.5× MLP); the seed varies both initialisation and training-data order, so `s` includes data-order noise.
 
 ## Execution order
 
 1. On the GPU node: prepare the pinned worktree, download the shard pool and shard 06541, train the tokenizer, and run the preflight checks above (commands under "Pipeline reference").
-2. Pilot d8 B0 and GQA-2 (10 updates each; the automated path uses the declared microbatch, while manual fit checks may sweep device batches): measure tokens/s, peak VRAM and evaluation cost; freeze `DEFAULTS` in `make_configs.py` (token targets, microbatch, cadence) and regenerate the configs.
+2. Pilot all six unique d8 architectures (10 updates each; the automated path uses the declared microbatch, while manual fit checks may sweep device batches): measure tokens/s, peak VRAM and evaluation cost; freeze `DEFAULTS` in `make_configs.py` (token targets, microbatch, cadence) and regenerate the configs.
 3. Run E1 (`d8-b0-s1/s2/s3`). Compute `s` and the threshold with `experiments.report`.
 4. Run E2, E3 and E4 (the remaining d8 runs).
 5. Collect the inference results, which each run produces automatically after training, and rerun `experiments.report` and `visualise.py`.
@@ -178,43 +178,43 @@ Do not label 0.71854 (nanochat Run 4's validation BPB, on its own distribution) 
 
 ## Run on Modal
 
-`modal_app.py` runs everything below in one job on an H100, resuming after preemption. Commit your changes first: the commit and any diff go into each run's provenance, and changing `experiments/*.py` midway makes resumes refuse the changed runtime.
+`modal_app.py` runs everything below in one job on an H100, with stage-aware recovery for handled failures. Hard container crashes require the reconciliation procedure below. Commit your changes first: the commit and any diff go into each run's provenance, and changing `experiments/*.py` midway makes resumes refuse the changed runtime.
 
 ```bash
 modal run modal_app.py::image_check          # CPU only: image builds, configs resolve
 modal run modal_app.py::gpu_check            # H100 available, FA3 loads
-modal run modal_app.py --pilot-only          # data, 2 pilots, cost table; no full runs
-modal run --detach modal_app.py              # the whole suite
+modal run modal_app.py --pilot-only --experiment d8-v2  # data, GPU checks, six pilots, cost table
+modal run --detach modal_app.py --experiment d8-v2      # reuse pilots, run the full suite
 ```
 
-Re-running validates the saved config and runtime source hashes before skipping a completed run, resuming a checkpoint, or replacing incomplete outputs. Changed configs or source stop the job; use a new Volume name for a new experiment revision, including this d8-only revision. Update the Volume binding before launching; preserve the old Volume and its checkpoints. Only one preparation or suite writer can run across Apps: a named Modal Dict (`nanochat-experiments-locks`) atomically claims its `writer` key, and competing writers fail before touching the Volume.
+Re-running validates the saved config and runtime source hashes before skipping a completed run, resuming a checkpoint, or replacing incomplete outputs. Changed full-run configs or source stop the job; use a new `--experiment` name for a new revision. Artifacts live under `/vol/experiments/<name>/artifacts`. Prepared data/tokenizer remain shared at `/vol/nanochat`, and all namespaces share the durable budget ledger. Pilots live under `/vol/experiments/<name>/pilots/<config-and-source-fingerprint>`, so editing `DEFAULTS` and regenerating configs automatically starts fresh pilots without redownloading data. Old pilot evidence is retained. Only one preparation or suite writer can run across Apps: a named Modal Dict (`nanochat-experiments-locks`) atomically claims its `writer` key, and competing writers fail before touching the Volume.
 
 The durable budget ledger is `/accounting/suite.json` on the `nanochat-experiments` Volume, outside deletable run directories. It imports legacy per-run totals once. Each suite attempt reserves the remaining budget and commits that reservation before work starts; on normal exit, including handled failures, it settles to elapsed suite time. Retries therefore retain earlier costs. Training deadlines kill the whole process group, including torchrun workers. Lower the ceiling with `--budget-usd` if other Modal usage has consumed your allowance.
 
-After a hard kill, automatic recovery intentionally stops: the writer lock may remain and the ledger may retain its full reservation. First stop **all** Apps using this Volume and confirm no worker remains. Then inspect the Modal usage records and the downloaded ledger. Reconcile `spent_usd` to the cumulative estimated suite cost, set `reserved_usd` to zero, and upload the corrected ledger. Previously unrecorded legacy attempts must also be reconciled manually. Only after stopping the workers and reconciling accounting, clear the stale lock with:
+After a hard kill, automatic recovery intentionally stops: the writer lock may remain and the ledger may retain its full reservation. Stop **all** Apps using this Volume and confirm no worker remains. Inspect Modal usage and the ledger, then explicitly reconcile the cumulative cost of all prior preparation/pilot/suite attempts. Never release a lock while an old worker is active.
 
 ```bash
 modal volume get nanochat-experiments /accounting/suite.json suite-accounting.json
-# Inspect/edit suite-accounting.json against actual usage before uploading:
-modal volume put --force nanochat-experiments suite-accounting.json /accounting/suite.json
-python -c 'import modal; modal.Dict.from_name("nanochat-experiments-locks").pop("writer", None)'
+# Example only: replace 5.25 with the reconciled cumulative spend.
+modal run modal_app.py::recover --spent-usd 5.25 --confirm-all-stopped
 ```
 
-Everything below `/vol` lives on the `nanochat-experiments` Volume; it does not automatically sync to the local repo. The results archive excludes checkpoints. Download the artifacts directory separately to include them:
+Recovery saves the old ledger and writer identity in `/accounting/recovery_<timestamp>.json`, commits the corrected ledger, then releases the stale lock. It does not reset experiment artifacts or authorize extra budget.
+
+Every suite invocation performs GPU numerical preflight on the current container: full versus cached FA3 across the sliding-window boundary and FA3 versus SDPA, for all six architectures. Every actual training/benchmark process requires FA3 pinned at `de87b9b5af06dd9984df595bef90b2eba44b181a`; silent SDPA fallback is a failure. The kernel identity is recorded in provenance.
+
+The six pilots retain the full inference batch/prompt/decode grid, with one warmup and one measured repeat. Every workload in the grid must succeed: last-token prefill keeps the largest d8 workload near 12 GiB, so a pilot OOM is a regression and blocks the suite. The cost gate uses each architecture's measured training, evaluation, and inference durations, scales inference repeats, and adds a safety margin. It does not sweep microbatch sizes or automatically change the declared token target. Freeze any calibration changes and regenerate configs before the full run.
+
+Everything below `/vol` lives on the `nanochat-experiments` Volume; it does not automatically sync locally. The smaller results archive excludes checkpoint tensors. A separate uncompressed archive contains the final checkpoint and resume state for every run. Earlier checkpoints remain available in the Volume.
 
 ```bash
-mkdir -p experiments/artifacts
-modal volume get nanochat-experiments /artifacts experiments/artifacts
+modal volume get nanochat-experiments experiments/d8-v2/artifacts/d8-b0-s1/metrics.jsonl -
+modal volume get nanochat-experiments experiments/d8-v2/results.tar.gz .
+modal volume get nanochat-experiments experiments/d8-v2/checkpoints.tar .
+mkdir -p experiments/downloaded-d8-v2
+tar xzf results.tar.gz -C experiments/downloaded-d8-v2
+tar xf checkpoints.tar -C experiments/downloaded-d8-v2
 ```
-
-Inspect progress or download the smaller results archive:
-
-```bash
-modal volume get nanochat-experiments artifacts/d8-b0-s1/metrics.jsonl -
-modal volume get nanochat-experiments results.tar.gz . && tar xzf results.tar.gz -C experiments/
-```
-
-**Deviations from the steps below:** the pilot checks that the provisional `DEFAULTS` fit and measures their speed, but does not sweep device batch 4/8/16. `DEFAULTS` are not re-frozen from pilot numbers, and token targets stay at their declared values.
 
 The sections below describe the same steps by hand on a GPU node.
 
@@ -273,7 +273,7 @@ Training runs to `target_tokens / total_batch_size` optimizer updates. The learn
 
 Evaluation uses fixed bytes: interim validation (`interim_tokens`) on the validation shard every `eval_every` updates, then after training a final validation pass (`final_tokens`) and a test pass (`test_tokens`) on the held-out test shard, outside the training clock. Tuning decisions use validation only; the test number is reported once.
 
-Resume restores per-rank optimizer and RNG state and replays consumed microbatches to preserve exact packing. Only the wall-clock cap depends on cumulative seconds; lost time after an interruption is not charged back automatically.
+Resume verifies checkpoint SHA-256 manifests, restores per-rank optimizer and RNG state, and replays consumed microbatches only when training remains unfinished. Checkpoints are staged and published with their completion marker last; completed generations are immutable. `training_complete.json` skips data replay after training, each final evaluation split is saved independently, and a completed `result.json` permits benchmark-only recovery. Final BPB is authoritative in `result.json`; checkpoint metadata stays immutable. Only the wall-clock cap depends on cumulative seconds; lost time after an interruption is not charged back automatically.
 
 ## Observe a running experiment
 
@@ -291,7 +291,7 @@ Follow `train.log` with `tail -f`, or rerun `visualise.py` on a local copy. Trai
 
 Each run directory under `experiments/artifacts/` holds the frozen config and source, provenance, logs, curves, checkpoints, `result.json` (including `val_bpb`, `test_bpb`, `scaling_parameters`, `target_tokens`, `data_epoch`), `inference.json`, and rental accounting. `data_manifest.json` is seed-independent (pool shards, validation and test hashes, tokenizer hashes) and is compared across runs at one depth; the per-run training order is in `data_order.json`. `data_epoch > 1` means a run saw repeated data and is flagged.
 
-`report.py` computes the d8 baseline seed standard deviation `s` (ddof = 1) from test BPB, the threshold `2√2·s`, and for every `compare_to` pair the test and validation BPB differences, relative differences, a `resolved` flag (`|Δ|` above the threshold), training-speed ratio, total and scaling parameter counts, exact matched-token and matched-FLOP observations (never interpolated), and inference speedups including KV-cache byte ratios. Newly generated `comparison.json` files omit the former `scale_transfer` field.
+`report.py` retains raw capped/repeated-data results with explicit exclusion reasons, but excludes them and token-count mismatches from quality comparisons, seed noise and final-quality charts. Ancillary curve, elapsed-time and inference comparisons explicitly identify the individual baseline seed in `field_references`; final BPB and training-speed comparisons use the named group mean. `report.py` computes the d8 baseline seed standard deviation `s` (ddof = 1) from test BPB, the threshold `2√2·s`, and for every `compare_to` pair the test and validation BPB differences, relative differences, a `resolved` flag (`|Δ|` above the threshold), training-speed ratio, total and scaling parameter counts, exact matched-token and matched-FLOP observations (never interpolated), and inference speedups including KV-cache byte ratios. Newly generated `comparison.json` files omit the former `scale_transfer` field.
 
 FLOPs use the historical estimate (six per matmul parameter per token plus attention by query-head count and window); they exclude lookup, norm, softmax and rotary elementwise work. Inference uses fixed greedy prompts and exactly 256 generated tokens ignoring EOS, measures prefill and TTFT separately, times the remaining 255 tokens as decode, records OOM workloads without shrinking the batch, and labels any workload whose cache exceeds the 2,048-token training context as speed-only.
 

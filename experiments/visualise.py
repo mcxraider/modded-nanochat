@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 import re
 
 from experiments.config import RUNS, members, validate_suite
-from experiments.report import pooled, seed_noise
+from experiments.report import comparison_eligibility, pooled, seed_noise
 
 _VARIANTS = ("b0", "gqa2", "gqa2-r75", "gqa2-pm", "gqa4", "gqa2-r25")
 _COLORS = ("#315A8C", "#B47B15", "#A13D6F", "#2E7D5B", "#7A4EA3", "#C0504D")
@@ -129,7 +129,11 @@ def load_runs(root):
                 value = result.get(key)
                 if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
                     raise ValueError(f"{directory / 'result.json'}: invalid {key}")
-        runs[name] = dict(directory=directory, rows=rows, result=result, inference=inference)
+        config = read_json(directory / "config.json")
+        eligibility = comparison_eligibility(result, config)
+        if result is not None and not eligibility["eligible"]:
+            warnings.warn(f"{name}: excluded from final comparisons: {'; '.join(eligibility['reasons'])}")
+        runs[name] = dict(directory=directory, rows=rows, result=result, inference=inference, eligibility=eligibility)
     if not runs:
         raise ValueError(f"No experiment measurements found under {root}. Run training first or select --output-root.")
     configs = [read_json(runs[name]["directory"] / "config.json") for name in RUNS if name in runs]
@@ -190,7 +194,7 @@ def series(ax, rows, xkey, ykey, name, xscale=1, yscale=1, window=1):
 
 
 def learning_curves(runs, context, window):
-    fig, axes = canvas("Learning curves", f"{context} · loss: worker 0; validation BPB: all workers", 2, 3, sharey="row")
+    fig, axes = canvas("Learning curves", f"{context} · raw observations, including incomplete/excluded runs", 2, 3, sharey="row")
     for col, (xkey, scale, xlabel) in enumerate(AXES):
         for name, run in runs.items():
             series(axes[0, col], [r for r in run["rows"] if r["kind"] == "train"], xkey, "loss", name, scale, window=window)
@@ -227,15 +231,21 @@ def quality_of(result, metric):
     return result[metric]
 
 
+def eligible_results(runs):
+    return {name: run["result"] for name, run in runs.items()
+            if run.get("eligibility", comparison_eligibility(run["result"]))["eligible"]}
+
+
 def baseline_noise(runs):
     """Seed noise from the d8 baseline group, if enough seeds finished (test BPB)."""
-    values = [runs[r]["result"]["test_bpb"] for r in members("d8-b0")
-              if r in runs and runs[r]["result"] is not None and runs[r]["result"].get("test_bpb") is not None]
+    results = eligible_results(runs)
+    values = [results[r]["test_bpb"] for r in members("d8-b0")
+              if r in results and results[r].get("test_bpb") is not None]
     return seed_noise(values)
 
 
 def pair_deltas(runs, metric):
-    results = {name: run["result"] for name, run in runs.items() if run["result"] is not None}
+    results = eligible_results(runs)
     out = []
     for name, result in results.items():
         for ref in RUNS[name]["compare_to"]:
@@ -246,12 +256,12 @@ def pair_deltas(runs, metric):
 
 
 def final_comparison(runs, context, noise=None):
-    completed = [(name, run["result"]) for name, run in runs.items() if run["result"] is not None]
+    completed = list(eligible_results(runs).items())
     if not completed:
         return None
     metric = "test_bpb" if all(r.get("test_bpb") is not None for _, r in completed) else "val_bpb"
     label = "test" if metric == "test_bpb" else "validation"
-    fig, axes = canvas("Final quality and training efficiency", f"{context} · exact final {label} BPB; completed runs only", 2, 2)
+    fig, axes = canvas("Final quality and training efficiency", f"{context} · exact final {label} BPB; eligible full-budget runs only", 2, 2)
     names, results = zip(*completed)
     positions = list(range(len(names)))
     colors = [STYLES[name]["color"] for name in names]
@@ -289,14 +299,14 @@ def final_comparison(runs, context, noise=None):
 
 def final_value(runs, name, metric):
     run = runs.get(name)
-    result = run["result"] if run else None
+    result = eligible_results({name: run}).get(name) if run else None
     return None if result is None else result.get(metric)
 
 
 def dose_response(runs, context):
     """Final BPB against KV heads (full RoPE) and against rotary fraction (2 KV heads), d8 only."""
     metric = "test_bpb" if all(final_value(runs, r, "test_bpb") is not None for r in RUNS if final_value(runs, r, "val_bpb") is not None) else "val_bpb"
-    results = {n: r["result"] for n, r in runs.items() if r["result"] is not None}
+    results = eligible_results(runs)
     base = pooled(results, "d8-b0")
     kv = [(4, base[metric])] if base and base.get(metric) is not None else []
     kv += [(4 // RUNS[n]["gqa"], results[n][metric]) for n in ("d8-gqa2", "d8-gqa4") if n in results]
@@ -318,7 +328,7 @@ def dose_response(runs, context):
 
 
 def quality_speed(runs, context):
-    completed = [(name, run["result"]) for name, run in runs.items() if run["result"] is not None]
+    completed = list(eligible_results(runs).items())
     if not completed:
         return None
     metric = "test_bpb" if all(r.get("test_bpb") is not None for _, r in completed) else "val_bpb"
@@ -407,6 +417,8 @@ def render(output_root, output_dir=None, smooth_window=10):
                 continue
         fig = build()
         if fig is None:
+            for extension in ("png", "svg"):
+                (output / f"{name}.{extension}").unlink(missing_ok=True)
             continue
         try:
             output.mkdir(parents=True, exist_ok=True)

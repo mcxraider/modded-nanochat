@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from experiments.config import BASE_COMMIT, NODE_HOUR_USD, read_config
-from experiments.resume import validate_saved_run
+from experiments.resume import validate_saved_run, resume_action
+from experiments.backend import patch_attention_loader, kernel_provenance
 
 
 def patch_checkpoint_loader(source):
@@ -70,6 +71,10 @@ def prepare_runtime(directory):
     target = directory / "nanochat/checkpoint_manager.py"
     target.write_text(patch_checkpoint_loader(historical))
     hashes["nanochat/checkpoint_manager.py"] = digest(target)
+    historical_attention = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{BASE_COMMIT}:nanochat/flash_attention.py"], text=True)
+    target = directory / "nanochat/flash_attention.py"
+    target.write_text(patch_attention_loader(historical_attention))
+    hashes["nanochat/flash_attention.py"] = digest(target)
     marker.write_text(json.dumps(hashes, indent=2) + "\n")
     return directory, hashes
 
@@ -124,7 +129,7 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None, time
     if resume is None:
         output.mkdir(parents=True, exist_ok=False)
         (output / "config.json").write_text(json.dumps(config, indent=2) + "\n")
-        provenance = {"base_commit": BASE_COMMIT, "overlay_sha256": overlay, "command": cmd,
+        provenance = {"attention_kernel": kernel_provenance(), "base_commit": BASE_COMMIT, "overlay_sha256": overlay, "command": cmd,
                       "source_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                       "source_diff": subprocess.check_output(["git", "-C", str(ROOT), "diff", "HEAD"], text=True)}
         (output / "launch.json").write_text(json.dumps(provenance, indent=2) + "\n")
@@ -144,8 +149,20 @@ def _launch(config_path, output_root, worktree, dry_run=False, resume=None, time
     def remaining():
         return None if timeout_seconds is None else timeout_seconds - (time.monotonic() - launch_started)
     try:
-        with (output / "train.log").open("a") as log:
-            run_process(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
+        benchmark_only = resume is not None and resume_action(output, config["workers"]) == ("benchmark", resume)
+        attempt["stage"] = "benchmark" if benchmark_only else "training"
+        if not benchmark_only:
+            if resume is not None:
+                # Results from a later, damaged generation cannot describe the replayed model.
+                for path in output.glob("evaluation_*.json"):
+                    if int(path.stem.split("_")[-1]) > resume:
+                        path.unlink()
+                for name in ("result.json", "training_complete.json"):
+                    path = output / name
+                    if path.exists() and json.loads(path.read_text()).get("step", -1) > resume:
+                        path.unlink()
+            with (output / "train.log").open("a") as log:
+                run_process(cmd, cwd=runtime, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=remaining())
         benchmark_env = dict(env)
         benchmark_env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]
         with (output / "benchmark.log").open("a") as log:

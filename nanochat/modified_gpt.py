@@ -416,7 +416,10 @@ class GPT(nn.Module):
             group["initial_lr"] = group["lr"]
         return optimizer
 
-    def forward(self, idx, targets=None, kv_cache=None, loss_reduction='mean'):
+    def forward(self, idx, targets=None, kv_cache=None, loss_reduction='mean', *, last_token_only=False):
+        """Return full logits/loss by default, or (B, 1, V) logits for generation."""
+        if last_token_only and targets is not None:
+            raise ValueError("last_token_only cannot be used with training/evaluation targets")
         B, T = idx.size()
 
         # Grab the rotary embeddings for the current sequence length (they are of shape (1, seq_len, 1, head_dim/2))
@@ -440,6 +443,9 @@ class GPT(nn.Module):
         x = norm(x)
 
         # Forward the lm_head (compute logits)
+        # Keep the full trunk/cache update, but avoid a B x T x V allocation for prefill.
+        if last_token_only:
+            x = x[:, -1:, :]
         softcap = 20 # smoothly cap the logits to the range [-softcap, softcap]
         logits = self.lm_head(x) # (B, T, padded_vocab_size) <- very big tensor, large amount of memory
         logits = logits[..., :self.config.vocab_size] # slice to remove padding
@@ -471,7 +477,7 @@ class GPT(nn.Module):
             rng.manual_seed(seed)
         ids = torch.tensor([tokens], dtype=torch.long, device=device) # add batch dim
         for _ in range(max_tokens):
-            logits = self.forward(ids) # (B, T, vocab_size)
+            logits = self.forward(ids, last_token_only=True) # (B, 1, vocab_size)
             logits = logits[:, -1, :] # (B, vocab_size)
             if top_k is not None and top_k > 0:
                 v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
