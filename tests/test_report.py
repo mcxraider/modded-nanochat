@@ -96,3 +96,29 @@ def test_final_validation_rows_are_never_paired_with_interim_rows():
     assert matched_observations(rows, ref, "tokens") == [{"tokens": 10, "bpb_delta": pytest.approx(-0.1)}]
     ref[1]["final"], rows[1]["final"] = True, False  # the final row is excluded on either side
     assert matched_observations(rows, ref, "tokens") == [{"tokens": 10, "bpb_delta": pytest.approx(-0.1)}]
+
+
+def test_paired_analysis_uses_same_seed_pairs_with_hand_computed_numbers():
+    from experiments.report import paired_analysis, paired_pairs, seed_noise
+    seeds, iso = paired_pairs()
+    assert seeds == [("d8-gqa2-s1", "d8-b0-s1"), ("d8-gqa2-s2", "d8-b0-s2"), ("d8-gqa2-s3", "d8-b0-s3")]
+    assert iso == [("d8-gqa2-iso", "d8-gqa2-s1"), ("d8-gqa4-iso", "d8-gqa4")]
+    r = lambda bpb: dict(test_bpb=bpb)
+    # Baseline seeds spread by +-0.02; GQA-2 tracks its same-seed twin: differences 0.010, 0.012, 0.014.
+    results = {"d8-b0-s1": r(1.00), "d8-b0-s2": r(1.02), "d8-b0-s3": r(0.98),
+               "d8-gqa2-s1": r(1.010), "d8-gqa2-s2": r(1.032), "d8-gqa2-s3": r(0.994)}
+    assert paired_analysis({k: v for k, v in results.items() if k != "d8-gqa2-s3"}) is None  # every pair required
+    noise = seed_noise([1.00, 1.02, 0.98])  # s = 0.02
+    out = paired_analysis(results, noise)
+    e2 = out["e2_seed_pairs"]
+    assert e2["mean"] == pytest.approx(0.012) and e2["std"] == pytest.approx(0.002) and e2["df"] == 2
+    h = 4.303 * 0.002 / 3 ** 0.5
+    assert e2["ci95"] == pytest.approx([0.012 - h, 0.012 + h]) and e2["resolved"] is True
+    assert e2["noise_ratio"] == pytest.approx(0.002 / (2 ** 0.5 * 0.02))
+    # The unpaired 3-vs-3 view of the same data cannot resolve 0.012 against s = 0.02.
+    assert 0.012 < 2 * 0.02 * (2 / 3) ** 0.5
+    assert out["e6_iso_vs_twin"] == [] and out["n_contrasts"] == 1
+    results |= {"d8-gqa2-iso": r(1.005), "d8-gqa4": r(1.02), "d8-gqa4-iso": r(1.019)}
+    e6 = {i["run_id"]: i for i in paired_analysis(results, noise)["e6_iso_vs_twin"]}
+    assert e6["d8-gqa2-iso"]["test_bpb_delta"] == pytest.approx(-0.005) and e6["d8-gqa2-iso"]["resolved"] is True  # 2*s_d = 0.004
+    assert e6["d8-gqa4-iso"]["resolved"] is False

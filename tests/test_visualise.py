@@ -214,6 +214,10 @@ def test_d8_report_omits_scale_transfer_and_tracks_missing_runs(artifacts, monke
     assert payload["noise"]["n"] == 3
     assert payload["comparisons"]
     assert (artifacts / "tables.md").is_file()
+    paired = payload["paired"]  # every B0 / GQA-2 seed is present in both cases
+    assert paired["e2_seed_pairs"]["n"] == 3
+    assert {i["run_id"] for i in paired["e6_iso_vs_twin"]} == {"d8-gqa2-iso", "d8-gqa4-iso"}
+    assert "Paired analysis" in (artifacts / "tables.md").read_text()
 
 
 @pytest.mark.parametrize("bad_run,change", [
