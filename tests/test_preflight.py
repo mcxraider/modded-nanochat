@@ -41,7 +41,15 @@ def test_preflight_rejects_wrong_logits_shape_or_nonfinite(actual):
 
 
 def _grads(scale=1.0):
-    return torch.tensor(2.0), {"w": torch.tensor([3.0, -4.0]) * scale, "b": torch.tensor([1.0])}
+    # "w" is matrix-sized (GRAD_RTOL); "b" is scalar-sized (SCALAR_GRAD_RTOL).
+    return torch.tensor(2.0), {"w": torch.linspace(-4.0, 3.0, 65) * scale, "b": torch.tensor([1.0])}
+
+
+def test_preflight_scalar_gradients_get_looser_tolerance():
+    loss, grads = _grads()
+    compare_backward((loss, {**grads, "b": grads["b"] * 1.10}), _grads())
+    with pytest.raises(AssertionError):
+        compare_backward((loss, {**grads, "b": grads["b"] * 1.20}), _grads())
 
 
 def test_preflight_accepts_near_equal_gradients_and_reports_error():
@@ -56,7 +64,7 @@ def test_preflight_accepts_near_equal_gradients_and_reports_error():
     _grads(float("nan")),
     (torch.tensor(float("inf")), _grads()[1]),
     (torch.tensor(3.0), _grads()[1]),
-    (torch.tensor(2.0), {"w": torch.tensor([3.0, -4.0])}),
+    (torch.tensor(2.0), {"w": _grads()[1]["w"]}),
 ])
 def test_preflight_rejects_gradient_mismatch_nonfinite_or_parameter_sets(actual):
     with pytest.raises(AssertionError):
