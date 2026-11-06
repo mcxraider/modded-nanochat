@@ -16,7 +16,7 @@
     "value_embeds": true
   },
   "training": {
-    "target_tokens": 440401920,
+    "target_tokens": 468451328,
     "tokens_per_scaling_param": 10.5,
     "flop_budget": 138539818014474240,
     "wallclock_cap_seconds": 7200,

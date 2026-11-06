@@ -234,10 +234,11 @@ def test_suite_runs_every_run_then_reports_once(modal_app, tmp_path, monkeypatch
 
 def test_gqa2_seeds_count_toward_the_budget_gate(modal_app, tmp_path, monkeypatch):
     launches, finishes, _ = suite_harness(modal_app, tmp_path, monkeypatch)
-    # Each run projects to ~$1.35 here: $17 covers 12 runs but the gate projects all 14 ($18.9), seeds included.
+    # Each run projects to ~$1.35 here (more for the 1,750/1,787-update fixed-compute GQA runs): $17 covers 12 runs
+    # but the gate projects all 14 ($19.05), seeds included.
     result = modal_app.run_suite(17.0, False, SimpleNamespace(spent=lambda: 0.0, seconds_left=lambda: 1e6))
     assert result["status"] == "stopped_at_gate"
-    assert result["projected_total_usd"] == pytest.approx(18.94, abs=0.05)
+    assert result["projected_total_usd"] == pytest.approx(19.05, abs=0.05)
     assert full_runs(launches) == [] and finishes.call_count == 0
 
 

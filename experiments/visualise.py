@@ -21,10 +21,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 import re
 
-from experiments.config import GROUPS, RUNS, members, validate_suite
-from experiments.report import comparison_eligibility, pooled, seed_noise
+from experiments.config import GROUPS, RUNS, is_ablation, members, validate_suite
+from experiments.report import comparison_eligibility, paired_pairs, pooled, seed_noise
 
-_VARIANTS = ("b0", "gqa2", "gqa2-r75", "gqa2-pm", "gqa4", "gqa2-r25", "b0-nove", "gqa2-nove", "gqa2-iso", "gqa4-iso")
+_VARIANTS = ("b0", "gqa2", "gqa2-r75", "gqa2-pm", "gqa4", "gqa2-r25", "b0-nove", "gqa2-nove", "gqa2-tok", "gqa4-tok")
 _COLORS = ("#315A8C", "#B47B15", "#A13D6F", "#2E7D5B", "#7A4EA3", "#C0504D", "#6F8FB8", "#D6A85A", "#8C5A08", "#4E2A70")
 _MARKERS = ("o", "s", "D", "^", "v", "P", "X", "*", "h", "p")
 
@@ -34,10 +34,10 @@ def variant(run_id):
     return re.sub(r"-s\d$", "", run_id.split("-", 1)[1])
 
 
-# Colour/marker identify the variant; line style: solid = VE on at the token target, dotted = VE off,
-# dashed = trained to the FLOP budget. Seeds of one variant share a style.
+# Colour/marker identify the variant; line style: solid = VE on at the FLOP budget, dotted = VE off,
+# dashed = matched-token ablation (B0's token count). Seeds of one variant share a style.
 STYLES = {name: dict(color=_COLORS[_VARIANTS.index(variant(name))], marker=_MARKERS[_VARIANTS.index(variant(name))],
-                     linestyle="--" if RUNS[name]["budget"] == "flops" else ":" if not RUNS[name]["ve"] else "-")
+                     linestyle="--" if is_ablation(name) else ":" if not RUNS[name]["ve"] else "-")
           for name in RUNS}
 STYLES.update({group: STYLES[names[0]] for group, names in GROUPS.items()})  # a seed-group mean looks like its seeds
 AXES = (("training_seconds", 60, "Training-phase elapsed time (minutes)"),
@@ -278,7 +278,7 @@ def final_comparison(runs, context, noise=None):
     for i, (name, result) in enumerate(completed):
         axes[0, 0].scatter(result[metric], i, color=colors[i], marker=STYLES[name]["marker"], s=65, zorder=3)
         axes[0, 0].annotate(f" {result[metric]:.5f}", (result[metric], i), xytext=(8, 0), textcoords="offset points", va="center", fontsize=9)
-    axes[0, 0].set(yticks=positions, yticklabels=names, xlabel=f"Final {label} BPB · lower is better", title="Quality after the fixed token budget")
+    axes[0, 0].set(yticks=positions, yticklabels=names, xlabel=f"Final {label} BPB · lower is better", title="Quality at the fixed compute budget")
     axes[0, 0].margins(x=0.45, y=0.35)
     pairs = pair_deltas(runs, metric)
     if pairs:
@@ -364,25 +364,26 @@ def quality_speed(runs, context):
 
 
 def budget_comparison(runs, context):
-    """E6: final BPB against estimated training FLOPs; arrows join each token-matched run to its FLOP-matched twin."""
+    """E6: final BPB against estimated training FLOPs; arrows join each matched-token ablation to its same-seed
+    fixed-compute run (the E6 paired-analysis pairs, so `d8-gqa2-tok` points at `d8-gqa2-s1`, not the seed mean)."""
     results = eligible_results(runs)
     metric = "test_bpb" if all(r.get("test_bpb") is not None for r in results.values()) else "val_bpb"
-    pairs = [(RUNS[iso]["compare_to"][0], iso) for iso in RUNS if RUNS[iso]["budget"] == "flops"]
+    pairs = [(token_run, compute) for compute, token_run in paired_pairs()[1]]  # same pairs as the E6 paired analysis
     points = {}
     for name in dict.fromkeys(["d8-b0", *(n for pair in pairs for n in pair)]):
         record = pooled(results, name)
         runs_ = [results[m] for m in members(name) if m in results]
         if record is not None and record.get(metric) is not None and runs_:
             points[name] = (sum(r["estimated_flops"] for r in runs_) / len(runs_) / 1e15, record[metric])
-    if not any(iso in points for _, iso in pairs):
+    if not any(token_run in points for token_run, _ in pairs):
         return None
-    fig, axes = canvas("Fixed compute budget", f"{context} · {metric.replace('_bpb', '')} BPB at matched tokens (solid) vs matched FLOPs (dashed)")
+    fig, axes = canvas("Fixed compute budget", f"{context} · {metric.replace('_bpb', '')} BPB: arrows from matched-token ablation to fixed-compute run")
     ax = axes[0, 0]
     for name, (x, y) in points.items():
         ax.scatter(x, y, color=STYLES[name]["color"], marker=STYLES[name]["marker"], s=80, label=name, zorder=3)
-    for token_run, iso in pairs:
-        if token_run in points and iso in points:
-            ax.annotate("", xy=points[iso], xytext=points[token_run], arrowprops=dict(arrowstyle="->", color="#7A8796", linestyle="--"))
+    for token_run, compute in pairs:
+        if token_run in points and compute in points:
+            ax.annotate("", xy=points[compute], xytext=points[token_run], arrowprops=dict(arrowstyle="->", color="#7A8796", linestyle="--"))
     budget = next((r["flop_budget"] for r in results.values() if r.get("flop_budget")), None)
     if budget:
         ax.axvline(budget / 1e15, color="#A13D6F", linewidth=1, linestyle=":", label="declared budget")

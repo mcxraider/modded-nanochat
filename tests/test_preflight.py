@@ -13,10 +13,10 @@ def test_preflight_covers_every_run_and_all_scientific_variants():
     baseline = next(item for item in variants if "d8-b0-s1" in item["run_ids"])
     assert set(baseline["run_ids"]) == {"d8-b0-s1", "d8-b0-s2", "d8-b0-s3"}
     gqa2 = next(item for item in variants if "d8-gqa2-s1" in item["run_ids"])
-    # Seeds and the FLOP-budget run share one architecture check; only token targets differ.
-    assert gqa2["run_ids"] == ["d8-gqa2-s1", "d8-gqa2-s2", "d8-gqa2-s3", "d8-gqa2-iso"]
+    # Seeds and the matched-token ablation share one architecture check; only token targets differ.
+    assert gqa2["run_ids"] == ["d8-gqa2-s1", "d8-gqa2-s2", "d8-gqa2-s3", "d8-gqa2-tok"]
     gqa4 = next(item for item in variants if "d8-gqa4" in item["run_ids"])
-    assert gqa4["run_ids"] == ["d8-gqa4", "d8-gqa4-iso"]
+    assert gqa4["run_ids"] == ["d8-gqa4", "d8-gqa4-tok"]
     for run_id in ("d8-gqa2-r75", "d8-gqa2-r25", "d8-gqa2-pm", "d8-b0-nove", "d8-gqa2-nove"):
         selected = [item for item in variants if run_id in item["run_ids"]]
         assert len(selected) == 1

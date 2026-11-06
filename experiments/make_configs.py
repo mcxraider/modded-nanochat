@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from experiments.config import BASE_COMMIT, RUNS, SUITE_BATCH, model_for, read_config, validate_suite
+from experiments.config import BASE_COMMIT, RUNS, SUITE_BATCH, is_ablation, is_b0, model_for, read_config, validate_suite
 
 # Per-depth policy shared by every run at that depth. PROVISIONAL until the GPU pilot measures
 # tokens/s, peak VRAM, and evaluation cost; edit here and regenerate. Micro-batches must tile the global batch.
@@ -43,9 +43,8 @@ def scaling_params(run_id):
 
 
 def b0_run(depth):
-    """The depth's reference run: MHA, full RoPE, historical MLP and value embeddings, seed 1, token budget."""
-    return next(r for r, spec in RUNS.items() if spec["depth"] == depth and spec["gqa"] == 1 and spec["ve"]
-                and spec["mlp"] == 4.0 and spec["rotary"] == 1.0 and spec["seed"] == 1 and spec["budget"] == "tokens")
+    """The depth's reference run: B0's architecture, seed 1."""
+    return next(r for r, spec in RUNS.items() if spec["depth"] == depth and is_b0(r) and spec["seed"] == 1)
 
 
 def token_target(depth):
@@ -60,7 +59,7 @@ def flop_budget(depth):
 
 def target_tokens(run_id):
     r = RUNS[run_id]
-    if r["budget"] == "tokens":
+    if is_ablation(run_id):
         return token_target(r["depth"])
     return flop_budget(r["depth"]) // (flops_per_token(run_id) * BATCH) * BATCH  # most whole updates within budget
 

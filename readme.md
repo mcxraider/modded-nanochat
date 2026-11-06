@@ -1,6 +1,6 @@
 # GQA and partial RoPE at small scale (nanochat d8)
 
-**Research question:** at depth 8 under a fixed token budget, what do grouped-query attention (GQA) and partial
+**Research question:** at depth 8 under a fixed compute budget (B0's training FLOPs), what do grouped-query attention (GQA) and partial
 RoPE cost or buy in validation quality, training speed, and inference memory and speed?
 
 The full pre-registered plan (hypotheses, budget, comparison rules) is in
@@ -97,21 +97,21 @@ python experiments/run_all.py             # all core runs; --runs <ids> for a su
 ### Run list
 
 All runs use d8 (8 layers, width 512, 4 heads of dimension 128), context 2,048, and a global batch of 262,144 tokens (upstream nanochat's own batch rule at d8).
-They are trained from random initialisation. The E1–E5 runs use B0's 1,680 updates, 10.5 tokens per scaling parameter (matched tokens). The E6 runs use the
-most updates that fit B0's FLOP budget (matched compute). The 14 runs cover 8 distinct architectures and are defined in `experiments/config.py`.
+They are trained from random initialisation. The E1–E5 runs use the most updates that fit B0's FLOP budget (B0: 1,680 updates, 10.5 tokens per
+scaling parameter; GQA runs get more updates because they cost fewer FLOPs per token). The E6 runs are a matched-token ablation at B0's 1,680 updates. The 14 runs cover 8 distinct architectures and are defined in `experiments/config.py`.
 
 | Run ID | Exp. | KV heads | Rotary fraction | MLP ratio | Value embeds | Budget (updates) | Seed |
 |---|---|---|---|---|---|---|---|
-| `d8-b0-s1/s2/s3` | E1 noise floor | 4 | 1.0 | 4.0 | on | tokens (1,680) | 1/2/3 |
-| `d8-gqa2-s1/s2/s3` | E2 | 2 | 1.0 | 4.0 | on | tokens (1,680) | 1/2/3 |
-| `d8-gqa2-r75` | E2 | 2 | 0.75 | 4.0 | on | tokens (1,680) | 1 |
-| `d8-gqa2-pm` | E3 param-matched | 2 | 1.0 | 4.5 | on | tokens (1,680) | 1 |
-| `d8-gqa4` | E4 | 1 | 1.0 | 4.0 | on | tokens (1,680) | 1 |
-| `d8-gqa2-r25` | E4 | 2 | 0.25 | 4.0 | on | tokens (1,680) | 1 |
-| `d8-b0-nove` | E5 value-embed 2×2 | 4 | 1.0 | 4.0 | off | tokens (1,680) | 1 |
-| `d8-gqa2-nove` | E5 value-embed 2×2 | 2 | 1.0 | 4.0 | off | tokens (1,680) | 1 |
-| `d8-gqa2-iso` | E6 fixed compute | 2 | 1.0 | 4.0 | on | FLOPs (1,750) | 1 |
-| `d8-gqa4-iso` | E6 fixed compute | 1 | 1.0 | 4.0 | on | FLOPs (1,787) | 1 |
+| `d8-b0-s1/s2/s3` | E1 noise floor | 4 | 1.0 | 4.0 | on | FLOPs (1,680) | 1/2/3 |
+| `d8-gqa2-s1/s2/s3` | E2 | 2 | 1.0 | 4.0 | on | FLOPs (1,750) | 1/2/3 |
+| `d8-gqa2-r75` | E2 | 2 | 0.75 | 4.0 | on | FLOPs (1,750) | 1 |
+| `d8-gqa2-pm` | E3 param-matched | 2 | 1.0 | 4.5 | on | FLOPs (1,680) | 1 |
+| `d8-gqa4` | E4 | 1 | 1.0 | 4.0 | on | FLOPs (1,787) | 1 |
+| `d8-gqa2-r25` | E4 | 2 | 0.25 | 4.0 | on | FLOPs (1,750) | 1 |
+| `d8-b0-nove` | E5 value-embed 2×2 | 4 | 1.0 | 4.0 | off | FLOPs (1,680) | 1 |
+| `d8-gqa2-nove` | E5 value-embed 2×2 | 2 | 1.0 | 4.0 | off | FLOPs (1,750) | 1 |
+| `d8-gqa2-tok` | E6 matched-token ablation | 2 | 1.0 | 4.0 | on | tokens (1,680) | 1 |
+| `d8-gqa4-tok` | E6 matched-token ablation | 1 | 1.0 | 4.0 | on | tokens (1,680) | 1 |
 
 The primary metric is test bits per byte (BPB). A difference counts as resolved only if it exceeds `2√2·s`, where
 `s` is the seed standard deviation of the three B0 runs.

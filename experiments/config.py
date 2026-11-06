@@ -1,4 +1,4 @@
-"""Small, dependency-free experiment configuration, run table and token-budget schedule."""
+"""Small, dependency-free experiment configuration, run table and FLOP-budget schedule."""
 import json
 import math
 from pathlib import Path
@@ -14,15 +14,16 @@ SEQUENCE_LEN, VOCAB_SIZE, WINDOW_PATTERN = 2048, 32768, "SSSL"
 SUITE_BATCH = 262144
 
 
-def _run(depth, gqa, rotary, mlp, seed, experiment, compare_to, ve=True, budget="tokens"):
+def _run(depth, gqa, rotary, mlp, seed, experiment, compare_to, ve=True, budget="flops"):
     return {"depth": depth, "gqa": gqa, "rotary": rotary, "mlp": mlp, "seed": seed, "ve": ve, "budget": budget,
             "experiment": experiment, "compare_to": tuple(compare_to)}
 
 
 # Single source of truth for the suite. `gqa` is query heads / KV heads. `compare_to` names a run or a
 # seed group (see GROUPS); the first entry is the primary reference. `ve` toggles the value embeddings.
-# `budget`: "tokens" trains on the depth's token target (B0's); "flops" trains the most whole updates that fit
-# the depth's declared FLOP budget (see make_configs.py), so a cheaper architecture sees more tokens.
+# `budget`: "flops" (every main run) trains the most whole updates that fit the depth's declared FLOP budget
+# (see make_configs.py), so a cheaper architecture sees more tokens; "tokens" marks the matched-token ablation,
+# which trains on B0's token count.
 RUNS = {
     "d8-b0-s1": _run(8, 1, 1.0, 4.0, 1, "E1", ()),
     "d8-b0-s2": _run(8, 1, 1.0, 4.0, 2, "E1", ()),
@@ -36,8 +37,8 @@ RUNS = {
     "d8-gqa2-r25": _run(8, 2, 0.25, 4.0, 1, "E4", ("d8-gqa2", "d8-gqa2-r75")),
     "d8-b0-nove": _run(8, 1, 1.0, 4.0, 1, "E5", ("d8-b0",), ve=False),
     "d8-gqa2-nove": _run(8, 2, 1.0, 4.0, 1, "E5", ("d8-b0-nove", "d8-gqa2"), ve=False),
-    "d8-gqa2-iso": _run(8, 2, 1.0, 4.0, 1, "E6", ("d8-gqa2", "d8-b0"), budget="flops"),
-    "d8-gqa4-iso": _run(8, 4, 1.0, 4.0, 1, "E6", ("d8-gqa4", "d8-b0"), budget="flops"),
+    "d8-gqa2-tok": _run(8, 2, 1.0, 4.0, 1, "E6", ("d8-gqa2", "d8-b0"), budget="tokens"),
+    "d8-gqa4-tok": _run(8, 4, 1.0, 4.0, 1, "E6", ("d8-gqa4", "d8-b0"), budget="tokens"),
 }
 GROUPS = {"d8-b0": ("d8-b0-s1", "d8-b0-s2", "d8-b0-s3"),
           "d8-gqa2": ("d8-gqa2-s1", "d8-gqa2-s2", "d8-gqa2-s3")}
@@ -52,6 +53,18 @@ def members(name):
     if name in GROUPS:
         return GROUPS[name]
     raise KeyError(name)
+
+
+def is_ablation(run_id):
+    """True for a matched-token ablation (B0's token count); every other run trains to the FLOP budget."""
+    return RUNS[run_id]["budget"] == "tokens"
+
+
+def is_b0(run_id):
+    """B0's architecture: MHA, full RoPE, historical MLP and value embeddings. It defines the depth's token target and
+    FLOP budget, so the ablations must share its target."""
+    r = RUNS[run_id]
+    return r["gqa"] == 1 and r["rotary"] == 1.0 and r["mlp"] == 4.0 and r["ve"] and not is_ablation(run_id)
 
 
 def model_for(run_id):
@@ -175,15 +188,15 @@ def validate_suite(configs):
         t = config["training"]
         if config["workers"] != 1 or t["total_batch_size"] != SUITE_BATCH or t["max_steps"] is not None:
             raise ValueError(f"suite requires one worker, batch {SUITE_BATCH}, and no step cap")
-        # Everything but the token target must match at a depth. Token-budget runs must also share one target;
-        # a FLOP-budget run's target is derived from the shared flop_budget instead.
+        # Everything but the token target must match at a depth. B0 and the matched-token ablations must share one
+        # target (B0's); any other FLOP-budget run's target is derived from the shared flop_budget instead.
         rest = {k: v for k, v in config.items() if k not in ("run_id", "seed", "model")}
         rest["training"] = {k: v for k, v in t.items() if k != "target_tokens"}
         depth = RUNS[run_id]["depth"]
-        target = targets.setdefault(depth, t["target_tokens"]) if RUNS[run_id]["budget"] == "tokens" else t["target_tokens"]
+        target = targets.setdefault(depth, t["target_tokens"]) if is_ablation(run_id) or is_b0(run_id) else t["target_tokens"]
         if rest != by_depth.setdefault(depth, rest) or target != t["target_tokens"]:
             raise ValueError("suite configs at one depth may differ only in run_id, seed, KV heads, rotary fraction, "
-                             "MLP ratio, value embeddings, and (FLOP-budget runs) token target")
+                             "MLP ratio, value embeddings, and token target (FLOP-budget runs only)")
 
 
 def schedule(progress, optimizer):

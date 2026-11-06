@@ -47,7 +47,7 @@ BASE_DIR = VOLUME_PATH / "nanochat"
 ARTIFACTS = VOLUME_PATH / "artifacts"
 PILOTS = VOLUME_PATH / "pilots"
 PILOT_RUNS = ("d8-b0-s1", "d8-gqa2-s1", "d8-gqa2-r75", "d8-gqa2-pm", "d8-gqa4", "d8-gqa2-r25",
-              "d8-b0-nove", "d8-gqa2-nove")  # one per architecture; FLOP-budget runs reuse their architecture's pilot
+              "d8-b0-nove", "d8-gqa2-nove")  # one per architecture; matched-token ablations reuse their architecture's pilot
 
 image = (
     modal.Image.debian_slim(python_version="3.12")

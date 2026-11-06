@@ -173,7 +173,7 @@ def test_final_pairwise_differences_follow_the_runs_table_and_use_test_bpb(artif
     fig = v.final_comparison(d8(runs), "SYNTHETIC TEST", noise)
     # Fixture test BPB = 0.72 + 0.001 * index in RUNS; b0 mean 0.721, gqa2 mean 0.724 (seeds at 0.723-0.725).
     # (gqa2, b0) (r75, b0) (r75, gqa2) (pm, b0) (pm, gqa2) (gqa4, b0) (gqa4, gqa2) (r25, gqa2) (r25, r75)
-    # (b0-nove, b0) (gqa2-nove, b0-nove) (gqa2-nove, gqa2) (gqa2-iso, gqa2) (gqa2-iso, b0) (gqa4-iso, gqa4) (gqa4-iso, b0)
+    # (b0-nove, b0) (gqa2-nove, b0-nove) (gqa2-nove, gqa2) (gqa2-tok, gqa2) (gqa2-tok, b0) (gqa4-tok, gqa4) (gqa4-tok, b0)
     assert [bar.get_width() for bar in fig.axes[1].patches] == pytest.approx(
         [0.003, 0.005, 0.002, 0.006, 0.003, 0.007, 0.004, 0.005, 0.003, 0.009, 0.001, 0.007, 0.008, 0.011, 0.005, 0.012])
     assert "d8-gqa2-r75" in fig.axes[1].get_yticklabels()[2].get_text() and "− d8-gqa2" in fig.axes[1].get_yticklabels()[2].get_text()
@@ -216,7 +216,7 @@ def test_d8_report_omits_scale_transfer_and_tracks_missing_runs(artifacts, monke
     assert (artifacts / "tables.md").is_file()
     paired = payload["paired"]  # every B0 / GQA-2 seed is present in both cases
     assert paired["e2_seed_pairs"]["n"] == 3
-    assert {i["run_id"] for i in paired["e6_iso_vs_twin"]} == {"d8-gqa2-iso", "d8-gqa4-iso"}
+    assert {i["run_id"] for i in paired["e6_compute_vs_tokens"]} == {"d8-gqa2-s1", "d8-gqa4"}
     assert "Paired analysis" in (artifacts / "tables.md").read_text()
 
 
@@ -315,10 +315,13 @@ def test_report_splits_regimes_labels_rules_and_tolerates_missing_steady_through
     monkeypatch.setattr(sys, "argv", ["report", "--output-root", str(artifacts)])
     report.main()
     payload = json.loads((artifacts / "comparison.json").read_text())
-    iso = next(c for c in payload["comparisons"] if c["run_id"] == "d8-gqa2-iso" and c["reference"] == "d8-gqa2")
-    assert iso["matched_tokens"] == iso["matched_estimated_flops"] == [] and "not schedule-matched" in iso["matched_observations_note"]
+    ablation = next(c for c in payload["comparisons"] if c["run_id"] == "d8-gqa2-tok" and c["reference"] == "d8-gqa2")
+    assert ablation["matched_tokens"] == ablation["matched_estimated_flops"] == [] and "not schedule-matched" in ablation["matched_observations_note"]
+    # Curves are matched only at equal token targets: R75 and GQA-2 share 1,750 updates; GQA-2 and B0 (1,680) do not.
+    r75 = next(c for c in payload["comparisons"] if c["run_id"] == "d8-gqa2-r75" and c["reference"] == "d8-gqa2")
+    assert r75["matched_tokens"] and "matched_observations_note" not in r75
     same = next(c for c in payload["comparisons"] if c["run_id"] == "d8-gqa2" and c["reference"] == "d8-b0")
-    assert same["matched_tokens"] and "matched_observations_note" not in same
+    assert same["matched_tokens"] == [] and "not schedule-matched" in same["matched_observations_note"]
     # Fixture steady tok/s = 1200 + 200 * index (gqa2 mean 2000, b0 1400); whole-phase 1000 + 150 * index (1600, 1150).
     assert same["training_speedup"] == pytest.approx(2000 / 1400) and same["whole_phase_training_speedup"] == pytest.approx(1600 / 1150)
     assert next(c for c in payload["comparisons"] if c["run_id"] == "d8-gqa4")["training_speedup"] is None

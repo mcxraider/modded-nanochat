@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from experiments.config import GROUPS, RUNS, SUITE_BATCH, members, model_for, read_config, schedule, validate_suite
+from experiments.config import GROUPS, RUNS, SUITE_BATCH, is_ablation, is_b0, members, model_for, read_config, schedule, validate_suite
 from experiments import make_configs, run, run_all
 from experiments.report import compare, matched_observations
 from experiments.resume import pilot_tokens_per_second, project_seconds, resume_action, spent_seconds, truncate_metrics
@@ -44,7 +44,7 @@ def test_generated_suite_matches_runs_table_and_batch_policy(config_dir):
     assert {RUNS[r]["depth"] for r in RUNS} == {8}
 
 
-def test_flop_budget_is_b0s_usage_and_iso_runs_fill_it(config_dir):
+def test_flop_budget_is_b0s_usage_and_fixed_compute_runs_fill_it(config_dir):
     suite = {c["run_id"]: c for c in configs(config_dir)}
     budget = suite[FIRST]["training"]["flop_budget"]
     assert {c["training"]["flop_budget"] for c in suite.values()} == {budget}
@@ -52,13 +52,14 @@ def test_flop_budget_is_b0s_usage_and_iso_runs_fill_it(config_dir):
     for run_id, c in suite.items():
         fpt, target, batch = make_configs.flops_per_token(run_id), c["training"]["target_tokens"], c["training"]["total_batch_size"]
         assert target * fpt <= budget  # no run exceeds the declared budget
-        if RUNS[run_id]["budget"] == "flops":
+        if not is_ablation(run_id):
             assert (target + batch) * fpt > budget  # the most whole updates that fit
             assert target * fpt > 0.999 * budget
         else:
             assert target == suite[FIRST]["training"]["target_tokens"]
-    assert {r: suite[r]["training"]["target_tokens"] // SUITE_BATCH for r in ("d8-gqa2-iso", "d8-gqa4-iso")} == {
-        "d8-gqa2-iso": 1750, "d8-gqa4-iso": 1787}
+    updates = {r: suite[r]["training"]["target_tokens"] // SUITE_BATCH
+               for r in ("d8-b0-s1", "d8-gqa2-s1", "d8-gqa4", "d8-gqa2-tok", "d8-gqa4-tok")}
+    assert updates == {"d8-b0-s1": 1680, "d8-gqa2-s1": 1750, "d8-gqa4": 1787, "d8-gqa2-tok": 1680, "d8-gqa4-tok": 1680}
 
 
 def _upstream_scaling_params(**overrides):
@@ -84,27 +85,32 @@ def test_b0_follows_upstream_base_train_recipe(config_dir):
     for c in configs(config_dir):
         t, o = c["training"], c["optimizer"]
         assert t["total_batch_size"] == batch and t["tokens_per_scaling_param"] == ratio
-        if RUNS[c["run_id"]]["budget"] == "tokens":
+        if is_ablation(c["run_id"]) or is_b0(c["run_id"]):  # B0 fills the budget at exactly its token target
             assert t["target_tokens"] == target // batch * batch == 1680 * batch
         expected = o["weight_decay"] * math.sqrt(batch / b_ref) * d_ref / target  # B0's, for every variant
         assert scaled_weight_decay(o, t, GPTConfig(**c["model"])) == pytest.approx(expected, rel=1e-12)
 
 
-def test_suite_allows_token_target_drift_only_on_flop_budget_runs(config_dir):
+def test_suite_allows_token_target_drift_only_on_fixed_compute_runs(config_dir):
     suite = configs(config_dir)
     index = {c["run_id"]: i for i, c in enumerate(suite)}
     drifted = copy.deepcopy(suite)
-    drifted[index["d8-gqa2-r75"]]["training"]["target_tokens"] += SUITE_BATCH
+    drifted[index["d8-gqa2-tok"]]["training"]["target_tokens"] += SUITE_BATCH
     with pytest.raises(ValueError, match="may differ only"):
         validate_suite(drifted)
     budget = copy.deepcopy(suite)
-    budget[index["d8-gqa2-iso"]]["training"]["flop_budget"] += 1
+    budget[index["d8-gqa2-s1"]]["training"]["flop_budget"] += 1
     with pytest.raises(ValueError, match="may differ only"):
         validate_suite(budget)
-    iso = copy.deepcopy(suite)
-    iso[index["d8-gqa2-iso"]]["training"]["target_tokens"] = suite[index[FIRST]]["training"]["target_tokens"]
+    collapsed = copy.deepcopy(suite)
+    collapsed[index["d8-gqa2-s1"]]["training"]["target_tokens"] = suite[index["d8-gqa2-tok"]]["training"]["target_tokens"]
     with pytest.raises(ValueError, match="duplicate"):
-        validate_suite(iso)  # identical to d8-gqa2-s1 once its target matches
+        validate_suite(collapsed)  # identical to d8-gqa2-tok once its target matches
+    shifted = copy.deepcopy(suite)  # both ablations move together: still off B0's target
+    for run_id in ("d8-gqa2-tok", "d8-gqa4-tok"):
+        shifted[index[run_id]]["training"]["target_tokens"] += SUITE_BATCH
+    with pytest.raises(ValueError, match="may differ only"):
+        validate_suite(shifted)
 
 
 def test_value_embedding_runs_form_a_2x2_with_b0_and_gqa2():

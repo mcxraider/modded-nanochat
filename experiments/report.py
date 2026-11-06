@@ -4,7 +4,7 @@ import json
 import math
 from pathlib import Path
 
-from experiments.config import GROUPS, INTERACTIONS, RUNS, members, model_for
+from experiments.config import GROUPS, INTERACTIONS, RUNS, is_ablation, members, model_for
 
 SIGNIFICANCE_FACTOR = 2 * math.sqrt(2)  # two-sigma on a difference of two single runs
 T95 = (12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228)  # two-sided 95% Student t, df 1..10
@@ -107,13 +107,13 @@ def sensitivity(delta, noise, ns):
 
 def paired_pairs():
     """Same-seed (subject, reference) pairs, derived from RUNS: `seeds` pairs each GQA-2 seed with the baseline seed
-    that shares its data order; `iso` pairs each FLOP-budget run with its matched-token twin (same architecture and
-    seed, hence identical initial weights and an identical batch sequence until the twin stops)."""
+    that shares its data order; `ablation` pairs each fixed-compute run with its matched-token ablation (same
+    architecture and seed, hence identical initial weights and an identical batch sequence until the ablation stops)."""
     base = {RUNS[r]["seed"]: r for r in GROUPS["d8-b0"]}
     seeds = [(r, base[RUNS[r]["seed"]]) for r in GROUPS["d8-gqa2"]]
-    iso = [(r, next(t for t in RUNS if RUNS[t]["budget"] == "tokens" and RUNS[t]["seed"] == RUNS[r]["seed"]
-                    and model_for(t) == model_for(r))) for r in RUNS if RUNS[r]["budget"] == "flops"]
-    return seeds, iso
+    ablation = [(next(f for f in RUNS if not is_ablation(f) and RUNS[f]["seed"] == RUNS[t]["seed"]
+                      and model_for(f) == model_for(t)), t) for t in RUNS if is_ablation(t)]
+    return seeds, ablation
 
 
 def paired_analysis(results, noise=None):
@@ -121,9 +121,9 @@ def paired_analysis(results, noise=None):
 
     E2: d_k = gqa2-sk - b0-sk on test BPB for every seed (all pairs must be eligible); mean, SD s_d (ddof=1), the
     Student-t 95% interval mean +- t * s_d / sqrt(n), and s_d / (sqrt(2) * s), the share of seed noise that the
-    shared data order does not cancel. E6: each iso run minus its twin, resolved if |delta| > 2 * s_d. The iso pairs
-    also share initial weights, so s_d from the E2 pairs is assumed to be an upper bound on their noise."""
-    seeds, iso = paired_pairs()
+    shared data order does not cancel. E6: each fixed-compute run minus its matched-token ablation, resolved if
+    |delta| > 2 * s_d. The ablation pairs also share initial weights, so s_d from the E2 pairs is assumed to be an upper bound on their noise."""
+    seeds, ablation = paired_pairs()
     if any(a not in results or b not in results for a, b in seeds):
         return None
     diffs = {a: results[a]["test_bpb"] - results[b]["test_bpb"] for a, b in seeds}
@@ -136,11 +136,11 @@ def paired_analysis(results, noise=None):
           "unpaired_difference_std": None if noise is None else math.sqrt(2) * noise["std"],
           "noise_ratio": None if noise is None or not noise["std"] else s_d / (math.sqrt(2) * noise["std"])}
     e6 = []
-    for a, b in iso:
+    for a, b in ablation:
         if a in results and b in results:
             delta = results[a]["test_bpb"] - results[b]["test_bpb"]
-            e6.append({"run_id": a, "twin": b, "test_bpb_delta": delta, "threshold": 2 * s_d, "resolved": abs(delta) > 2 * s_d})
-    return {"e2_seed_pairs": e2, "e6_iso_vs_twin": e6, "n_contrasts": 1 + len(e6)}
+            e6.append({"run_id": a, "ablation": b, "test_bpb_delta": delta, "threshold": 2 * s_d, "resolved": abs(delta) > 2 * s_d})
+    return {"e2_seed_pairs": e2, "e6_compute_vs_tokens": e6, "n_contrasts": 1 + len(e6)}
 
 
 def pair_entry(run, reference, threshold, std=None, pn=None):
@@ -243,7 +243,7 @@ def tables(payload):
         lines.append(f"| {c['run_id']} ({c['n_run']}) | {c['reference']} ({c['n_ref']}) | {fmt(c.get('test_bpb_delta'), '+.4f')} | "
                      f"{flag[c.get('resolved')]} | {flag[c.get('resolved_by_means')]} | {ci(c.get('sensitivity'))} | {sens(c.get('sensitivity'))} | "
                      f"{fmt(c['bpb_delta'], '+.4f')} | {fmt(c['training_speedup'], '.3f')} | {fmt(c['whole_phase_training_speedup'], '.3f')} |")
-    lines += ["", "Paired analysis (secondary; same-seed pairs share data order, iso runs also share initial weights):"]
+    lines += ["", "Paired analysis (secondary; same-seed pairs share data order, ablation pairs also share initial weights):"]
     pa = payload["paired"]
     if pa is None:
         lines.append("not yet available (needs every d8-b0 and d8-gqa2 seed)")
@@ -253,8 +253,8 @@ def tables(payload):
         lines += [f"- E2 gqa2-sk - b0-sk: mean {e2['mean']:+.4f}, s_d={e2['std']:.4f} (df={e2['df']}), "
                   f"95% CI [{e2['ci95'][0]:+.4f}, {e2['ci95'][1]:+.4f}], resolved: {flag[e2['resolved']]}; "
                   f"s_d / (sqrt(2)*s) = {ratio}"]
-        lines += [f"- E6 {i['run_id']} - {i['twin']}: {i['test_bpb_delta']:+.4f} vs 2*s_d = {i['threshold']:.4f}, "
-                  f"resolved: {flag[i['resolved']]}" for i in pa["e6_iso_vs_twin"]] or ["- E6: iso runs or twins not yet available"]
+        lines += [f"- E6 {i['run_id']} - {i['ablation']}: {i['test_bpb_delta']:+.4f} vs 2*s_d = {i['threshold']:.4f}, "
+                  f"resolved: {flag[i['resolved']]}" for i in pa["e6_compute_vs_tokens"]] or ["- E6: fixed-compute runs or ablations not yet available"]
     lines += ["", "| Interaction (a-b)-(c-d) | with | without | interaction | threshold | resolved (primary) | "
               "pooled-t 95% CI (sensitivity) | resolved (sensitivity) |", "|---|---|---|---|---|---|---|---|"]
     for name, i in payload["interactions"].items():
@@ -319,12 +319,12 @@ def main():
             entry["field_subject"] = run_id
             entry["field_references"] = {field: ref_id for field in (
                 "matched_tokens", "matched_estimated_flops", "elapsed_seconds_difference", "inference_speedups")}
-            if RUNS[run_id]["budget"] == RUNS[ref_id]["budget"]:
+            if item["config"]["training"]["target_tokens"] == loaded[ref_id]["config"]["training"]["target_tokens"]:
                 entry["matched_tokens"] = matched_observations(item["curves"], loaded[ref_id]["curves"], "tokens")
                 entry["matched_estimated_flops"] = matched_observations(item["curves"], loaded[ref_id]["curves"], "estimated_flops")
-            else:  # the FLOP-budget twin's learning rate decays later; only final BPB is compared across regimes
+            else:  # a longer run's learning rate decays later; only final BPB is compared across token targets
                 entry.update(matched_tokens=[], matched_estimated_flops=[],
-                             matched_observations_note="different budget regimes; curves are not schedule-matched")
+                             matched_observations_note="different token targets; curves are not schedule-matched")
             entry["elapsed_seconds_difference"] = results[run_id]["training_seconds"] - results[ref_id]["training_seconds"]
             entry["inference_speedups"] = []
             if item["inference"] and loaded[ref_id]["inference"]:
@@ -346,8 +346,8 @@ def main():
                           "contrast by simulation); resolved_by_means is a secondary rule for three-seed group means; "
                           "`sensitivity` is a separately labelled sensitivity analysis using the SD pooled over the d8-b0 and "
                           "d8-gqa2 seeds with Student-t 95% intervals; n_contrasts counts the contrasts reported, with no "
-                          "multiplicity correction; `paired` is a secondary paired analysis of same-seed pairs (E2 seeds, E6 iso vs "
-                          "twin) on 2 df, with its own contrast count; unresolved differences are not ties")}
+                          "multiplicity correction; `paired` is a secondary paired analysis of same-seed pairs (E2 seeds, E6 fixed-compute "
+                          "run vs matched-token ablation) on 2 df, with its own contrast count; unresolved differences are not ties")}
     from experiments.train import write_json
     write_json(args.output_root / "comparison.json", payload)
     (args.output_root / "tables.md").write_text(tables(payload))
