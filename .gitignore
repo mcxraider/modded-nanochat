@@ -17,3 +17,11 @@ experiments/artifacts/
 
 # Course rubric (local reference)
 rubrics.md
+
+# LaTeX build intermediates (report.pdf itself is kept)
+report/*.aux
+report/*.log
+report/*.bbl
+report/*.blg
+report/*.out
+report/*.xdv

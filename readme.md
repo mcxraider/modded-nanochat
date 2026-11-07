@@ -4,7 +4,8 @@
 RoPE cost or buy in validation quality, training speed, and inference memory and speed?
 
 The full pre-registered plan (hypotheses, budget, comparison rules) is in
-[`experiments/experiments.md`](experiments/experiments.md). The written report is not in the repository yet. Group members are listed in
+[`experiments/experiments.md`](experiments/experiments.md). The report source is [`report/report.tex`](report/report.tex)
+(build: `cd report && tectonic report.tex`, or `latexmk -pdf report.tex`). Group members are listed in
 [`authors.md`](authors.md). This repository is a fork of Karpathy's nanochat, whose original README is now
 [`nanochat_readme.md`](nanochat_readme.md).
 
@@ -13,7 +14,10 @@ The full pre-registered plan (hypotheses, budget, comparison rules) is in
 ```
 ├── readme.md                 # this file
 ├── authors.md                # group members and student IDs
-├── report/figures/           # placeholder for report figures (report itself to be added)
+├── report/
+│   ├── report.tex            # complete report source (LaTeX)
+│   ├── references.bib        # bibliography
+│   └── figures/              # figures used by the report
 ├── nanochat/modified_gpt.py  # configurable GPT: n_kv_head, rotary_fraction, mlp_ratio, value_embeds
 ├── experiments/
 │   ├── config.py             # RUNS table: single source of truth for every run
@@ -27,8 +31,7 @@ The full pre-registered plan (hypotheses, budget, comparison rules) is in
 │   └── experiments.md        # plan and pipeline reference
 ├── modal_app.py              # runs the whole suite on a Modal H100
 ├── tests/                    # CPU tests
-├── code/                     # (to be added)
-└── results/                  # saved numerical results (to be added)
+└── results/                  # saved numerical results (pilot_d8-v5.md/.json; suite outputs once downloaded)
 ```
 
 ## Environment and dependencies
@@ -66,14 +69,14 @@ this worktree.
 ```bash
 modal run modal_app.py::image_check                       # CPU: image builds, configs resolve
 modal run modal_app.py::gpu_check                         # H100 available, FA3 loads
-modal run modal_app.py --pilot-only --experiment d8-v4    # data, numerical preflight, 8 pilots, cost table
-modal run --detach modal_app.py --experiment d8-v4        # full suite: 14 runs
+modal run modal_app.py --pilot-only --experiment d8-v5    # data, numerical preflight, 8 pilots, cost table
+modal run --detach modal_app.py --experiment d8-v5        # full suite: 14 runs
 ```
 
 **2. Download the results.**
 
 ```bash
-modal volume get nanochat-experiments experiments/d8-v4/results.tar.gz .
+modal volume get nanochat-experiments experiments/d8-v5/results.tar.gz .
 mkdir -p experiments/artifacts && tar xzf results.tar.gz -C experiments/artifacts
 ```
 
@@ -84,7 +87,8 @@ mkdir -p experiments/artifacts && tar xzf results.tar.gz -C experiments/artifact
 .venv/bin/python experiments/visualise.py --output-root experiments/artifacts
 ```
 
-The figures are written to `experiments/artifacts/figures/`.
+The figures are written to `experiments/artifacts/figures/`. The pilot measurements (throughput, cost gate) for
+the reported suite are in [`results/pilot_d8-v5.md`](results/pilot_d8-v5.md).
 
 **Alternative: run by hand on a GPU node.** Follow these steps:
 
