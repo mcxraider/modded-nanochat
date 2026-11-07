@@ -1,0 +1,7 @@
+{
+  "step": 1680,
+  "stop_reason": "token_target",
+  "data_epoch": 1,
+  "training_seconds": 421.73618447899935,
+  "peak_vram_bytes": 15667644928.0
+}

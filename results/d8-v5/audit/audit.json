@@ -1,0 +1,795 @@
+{
+  "failures": [],
+  "log_warnings": [
+    {
+      "run_id": "d8-b0-s1",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    }
+  ],
+  "run_count": 14,
+  "total_updates": 24047,
+  "total_tokens": 6303776768,
+  "runs": [
+    {
+      "run_id": "d8-b0-s1",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9612267073081054,
+      "val_bpb": 0.9615667274921506,
+      "steady_tokens_per_second": 1183999.7268789506,
+      "data_wait_fraction": 0.005170889654467157,
+      "training_seconds": 456.2821726,
+      "final_evaluation_seconds": 52.815666521000026,
+      "benchmark_seconds": 84.654084721,
+      "pipeline_seconds": 612.4773878039999,
+      "pipeline_cost_usd": 0.7536874522143665,
+      "projected_seconds": 1022.658579076555,
+      "projected_training_seconds": 412.67733503493264,
+      "projected_final_evaluation_seconds": 94.13619033599753,
+      "projected_benchmark_seconds": 95.84505370562489,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 18.72546396199988,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.1451735496520996
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9611179260552988,
+      "val_bpb": 0.9614461978761936,
+      "steady_tokens_per_second": 1184531.0524848665,
+      "data_wait_fraction": 0.004707283613958996,
+      "training_seconds": 438.46971325699997,
+      "final_evaluation_seconds": 52.59226670300018,
+      "benchmark_seconds": 84.30241386299986,
+      "pipeline_seconds": 591.8381657239999,
+      "pipeline_cost_usd": 0.7282897428214776,
+      "projected_seconds": 1022.658579076555,
+      "projected_training_seconds": 412.67733503493264,
+      "projected_final_evaluation_seconds": 94.13619033599753,
+      "projected_benchmark_seconds": 95.84505370562489,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 16.47377190099985,
+      "loss_first": 10.397729873657227,
+      "loss_last": 3.1850905418395996
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9600402935909975,
+      "val_bpb": 0.9602647603249718,
+      "steady_tokens_per_second": 1184567.8381260142,
+      "data_wait_fraction": 0.004723729441068959,
+      "training_seconds": 438.3445095740001,
+      "final_evaluation_seconds": 52.29263893600023,
+      "benchmark_seconds": 85.55723821000015,
+      "pipeline_seconds": 592.5727095750001,
+      "pipeline_cost_usd": 0.7291936398381251,
+      "projected_seconds": 1022.658579076555,
+      "projected_training_seconds": 412.67733503493264,
+      "projected_final_evaluation_seconds": 94.13619033599753,
+      "projected_benchmark_seconds": 95.84505370562489,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 16.378322854999624,
+      "loss_first": 10.397231101989746,
+      "loss_last": 3.1379287242889404
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9676358573105333,
+      "val_bpb": 0.9679067162228787,
+      "steady_tokens_per_second": 1217373.578732788,
+      "data_wait_fraction": 0.004937736445379103,
+      "training_seconds": 456.34766253399994,
+      "final_evaluation_seconds": 51.46942787500029,
+      "benchmark_seconds": 89.11015679999991,
+      "pipeline_seconds": 612.4700331220001,
+      "pipeline_cost_usd": 0.7536784018695724,
+      "projected_seconds": 1414.8036756849299,
+      "projected_training_seconds": 550.6068862464291,
+      "projected_final_evaluation_seconds": 351.1723228160008,
+      "projected_benchmark_seconds": 93.02446662249999,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.542785912999989,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.1721768379211426
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9661215001106994,
+      "val_bpb": 0.9664298829140218,
+      "steady_tokens_per_second": 1218844.5208048094,
+      "data_wait_fraction": 0.004812295130118437,
+      "training_seconds": 438.8162895649998,
+      "final_evaluation_seconds": 51.545309262000046,
+      "benchmark_seconds": 85.69798687699995,
+      "pipeline_seconds": 592.0551661929999,
+      "pipeline_cost_usd": 0.7285567739541636,
+      "projected_seconds": 1414.8036756849299,
+      "projected_training_seconds": 550.6068862464291,
+      "projected_final_evaluation_seconds": 351.1723228160008,
+      "projected_benchmark_seconds": 93.02446662249999,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.995580489000076,
+      "loss_first": 10.397729873657227,
+      "loss_last": 3.2266807556152344
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9641014846006933,
+      "val_bpb": 0.9642431832671292,
+      "steady_tokens_per_second": 1217927.9539937754,
+      "data_wait_fraction": 0.004755750020811966,
+      "training_seconds": 436.570790969,
+      "final_evaluation_seconds": 51.78383311400012,
+      "benchmark_seconds": 86.53257886499978,
+      "pipeline_seconds": 590.3478576470002,
+      "pipeline_cost_usd": 0.7264558359378362,
+      "projected_seconds": 1414.8036756849299,
+      "projected_training_seconds": 550.6068862464291,
+      "projected_final_evaluation_seconds": 351.1723228160008,
+      "projected_benchmark_seconds": 93.02446662249999,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.460654699000315,
+      "loss_first": 10.397231101989746,
+      "loss_last": 3.2270119190216064
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9657969742208089,
+      "val_bpb": 0.9661480894727317,
+      "steady_tokens_per_second": 1216343.3453236604,
+      "data_wait_fraction": 0.004699338300942692,
+      "training_seconds": 446.0797817919997,
+      "final_evaluation_seconds": 52.28534033899996,
+      "benchmark_seconds": 87.40208470400012,
+      "pipeline_seconds": 601.4913169640004,
+      "pipeline_cost_usd": 0.7401684817084782,
+      "projected_seconds": 1021.3517836554994,
+      "projected_training_seconds": 420.2132740994963,
+      "projected_final_evaluation_seconds": 94.851944576003,
+      "projected_benchmark_seconds": 86.28656498000005,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.724110129000564,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.166741371154785
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9648669526811049,
+      "val_bpb": 0.9650679782673326,
+      "steady_tokens_per_second": 1173835.9523188593,
+      "data_wait_fraction": 0.00481624369032965,
+      "training_seconds": 448.8344039249996,
+      "final_evaluation_seconds": 54.13638208100019,
+      "benchmark_seconds": 89.74310413199964,
+      "pipeline_seconds": 607.4750278310003,
+      "pipeline_cost_usd": 0.7475317703587031,
+      "projected_seconds": 998.0967028289701,
+      "projected_training_seconds": 412.70734467334427,
+      "projected_final_evaluation_seconds": 83.33589632000076,
+      "projected_benchmark_seconds": 82.05346183562504,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 14.76113769300082,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.1533331871032715
+    },
+    {
+      "run_id": "d8-gqa4",
+      "steps": 1787,
+      "tokens": 468451328,
+      "test_bpb": 0.9721649676797284,
+      "val_bpb": 0.9723183765776132,
+      "steady_tokens_per_second": 1260261.1232343924,
+      "data_wait_fraction": 0.005382866233081198,
+      "training_seconds": 446.92717809900023,
+      "final_evaluation_seconds": 51.330931275000694,
+      "benchmark_seconds": 91.92999512499955,
+      "pipeline_seconds": 605.8730716749997,
+      "pipeline_cost_usd": 0.7455604743111801,
+      "projected_seconds": 995.8893806597389,
+      "projected_training_seconds": 410.31307021161876,
+      "projected_final_evaluation_seconds": 83.23427327999525,
+      "projected_benchmark_seconds": 82.34203716812485,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.68496717599919,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.2767601013183594
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9668211613503422,
+      "val_bpb": 0.9670222747018034,
+      "steady_tokens_per_second": 1212585.4027392853,
+      "data_wait_fraction": 0.005556000432740989,
+      "training_seconds": 454.79702134299987,
+      "final_evaluation_seconds": 52.05303781600105,
+      "benchmark_seconds": 94.49410551300025,
+      "pipeline_seconds": 617.4808860680005,
+      "pipeline_cost_usd": 0.759844534800345,
+      "projected_seconds": 1000.970444610505,
+      "projected_training_seconds": 414.6725810945088,
+      "projected_final_evaluation_seconds": 83.47252889599622,
+      "projected_benchmark_seconds": 82.82533461999996,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 16.136721395999302,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.170186996459961
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9775414229279047,
+      "val_bpb": 0.9777611943468361,
+      "steady_tokens_per_second": 1211757.67720582,
+      "data_wait_fraction": 0.005428128048142232,
+      "training_seconds": 433.3089782849993,
+      "final_evaluation_seconds": 53.14098599600038,
+      "benchmark_seconds": 80.3346056370001,
+      "pipeline_seconds": 583.2590500340002,
+      "pipeline_cost_usd": 0.7177326643473946,
+      "projected_seconds": 983.7000275737948,
+      "projected_training_seconds": 400.271702438669,
+      "projected_final_evaluation_seconds": 83.32495219200064,
+      "projected_benchmark_seconds": 80.10337294312507,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 16.47448011600045,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.195286273956299
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "steps": 1750,
+      "tokens": 458752000,
+      "test_bpb": 0.9821923304885778,
+      "val_bpb": 0.9825038928924098,
+      "steady_tokens_per_second": 1234406.084732404,
+      "data_wait_fraction": 0.005352761680240237,
+      "training_seconds": 437.15579156900003,
+      "final_evaluation_seconds": 50.99803328899998,
+      "benchmark_seconds": 77.96814167200046,
+      "pipeline_seconds": 581.6758000270002,
+      "pipeline_cost_usd": 0.7157843872554474,
+      "projected_seconds": 1002.1965420671506,
+      "projected_training_seconds": 412.9916683091565,
+      "projected_final_evaluation_seconds": 87.36907404799422,
+      "projected_benchmark_seconds": 81.83579970999993,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.553833496999687,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.223149299621582
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.969949931233875,
+      "val_bpb": 0.9702762106343458,
+      "steady_tokens_per_second": 1219195.2875043647,
+      "data_wait_fraction": 0.0051080714412623796,
+      "training_seconds": 421.73618447899935,
+      "final_evaluation_seconds": 52.66898585600029,
+      "benchmark_seconds": 87.62820866200036,
+      "pipeline_seconds": 576.7645373660007,
+      "pipeline_cost_usd": 0.7097408057031619,
+      "projected_seconds": 1399.802846691393,
+      "projected_training_seconds": 535.606057252892,
+      "projected_final_evaluation_seconds": 351.1723228160008,
+      "projected_benchmark_seconds": 93.02446662249999,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 14.731158369000696,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.1714847087860107
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "steps": 1680,
+      "tokens": 440401920,
+      "test_bpb": 0.9756869061688264,
+      "val_bpb": 0.9758453771922937,
+      "steady_tokens_per_second": 1257761.7128220922,
+      "data_wait_fraction": 0.005199530982451404,
+      "training_seconds": 406.3585082489999,
+      "final_evaluation_seconds": 50.33564826300062,
+      "benchmark_seconds": 89.03931325300073,
+      "pipeline_seconds": 560.7494348089995,
+      "pipeline_cost_usd": 0.6900333322788521,
+      "projected_seconds": 973.8130153031841,
+      "projected_training_seconds": 388.236704855064,
+      "projected_final_evaluation_seconds": 83.23427327999525,
+      "projected_benchmark_seconds": 82.34203716812485,
+      "projected_overhead_seconds": 420,
+      "actual_other_seconds": 15.015965043998222,
+      "loss_first": 10.397600173950195,
+      "loss_last": 3.1886401176452637
+    }
+  ],
+  "checkpoint_checks": [
+    {
+      "run_id": "d8-b0-s1",
+      "file": "model_001680.pt",
+      "bytes": 335570681,
+      "sha256": "be93dfee35f7a167da9fe768b48b11ebf43de1de608e351102ed6387189eab09",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s1",
+      "file": "meta_001680.json",
+      "bytes": 1925,
+      "sha256": "44bb866672fca13dc5193e02f4edbc848a6a62b5de29d836e460e965797a79eb",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s1",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 570633637,
+      "sha256": "73057065439811922171c16ae8497583071fc6b19e1b72bc804a43e784651586",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s1",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "47034db3bdb8e48ef3520f13728536ad7a97d32804128ae7fab0af2385c0af26",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "file": "model_001680.pt",
+      "bytes": 335570681,
+      "sha256": "0401d13d369bc3df45dd8065d4230be75ec4ca60c0872f67c178b3e1cf29c944",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "file": "meta_001680.json",
+      "bytes": 1930,
+      "sha256": "f1e3f38ab505f4ba9a4ba591b6f60595c36272825f322fc1fc1cc70298eb1879",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 570633637,
+      "sha256": "eb4da361031a3ab3a7dfc72e5cc4a9bc4389b122defc0be99af931a02b9a2d4e",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "b184a1766f6a8401183e4cc93287a457a2599c10b5049d7196cf1803908a3b07",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "file": "model_001680.pt",
+      "bytes": 335570681,
+      "sha256": "2fdf4d7bd670491d8dad2feda7a7fb81fe407bf6e2dd80924c2120a937177f31",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "file": "meta_001680.json",
+      "bytes": 1929,
+      "sha256": "cebe0fa41d8b8776c6066ed2c5b9a16b3e9fd660390de95bfcbc397f78dbfa26",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 570633637,
+      "sha256": "509a072ba26c1eaf9b4a9501dbf3cab64b8ff4f417a3ef157a407ecdff53c396",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "9a12a627e0875aba918bfa80c890999dadc661d966c6f63a13db8fb39b84c1ff",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "file": "model_001750.pt",
+      "bytes": 260072185,
+      "sha256": "49a16eed5feb0c76f919fb2930e8afaeade27cdbcdfcf4c10b73808ac1f93206",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "file": "meta_001750.json",
+      "bytes": 1932,
+      "sha256": "e2732c9008be74d62a815ffe88f7ec709f26108ae46ee20258c4536529b50935",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "11adf9950617d4dda073fb3bc00f635f63abfa186089d1297559eb4dfaba09fd",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "bfcc96caed42061a5fe20f5e0ed485179a2f7228e819e4f53c1a190dba6a53d0",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "file": "model_001750.pt",
+      "bytes": 260072185,
+      "sha256": "2305a9bdc618ed473a405f6ff1e391cc69f23fe19ddd28061a0b4e131ec67223",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "file": "meta_001750.json",
+      "bytes": 1932,
+      "sha256": "f883dd7ee98c31f9f9878992995a8381214c30fee399b15cfc130afd952dbf14",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "759816ae85075c99e7697deae6b884e308873f2e85bc84c3637c955217316c39",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "5b14d2d283a44189deacbc4b8a0e3a0e5d05f5e536cfa8c2ae973ddf8e824ff6",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "file": "model_001750.pt",
+      "bytes": 260072185,
+      "sha256": "6149d143d362349d25f937a360f2a090f4af2aebaa690e09e03ff31c527d1f94",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "file": "meta_001750.json",
+      "bytes": 1931,
+      "sha256": "0a5b999a513678f042570e291e985ffb94080013dc296768c8f06ee3cda017a5",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "5887f76043bba53661e7717395a76597b5f9f0c20ec30d4ea0379544e15d99db",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "5fde7b0bca8b8e7f4ddfebca93ea41fbf3def9283d9fb17b6c0bce5f55c327ce",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "file": "model_001750.pt",
+      "bytes": 260072185,
+      "sha256": "cc373ed7c1646bbbf7b09e32ab54254902d6f00d1d1e4dc9a27dc571b01130b0",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "file": "meta_001750.json",
+      "bytes": 1934,
+      "sha256": "479e1438bbf9d5263909e37eccf4ee2eaa2c7a1127e6133c13473d9891ce9a52",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "1447af7d741906d6a0d1e769bc27fe46e3c60ca19e48d273181bd09071d42902",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "bfcc96caed42061a5fe20f5e0ed485179a2f7228e819e4f53c1a190dba6a53d0",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "file": "model_001680.pt",
+      "bytes": 268460793,
+      "sha256": "ad54e50eb8841eb4fa04c3a25cd74d74fae057cfcc021a250b03ef485d326f99",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "file": "meta_001680.json",
+      "bytes": 1931,
+      "sha256": "ac4bdf82997c3ddbf145179d5c43263d5967a7ac29df79f8425b2fd4234976cb",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 436431989,
+      "sha256": "667861f078d89c5193ac9467e08d2aee0285cb22ab8caaf56dbfca3acc2f1f60",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "1417fc4ba4b8d0516111ad3991bd6345164669fb86d4011df5c4a2943bfa7385",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "file": "model_001787.pt",
+      "bytes": 222322873,
+      "sha256": "98444bcde444a788b02080ec116fea0375fc146c43d33b395a0c3afa7772e147",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "file": "meta_001787.json",
+      "bytes": 1929,
+      "sha256": "a983c41c7f3c0c30dced79139f17b9162f456a9af86950b38d839135b9efc269",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "file": "optim_001787_rank0.pt",
+      "bytes": 356723253,
+      "sha256": "623c7888a076f2efbe2dfb1e709d35f20972f604706d9f8e019550d9318d0a25",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "file": "runtime_001787_rank0.pt",
+      "bytes": 10829,
+      "sha256": "45b4ee5e1f20633a83c6ef668eae7b30a0213732379734d3cd7b0b7edfb02521",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "file": "model_001750.pt",
+      "bytes": 260072185,
+      "sha256": "ac4a9e57783b652d5fc0d3a6bc8f26a86b6c1efbeb623964410e0522d4cf8bea",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "file": "meta_001750.json",
+      "bytes": 1935,
+      "sha256": "5b989f61f8595bfb06a10fd4046e8d81ccf514f7b61a1ae01981f99a4824b396",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "9a237c72a6d1d2f913d5cf379e96cb1ed63d204561a4d381debec414d1a02094",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "bfcc96caed42061a5fe20f5e0ed485179a2f7228e819e4f53c1a190dba6a53d0",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "file": "model_001680.pt",
+      "bytes": 201347945,
+      "sha256": "7fd198f99b03bb0f9681f62501cdac066f001c1a97bb2209b7f5d2e100a2b6b3",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "file": "meta_001680.json",
+      "bytes": 1933,
+      "sha256": "ccaff7fb245be6a577ed3f62befd72b2010e9bcc06934154ecf502063da32004",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 302192661,
+      "sha256": "80f38c44687fbfa66d1fb639589073990f76d51f7c44f7010d2febfcd30a6e38",
+      "valid": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "eddc86646b5395b526395ead6783d0e34859436e6103de0a127a7fded8382cd9",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "file": "model_001750.pt",
+      "bytes": 192959337,
+      "sha256": "b009fd5e1a4e1fd302157b5c90a34d1b5f91ed1bf4e991af4265dd0b26d4ece8",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "file": "meta_001750.json",
+      "bytes": 1935,
+      "sha256": "214b8b46cf0b87b0dce0a8a76fefe161dc998d2df92895edd8ce23f3d79f658b",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "file": "optim_001750_rank0.pt",
+      "bytes": 293804709,
+      "sha256": "dfa1f8e73ce7d6a53acf7799185a6cb6387df8ae6ffb10352cabe05575662d2f",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "file": "runtime_001750_rank0.pt",
+      "bytes": 10829,
+      "sha256": "f9cd21a83d5391b637c8a5f477381a25330be4c34965b0715202417b6c1bf21f",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "file": "model_001680.pt",
+      "bytes": 260072185,
+      "sha256": "89281e343424fe707be95ef1785637854e3c21cb10d9a7c3246443e8c1888194",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "file": "meta_001680.json",
+      "bytes": 1933,
+      "sha256": "db5babdb696e636a4efc772d94e69866c7261a1272c19d235b22b3bfd6e1355d",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 428026997,
+      "sha256": "ecb29a4695d0901337b0cb2ef02811d96f5928403666ff399f6b5744522c0dc0",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "90252c608e41e61c4d264cf898aaab6aa9620d5238f22b7a5e81e60ca0aa7b94",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "file": "model_001680.pt",
+      "bytes": 222322873,
+      "sha256": "350bc6e836b2c3342ce9a51795ab28ce634cf0c4de4280fc17490b2f9c015d4b",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "file": "meta_001680.json",
+      "bytes": 1933,
+      "sha256": "e3e652eaea7db95b76aac6f4f23876667a4505d06985e85399391f30c0fc7deb",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "file": "optim_001680_rank0.pt",
+      "bytes": 356723253,
+      "sha256": "d69894a67b5a614377df533b9876271146b4fc64b0fde2d985b8d36c2410b4fb",
+      "valid": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "file": "runtime_001680_rank0.pt",
+      "bytes": 10829,
+      "sha256": "5401006e46c0e43d1d9b372bc433ee3e5fe4fa155ef77f1c1308cc702683a09f",
+      "valid": true
+    }
+  ],
+  "totals": {
+    "training_seconds": 6160.028986239998,
+    "final_evaluation_seconds": 729.448487326004,
+    "benchmark_seconds": 1214.394018034001,
+    "pipeline_seconds": 8326.530444839002,
+    "pipeline_cost_usd": 10.246258297399102,
+    "projected_seconds": 15688.207507674691,
+    "projected_training_seconds": 6284.865066778836,
+    "projected_final_evaluation_seconds": 2285.920804863981,
+    "projected_benchmark_seconds": 1237.4216360318744,
+    "projected_overhead_seconds": 5880,
+    "actual_other_seconds": 222.65895323899866
+  }
+}

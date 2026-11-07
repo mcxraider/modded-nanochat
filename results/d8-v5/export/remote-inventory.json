@@ -1,0 +1,26 @@
+[
+  {
+    "filename": "experiments/d8-v5/artifacts",
+    "type": "dir",
+    "created_modified": "2026-11-07 12:53:59+08:00",
+    "size": 0
+  },
+  {
+    "filename": "experiments/d8-v5/checkpoints.tar",
+    "type": "file",
+    "created_modified": "2026-11-07 15:13:28+08:00",
+    "size": 9700812800
+  },
+  {
+    "filename": "experiments/d8-v5/pilots",
+    "type": "dir",
+    "created_modified": "2026-11-06 23:50:30+08:00",
+    "size": 0
+  },
+  {
+    "filename": "experiments/d8-v5/results.tar.gz",
+    "type": "file",
+    "created_modified": "2026-11-07 15:13:10+08:00",
+    "size": 8321484
+  }
+]

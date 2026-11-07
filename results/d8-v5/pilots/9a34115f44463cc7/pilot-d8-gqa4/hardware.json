@@ -1,0 +1,209 @@
+{
+  "attention_kernel": {
+    "repo": "varunneal/flash-attention-3",
+    "revision": "de87b9b5af06dd9984df595bef90b2eba44b181a"
+  },
+  "python": "3.10.22",
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "world_size": 1,
+  "device": "cuda:0",
+  "attention_backend": "FA3",
+  "precision": "BF16 autocast; FP32 linear weights, BF16 embeddings",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "effective_optimizer_groups": [
+    {
+      "kind": "adamw",
+      "lr": 0.003464101615137755,
+      "betas": [
+        0.8,
+        0.95
+      ],
+      "eps": 1e-10,
+      "weight_decay": 0.0,
+      "initial_lr": 0.003464101615137755,
+      "parameter_shapes": [
+        [
+          32768,
+          512
+        ]
+      ],
+      "parameter_count": 16777216
+    },
+    {
+      "kind": "adamw",
+      "lr": 0.2598076211353316,
+      "betas": [
+        0.8,
+        0.95
+      ],
+      "eps": 1e-10,
+      "weight_decay": 0.0,
+      "initial_lr": 0.2598076211353316,
+      "parameter_shapes": [
+        [
+          32768,
+          512
+        ]
+      ],
+      "parameter_count": 16777216
+    },
+    {
+      "kind": "adamw",
+      "lr": 0.2598076211353316,
+      "betas": [
+        0.8,
+        0.95
+      ],
+      "eps": 1e-10,
+      "weight_decay": 0.0,
+      "initial_lr": 0.2598076211353316,
+      "parameter_shapes": [
+        [
+          32768,
+          128
+        ]
+      ],
+      "parameter_count": 16777216
+    },
+    {
+      "kind": "adamw",
+      "lr": 0.003535533905932738,
+      "betas": [
+        0.8,
+        0.95
+      ],
+      "eps": 1e-10,
+      "weight_decay": 0.0,
+      "initial_lr": 0.003535533905932738,
+      "parameter_shapes": [
+        [
+          8
+        ]
+      ],
+      "parameter_count": 8
+    },
+    {
+      "kind": "adamw",
+      "lr": 0.3535533905932738,
+      "betas": [
+        0.96,
+        0.95
+      ],
+      "eps": 1e-10,
+      "weight_decay": 0.0,
+      "initial_lr": 0.3535533905932738,
+      "parameter_shapes": [
+        [
+          8
+        ]
+      ],
+      "parameter_count": 8
+    },
+    {
+      "kind": "muon",
+      "lr": 0.014142135623730952,
+      "momentum": 0.95,
+      "ns_steps": 5,
+      "beta2": 0.95,
+      "weight_decay": 0.3712304127552468,
+      "initial_lr": 0.014142135623730952,
+      "parameter_shapes": [
+        [
+          1,
+          32
+        ]
+      ],
+      "parameter_count": 128
+    },
+    {
+      "kind": "muon",
+      "lr": 0.014142135623730952,
+      "momentum": 0.95,
+      "ns_steps": 5,
+      "beta2": 0.95,
+      "weight_decay": 0.3712304127552468,
+      "initial_lr": 0.014142135623730952,
+      "parameter_shapes": [
+        [
+          128,
+          512
+        ]
+      ],
+      "parameter_count": 1048576
+    },
+    {
+      "kind": "muon",
+      "lr": 0.014142135623730952,
+      "momentum": 0.95,
+      "ns_steps": 5,
+      "beta2": 0.95,
+      "weight_decay": 0.3712304127552468,
+      "initial_lr": 0.014142135623730952,
+      "parameter_shapes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "parameter_count": 4194304
+    },
+    {
+      "kind": "muon",
+      "lr": 0.014142135623730952,
+      "momentum": 0.95,
+      "ns_steps": 5,
+      "beta2": 0.95,
+      "weight_decay": 0.3712304127552468,
+      "initial_lr": 0.014142135623730952,
+      "parameter_shapes": [
+        [
+          512,
+          2048
+        ]
+      ],
+      "parameter_count": 8388608
+    },
+    {
+      "kind": "muon",
+      "lr": 0.014142135623730952,
+      "momentum": 0.95,
+      "ns_steps": 5,
+      "beta2": 0.95,
+      "weight_decay": 0.3712304127552468,
+      "initial_lr": 0.014142135623730952,
+      "parameter_shapes": [
+        [
+          2048,
+          512
+        ]
+      ],
+      "parameter_count": 8388608
+    }
+  ],
+  "batch_lr_scale": 0.7071067811865476,
+  "effective_initial_weight_decay": 0.3712304127552468,
+  "parameters": 72351888,
+  "flops_per_token": 295699200,
+  "flop_budget": 138539818014474240,
+  "flops_formula": "6 * matmul_parameters + sum_layers(12 * query_heads * head_dim * effective_window); excludes lookup, norm, softmax, rotary elementwise ops",
+  "unique_data_estimate": null,
+  "unique_data_note": "packing/cropping prevents inference of unique tokens from total tokens",
+  "data_loader": "historical loader in 1 spawned DataLoader worker, prefetch_factor=4, pinned, non_blocking HtoD",
+  "gradient_accumulation": 4,
+  "resume_replay_batches": 0,
+  "resume_replay_seconds": 1.5929999790387228e-06,
+  "nvidia_smi": [
+    "0, 0, 1535"
+  ],
+  "gpu_topology": "\u001b[4mGPU0\tCPU Affinity\tNUMA Affinity\tGPU NUMA ID\u001b[0m\nGPU0\t X \t\t\t\tN/A\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "gpu_driver": "NVIDIA H100 80GB HBM3, 610.57.04, 81559 MiB",
+  "packages": {
+    "torch": "2.9.1+cu128",
+    "numpy": "1.26.4",
+    "pyarrow": "21.0.0",
+    "kernels": "0.11.7",
+    "rustbpe": "0.1.0",
+    "tiktoken": "0.11.0"
+  }
+}

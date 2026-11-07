@@ -1,0 +1,7 @@
+{
+  "step": 10,
+  "stop_reason": "pilot_step_cap",
+  "data_epoch": 1,
+  "training_seconds": 21.775610848000042,
+  "peak_vram_bytes": 16263252480.0
+}

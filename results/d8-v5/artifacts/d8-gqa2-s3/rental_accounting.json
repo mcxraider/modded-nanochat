@@ -1,0 +1,28 @@
+{
+  "launches": [
+    {
+      "resume_step": null,
+      "started_unix_seconds": 1794030245.018582,
+      "status": "complete",
+      "command": [
+        "/root/modded-nanochat-experiments-324e69c/.venv/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=1",
+        "-m",
+        "experiments.train",
+        "--config",
+        "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-s3/config.json",
+        "--output",
+        "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-s3"
+      ],
+      "stage": "training",
+      "node_seconds": 590.3478576470002
+    }
+  ],
+  "total_pipeline_node_seconds": 590.3478576470002,
+  "total_pipeline_gpu_hours": 0.1639855160130556,
+  "cost_usd": 0.7264558359378362,
+  "note": "Excludes earlier dependency/data preparation, pilots, idle gaps, and unrecorded force-killed launches."
+}

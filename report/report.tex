@@ -24,19 +24,7 @@
 \captionsetup{font=small,labelfont=bf}
 \setlength{\parskip}{0.3em}
 
-% Placeholder for numbers that the full suite has not produced yet. Remove the
-% definition's colour once every \TBD{} is filled in; `grep -n TBD report.tex`
-% lists what is outstanding.
-\newcommand{\TBD}[1]{\textcolor{red}{\textbf{[#1]}}}
-
-% Figure that renders a framed placeholder until the file exists in figures/.
-\newcommand{\resultfigure}[3]{%
-  \IfFileExists{figures/#1}%
-    {\includegraphics[width=#2]{figures/#1}}%
-    {\fbox{\parbox[c][0.17\textheight][c]{#2}{\centering\textcolor{red}{\textbf{[Figure placeholder: \detokenize{#1}]}}\\[0.4em]\small #3}}}%
-}
-
-\newcommand{\BO}{\textsc{B0}}
+\newcommand{\BO}{\textnormal{\textsc{B0}}}
 \newcommand{\GQA}[1]{GQA-#1}
 
 \title{\vspace{-1.2em}Grouped-Query Attention and Partial RoPE Under a Fixed FLOP Budget:\\
@@ -48,13 +36,24 @@ A Controlled Study of a Small Language Model Trained from Scratch}
 \maketitle
 \vspace{-2.2em}
 
+\begin{abstract}
+We test grouped-query attention and partial rotary embeddings in 14 from-scratch depth-8 language-model runs under a
+fixed estimated training-FLOP allowance. Multi-head attention achieves mean held-out test BPB 0.960795; two K/V heads
+and one K/V head worsen it by 0.005158 and 0.011370 despite longer training. Training throughput improves by 2.84\%
+and 6.42\%, and allocated K/V cache halves and quarters, respectively. Extra tokens recover about one quarter of
+same-seed matched-token quality penalties; the value-embedding interaction remains unresolved. Partial RoPE has no
+resolved quality effect or measured training speedup. Eager H100 decoding does not exhibit the predicted GQA speedup.
+The results distinguish arithmetic savings, memory savings and measured speed, while retaining failed predictions
+and uncertainty from limited seeds.
+\end{abstract}
+
 % ---------------------------------------------------------------------------
 % Declarations (required by the brief; stated before any results)
 % ---------------------------------------------------------------------------
 \begin{center}
 \fbox{\parbox{0.96\linewidth}{\small
 \textbf{Repository:} \url{https://github.com/mcxraider/modded-nanochat}
-(experiment namespace \texttt{d8-v5}; code commit \TBD{commit hash of the d8-v5 launch}).\\
+(experiment namespace \texttt{d8-v5}; code commit \texttt{c07aa7e}).\\
 \textbf{Group members:} Jerry Yang Shao Ern, student number A0281549U.\\[0.3em]
 \textbf{Compute budget (declared before any training run).} Hardware: one NVIDIA H100 SXM 80\,GB on Modal, BF16 autocast,
 FlashAttention-3. Per-run allowance: at most $C = 1.385\times10^{17}$ \emph{estimated} training FLOPs, the cost of the
@@ -62,70 +61,49 @@ baseline \BO{} trained on upstream nanochat's compute-optimal horizon at depth 8
 tokens $\times$ 314{,}575{,}872 FLOPs/token). FLOPs are counted with nanochat's estimator (6 FLOPs per matmul parameter per
 token plus windowed attention), so each architecture receives the largest whole number of updates whose estimate fits in
 $C$. A 2-hour wall-clock cap applies to every run as a safety stop only; no comparable run reached it (each needed about
-\TBD{6--9} minutes). Pilots, numerical preflight checks and tokenizer training are excluded from the budget and reported
+6.77--7.61 minutes). Pilots, numerical preflight checks and tokenizer training are excluded from the budget and reported
 separately.\\[0.3em]
 \textbf{Initialisation.} Every model is trained from random initialisation. No pretrained weights, embeddings or other
 pretrained neural components are used. We reuse the nanochat architecture and code, its BPE tokenizer recipe (trained
 by us on the training shards, vocabulary 32{,}768) and the ClimbMix corpus.\\[0.3em]
 \textbf{Evaluation objective.} Bits per byte (BPB) of next-token prediction on held-out ClimbMix web text: $2^{24}$ tokens
 from shard 06542 (validation, used for curves and any decision) and, separately, $2^{24}$ tokens from shard 06541 (test,
-evaluated once per run after training; the primary metric). BPB normalises the summed cross-entropy by the UTF-8 byte
-count of the targets, so it is independent of tokenisation and measures the quantity the budget is spent on, namely
-language modelling of the training distribution. It does not measure downstream reasoning, instruction following or
-long-context use, and inference speed and memory are reported as separate metrics.}}
+evaluated once per run after training; the primary metric). BPB measures in-distribution language modelling, not downstream reasoning, instruction following or long-context quality;
+inference speed and memory are separate metrics.}}
 \end{center}
 
 % ---------------------------------------------------------------------------
 \section{Introduction and research question}
 % ---------------------------------------------------------------------------
-Two attention changes appear in almost every recent open model: \emph{grouped-query attention}
-(GQA)~\cite{ainslie2023gqa,shazeer2019mqa}, which lets several query heads share one key/value (K/V) head, and
-\emph{partial rotary embeddings}~\cite{su2021roformer,black2022gptneox}, which rotate only a fraction of each head's
-dimensions. Both are usually justified by inference cost (a smaller K/V cache) or by evidence from large models, not by
-what they do to a small model trained from scratch on a tight compute budget. The brief asks how to obtain the best
-model within a fixed per-run allowance, which makes this the relevant question. GQA removes training FLOPs, so at fixed
-compute a GQA model trains on \emph{more} tokens than its multi-head (MHA) counterpart. Whether it ends up better or
-worse therefore depends on two competing effects: a per-token quality cost from sharing K/V heads, and a gain from the
-extra data. Our research question is:
-
+Grouped-query attention (GQA) shares key/value (K/V) heads across query heads, reducing cache memory and
+projection FLOPs~\cite{ainslie2023gqa,shazeer2019mqa}. Partial rotary embeddings rotate only a fraction of each
+head's dimensions~\cite{su2021roformer,black2022gptneox}. Their effects on small models trained from scratch under
+limited compute are less clear than their large-model motivations. At fixed compute, GQA buys extra training tokens
+but may lose per-token quality. We ask:
 \begin{quote}\itshape
-At depth 8 and a fixed per-run budget of $C$ estimated training FLOPs, what do GQA and partial RoPE cost or buy in
-held-out BPB, training throughput and inference memory/speed, and how much of GQA's fixed-compute result comes from
-the extra tokens its FLOP saving buys?
+At depth 8 and a fixed budget of $C$ estimated training FLOPs, what do GQA and partial RoPE cost or buy in
+held-out BPB, training throughput and inference memory/speed, and how much does GQA benefit from extra tokens?
 \end{quote}
-
-We wrote the hypotheses, resolution thresholds and analysis rules in \texttt{experiments/experiments.md} before running
-any training job. Every outcome below is reported against its prediction, including the null and negative ones.
-Our contributions are: (i) a fixed-compute comparison of MHA, GQA-2 and MQA with a seed-noise estimate on
-\emph{both} the baseline and the main variant; (ii) a dose--response over the rotary fraction; (iii) two controls for
-confounds that the naive comparison hides: the \emph{value embeddings} in this architecture shrink with the K/V head
-count (a $2\times2$ design), and GQA's per-token penalty is mixed with its extra data (a matched-token ablation);
-and (iv) an inference benchmark that tests where the K/V saving actually appears on an H100.
+We pre-registered hypotheses and analysis rules in \texttt{experiments/experiments.md}. The study combines replicated
+MHA/GQA-2 comparisons, a rotary dose--response, value-embedding and matched-token controls, and H100 inference measurements.
 
 % ---------------------------------------------------------------------------
 \section{Background}
 % ---------------------------------------------------------------------------
 \paragraph{Multi-query and grouped-query attention.}
-In MHA~\cite{vaswani2017attention} every query head $h$ has its own key and value projections. During autoregressive
-decoding, each step must read the whole cache of past keys and values, so at large batch or long context decoding is
-limited by memory bandwidth rather than arithmetic~\cite{shazeer2019mqa,pope2023efficiently}.
-MQA~\cite{shazeer2019mqa} shares a single K/V head across all query heads and cuts the cache by a factor of $n_\text{head}$.
-GQA~\cite{ainslie2023gqa} interpolates between the two with $n_\text{kv}$ groups, and reports quality close to MHA when
-large checkpoints are \emph{uptrained} into GQA form. That evidence comes from converted T5-XXL models, not from small
-models trained from scratch, which is why we test the claim directly. In training, GQA saves only the K/V projection
-matmuls: the attention score and value products still run over all $n_\text{head}$ query heads. At our size this is
-$8\%$ of B0's estimated FLOPs for full K/V, so GQA-2 saves $4.2\%$ and MQA $6.4\%$ (Table~\ref{tab:arch}).
+MHA~\cite{vaswani2017attention} gives each query head independent K/V projections. MQA shares one K/V head;
+GQA uses an intermediate number. This reduces cache reads, which can dominate decoding at large batch or long
+context~\cite{shazeer2019mqa,pope2023efficiently}. GQA's near-MHA quality evidence comes from uptrained T5-XXL
+checkpoints~\cite{ainslie2023gqa}, motivating our from-scratch test. Training saves only K/V projection matmuls:
+attention products still use every query head. Here GQA-2 saves 4.0\% of estimated FLOPs and MQA 6.0\%.
 
 \paragraph{Rotary embeddings and partial RoPE.}
-RoPE~\cite{su2021roformer} rotates pairs of query/key dimensions by angles proportional to position, so the dot product
-depends on relative offset. Each of the $d/2$ pairs has frequency $\theta_i = 10000^{-2i/d}$. GPT-NeoX~\cite{black2022gptneox}
-rotates only 25\% of each head and leaves the rest position-free. Barbero et al.~\cite{barbero2025round} found that a
-trained Gemma model uses the high-frequency pairs for positional patterns and the lowest frequencies as almost
-position-independent ``semantic'' channels, and that removing the lowest frequencies can help. Partial RoPE achieves
-something similar by construction. A detail matters for interpreting our dose--response: in our implementation the
-frequencies are recomputed for the rotated prefix (base $10^4$ over $d_\text{rot}$ dimensions), so R25 keeps the same
-highest and lowest frequency as full RoPE but samples the spectrum $4\times$ more coarsely (16 pairs instead of 64), and
-adds 96 dimensions with no positional signal at all.
+RoPE~\cite{su2021roformer} rotates query/key dimension pairs by position-dependent angles, with frequencies
+$\theta_i=10000^{-2i/d}$. GPT-NeoX rotates only 25\% of each head~\cite{black2022gptneox}; evidence that low-frequency
+pairs serve almost position-independent semantic roles also motivates partial rotation~\cite{barbero2025round}.
+Our implementation recomputes frequencies over the rotated prefix: R25 uses 16 rather than 64 pairs, with lowest
+frequency $10^{-3.75}$ rather than $10^{-3.9375}$, leaving 96 dimensions unrotated. Thus fraction changes both
+positional capacity and the frequency grid.
 
 \paragraph{Value embeddings.}
 nanochat's attention adds a learned, token-indexed \emph{value embedding} to the values in alternating layers, scaled
@@ -134,14 +112,13 @@ the same loss with 16\% fewer parameters. The embedding width equals the value w
 At depth 8 these tables hold 67.1M of B0's 125.8M parameters, so halving the K/V heads removes 33.5M embedding
 parameters, about 16 times the 2.1M removed from the K/V projections. Nanochat's FLOP estimator treats embedding lookups as free,
 so this change is invisible to the budget. A naive ``GQA vs MHA'' comparison in this codebase is therefore also a
-``half vs full value embeddings'' comparison, and Experiment E5 separates the two.
+``half vs full value embeddings'' comparison, and Experiment E5 tests whether their effects interact.
 
 \paragraph{Compute-optimal training.}
-Chinchilla~\cite{hoffmann2022chinchilla} models loss as $L(N,D)=E+A/N^{\alpha}+B/D^{\beta}$ and finds roughly 20 tokens
-per parameter compute-optimal. Kaplan et al.~\cite{kaplan2020scaling} first pointed out that embedding parameters
-behave differently in such fits. nanochat~\cite{karpathy2025nanochat} fits its own ratio of 10.5 tokens per
-\emph{scaling} parameter (transformer matrices plus unembedding) and we adopt its horizon for B0. We use the Chinchilla
-data term only to make an order-of-magnitude prediction of what GQA's extra 4--6\% of tokens should be worth (\S\ref{sec:design}).
+Chinchilla~\cite{hoffmann2022chinchilla} models loss as $L(N,D)=E+A/N^{\alpha}+B/D^{\beta}$; embedding parameters
+require separate treatment~\cite{kaplan2020scaling}. We adopt nanochat's fitted horizon of 10.5 tokens per scaling
+parameter (transformer matrices plus unembedding)~\cite{karpathy2025nanochat}, using Chinchilla's data term only to
+predict the approximate benefit of GQA's extra tokens (\S\ref{sec:design}).
 
 % ---------------------------------------------------------------------------
 \section{Methods and experimental setup}
@@ -165,15 +142,12 @@ through unchanged; and the MLP ratio and value-embedding on/off flags used by th
 Table~\ref{tab:arch} lists the eight resulting architectures.
 
 \paragraph{Data and tokenizer.}
-We use NVIDIA ClimbMix~\cite{diao2025climb}, a 400B-token web mixture produced by clustering-based mixture search, in
-the shard format used by nanochat. Upstream switched to ClimbMix because it gave clear gains over FineWeb-Edu and other
-corpora on its leaderboard. The training pool is shards 0--47. Shard 06542 (the last, which nanochat treats as validation)
-is our validation split, and shard 06541 is a held-out test split that is never used for any decision. We trained the
-nanochat BPE tokenizer (vocabulary $2^{15}$) ourselves. Its trainer reads files in index order and stops after
-$2\times10^9$ characters, so it sees only the first training shards and never the test shard \TBD{confirm from the
-\texttt{tok\_train} log}. Documents are packed into 2{,}048-token rows with
-nanochat's BOS-aligned best-fit packer. The longest run consumes \TBD{x.xx}\% of the pool, so no run repeats data
-(\texttt{data\_epoch}$\,=1$ is checked).
+We use NVIDIA ClimbMix~\cite{diao2025climb}, a 400B-token web mixture, in nanochat's shard format.
+Training uses shards 0--47; 06542 is validation and 06541 is test, never used for decisions.
+Our $2^{15}$-vocabulary BPE trainer reads training files in order up to $2\times10^9$ characters, excluding held-out
+shards by recipe; its retained export does not enumerate every input. BOS-aligned best-fit packing produces
+2{,}048-token rows. All runs end in the first epoch, with seed rotations 0, 16 and 32 over 48 shards.
+The pool's exact token capacity was not measured.
 
 \paragraph{Optimisation.}
 Following the pinned upstream training script, matrices are updated with Muon~\cite{jordan2024muon} (Polar-Express
@@ -184,14 +158,19 @@ B0 and \emph{frozen for every variant}. The schedule has no warm-up, a constant 
 then linear decay to zero. Weight decay decays linearly with progress, and Muon momentum warms up from 0.85 to 0.95
 over 300 updates. We tuned no hyperparameters for any variant (\S\ref{sec:limits}).
 
+\paragraph{Metric definition.}
+For held-out target tokens $x_i$ whose decoded UTF-8 byte lengths are $b_i$, the evaluation computes
+\[
+\mathrm{BPB}=\frac{\sum_i-\log p(x_i\mid x_{<i})}{\log(2)\sum_i b_i}.
+\]
+Lower is better. Comparisons share tokenizer, held-out files and masking. Each final split requests $2^{24}$ tokens;
+saved scores and configurations agree, but independent consumed-token counters were not retained.
+
 \subsection{The FLOP budget and why we chose it}\label{sec:budget}
-We chose a FLOP budget rather than wall-clock time because (a) it is hardware-independent and reproducible, while
-throughput on a rented GPU varies with the node; (b) it is the quantity scaling laws reason about; and (c) it rewards an
-architecture exactly for the arithmetic it removes, which is the claimed advantage of GQA in training. The cost is that
-the estimator ignores work that is not a matmul, so it understates the true cost of value embeddings and treats
-partial RoPE as free. We report measured throughput next to every comparison so that readers can see how the ranking
-would change under a time budget (\S\ref{sec:speed}). Training stops at the token target and refuses to start if the
-target exceeds $C$. All fixed-compute runs use at least $99.98\%$ of $C$.
+Estimated FLOPs provide a reproducible arithmetic budget and reward GQA for removed projections.
+The estimator omits non-matmul work, including embedding lookups and rotary operations; measured throughput is
+therefore reported separately (\S\ref{sec:speed}). Training refuses targets above $C$ and stops at the assigned token
+count. Every fixed-compute run uses at least 99.98\% of $C$.
 
 \begin{table}[t]
 \centering\small
@@ -230,27 +209,21 @@ so seed noise includes data-order noise.
 \item \textbf{E5, value-embedding $2\times2$} (\texttt{d8-b0-nove}, \texttt{d8-gqa2-nove}): B0-noVE and GQA-2-noVE. With B0 and GQA-2 these cross
   $\{4,2\}$ K/V heads with value embeddings $\{\text{on},\text{off}\}$.
 \item \textbf{E6, matched-token ablation} (\texttt{d8-gqa2-tok}, \texttt{d8-gqa4-tok}): GQA-2 and MQA trained on B0's 1{,}680 updates (96\% and 94\% of $C$). The
-  difference to their fixed-compute twin (same seed, so the same initial weights and batches up to update 1{,}680) is the
-  value of the extra tokens, and the difference to B0 is the per-token cost of K/V sharing.
+  difference to their fixed-compute twin (same seed, so the same initial weights and batches up to update 1{,}680) estimates the benefit of the longer token horizon and its associated schedule; the difference to B0
+  is the matched-token cost of the complete architectural change, including value embeddings.
 \end{itemize}
 
 \paragraph{Pre-registered predictions.}
-We wrote these predictions down before any run. \textbf{H2a:} GQA-2 is not resolved-worse than B0 at fixed compute.
-\textbf{H2b:} GQA-2's training-throughput gain is below 5\%. \textbf{H2c:} R75 is not resolved from full RoPE in BPB
-and differs by under 2\% in throughput. \textbf{H3:} PM is within the threshold of B0. \textbf{H4a:} BPB degrades
-monotonically with K/V sharing, and MQA is resolved-worse than B0. \textbf{H4b:} R25 is not resolved from R75 or full RoPE.
-\textbf{H5a:} removing value embeddings costs B0 a resolved loss. \textbf{H5b/c:} GQA's gap is smaller without value
-embeddings (a positive interaction, probably unresolved). \textbf{H6:} from the Chinchilla data term ($B=410.7$,
-$\beta=0.28$, $B/D^{\beta}\approx1.56$ nats at $D=0.44$B), 4.2\% / 6.4\% more tokens should be worth about
-$0.018/0.027$ nats, i.e.\ roughly $0.005$--$0.006$ / $0.008$--$0.009$ BPB at 4.2--4.8 bytes per token.
-\textbf{HIa--c (inference):} decode never materialises expanded K/V; at batch 1 the variants decode within 5\% of each
-other; at batch 64, GQA's decode advantage grows with prompt length up to the training context and then plateaus.
+Table~\ref{tab:hypotheses} lists every registered prediction alongside its outcome. For H6, the transferred
+Chinchilla data term ($B=410.7$, $\beta=0.28$, $B/D^{\beta}\approx1.56$ nats at $D=0.44$B) predicts that
+4.2\% / 6.4\% extra tokens save $0.018/0.027$ nats, or roughly $0.005$--$0.006$ / $0.008$--$0.009$ BPB
+at 4.2--4.8 bytes per token.
 
 \paragraph{Statistical procedure.}
 A difference counts as \emph{resolved} only if it exceeds $2\sqrt{2}\,s$, a two-sigma bound on the difference of two
 single runs, where $s$ is the s.d.\ of the three B0 seeds. This rule is crude: $s$ has two degrees of freedom. By
 simulation it flags about 18\% of null single-vs-single contrasts, so across our $\approx17$ contrasts two or three
-spurious ``resolved'' flags are expected~\cite{bouthillier2021variance}. We therefore pre-registered three secondary
+spurious ``resolved'' flags can occur~\cite{bouthillier2021variance}. We therefore pre-registered three secondary
 analyses and report where they disagree with the primary rule: (i) a bound that accounts for seed means,
 $2s\sqrt{1/n_1+1/n_2}$; (ii) a Student-$t$ 95\% interval using $s_p$, the s.d.\ pooled over the B0 and GQA-2 groups
 (df$\,=4$); and (iii) a \emph{paired} analysis that uses the shared data order of same-seed runs (E2 seed pairs and
@@ -267,241 +240,344 @@ size and the K/V bytes read per decoded token. Execution is eager. Weights are c
 is kept on the host to avoid a GPU synchronisation per step.
 
 \subsection{Validity checks before the main runs}\label{sec:validity}
-CPU unit tests check that full RoPE reproduces the historical code exactly, that the un-rotated dimensions pass through
-unchanged, that GQA projection and cache shapes are correct, that cached decoding matches full-sequence decoding, and that
-resuming from a checkpoint is bit-identical. On the H100, a preflight for all eight architectures compares FA3 with
-PyTorch SDPA (logits, loss and gradients) and the compiled model with eager execution (per-tensor relative gradient
-error $\le5\%$) across the sliding-window boundary. The largest observed error was \TBD{x.x\%} on
-\TBD{parameter}. A 10-update pilot per architecture then confirmed FA3 selection, no out-of-memory error anywhere in the
-inference grid, a decode working set below half the cache (so K/V heads are not expanded), and data-loader wait time
-below 2\% of each update, so measured throughput reflects the GPU rather than the CPU packer. All pilots passed and no
-setting was changed afterwards (\href{https://github.com/mcxraider/modded-nanochat/blob/main/results/pilot_d8-v5.md}{\texttt{results/pilot\_d8-v5.md}}).
-The suite cost \TBD{\$xx.xx} against a projected \$21.38.
+CPU tests verify full-RoPE parity, unchanged unrotated dimensions, GQA projection/cache shapes, cached/full-sequence
+decoding parity and bit-identical checkpoint resumption. All eight architectures passed H100 FA3/SDPA and
+compiled/eager checks across the sliding-window boundary; maximum recorded relative matrix-gradient error was
+2.997\% (5\% tolerance, separate scalar tolerance). Ten-update pilots checked FA3 selection, inference and loading.
+Full runs had no nonfinite logged metrics, 168/168 successful inference cells and median loader waits at most 0.556\%
+(2\% gate). Pilot evidence is retained under \path{results/d8-v5/pilots/9a34115f44463cc7/}.
 
 % ---------------------------------------------------------------------------
 \section{Results}
-% ---------------------------------------------------------------------------
-\subsection{Noise floor (E1)}
-The three B0 seeds reach test BPB \TBD{a}, \TBD{b} and \TBD{c} (mean \TBD{m}), so $s=\TBD{s}$ and the resolution
-threshold is $2\sqrt2\,s=\TBD{t}$ BPB. The three GQA-2 seeds give $s_\text{GQA-2}=\TBD{s2}$ and the pooled
-$s_p=\TBD{sp}$ (df$\,=4$). The prediction $s\in[0.001,0.003]$ \TBD{held / failed}. \TBD{Comment on whether the two
-groups' noise is similar, which the threshold assumes. Comment on validation--test agreement: is the gap between
-validation and test BPB constant across runs, i.e.\ is the test shard simply harder/easier?}
+\subsection{Completion, noise floor and learning behaviour (E1)}
+All 14 runs reached their token targets: 24{,}047 contiguous updates and 6{,}303{,}776{,}768 training tokens in total,
+counting each model separately. No run stopped at the wall-clock cap or the spending gate. The 12 fixed-compute runs
+used 99.9862--100\% of their allowance; the two E6 controls deliberately used 96\% and 94\%. Thus the comparisons below
+are completed experiments rather than extrapolations from the pilots.
+
+B0's three test scores are 0.961227, 0.961118 and 0.960040 BPB (mean 0.960795), giving
+$s=0.000656$ and the primary threshold $\tau=2\sqrt{2}s=0.001855$ BPB. The predicted noise range
+$[0.001,0.003]$ was too high for B0. GQA-2's scores are 0.967636, 0.966122 and 0.964101 BPB
+(mean 0.965953), giving $s_{\mathrm{GQA-2}}=0.001773$, 2.70 times B0's s.d. The pooled estimate is
+$s_p=0.001337$ (4 degrees of freedom). Consequently, a threshold derived only from B0 is optimistic for GQA
+comparisons; the sensitivity intervals materially affect the interpretation of several smaller effects.
+
+Validation BPB exceeds test BPB by 0.000142--0.000351; the main GQA-2 penalty agrees across splits
+(0.005101 validation, 0.005158 test). Figure~\ref{fig:curves} shows continued improvement through decay.
+Curves use validation only and separate horizons because their schedules differ; test did not select checkpoints.
 
 \begin{figure}[t]
-\centering
-\resultfigure{learning_curves_d8.pdf}{0.98\linewidth}{Validation BPB vs.\ update for runs grouped by token target
-(1{,}680 and 1{,}750 updates); training loss inset.}
-\caption{Learning curves. Curves are compared only within the same token target.}
+\centering\includegraphics[width=\linewidth]{figures/learning_curves_d8.pdf}
+\caption{Recorded validation curves, grouped by the 1{,}680- and 1{,}750-update schedules. Final validation is included.
+The right panel compares full, 75\% and 25\% RoPE at the same horizon. Legends are outside the plotted data.}
 \label{fig:curves}
 \end{figure}
 
 \subsection{Quality at fixed compute (E2--E5)}
 \begin{table}[t]
 \centering\small
-\caption{Final results. $\Delta$ is test BPB minus the primary reference (negative is better). ``Res.'' is the primary
-rule $|\Delta|>2\sqrt2 s$, ``means'' the seed-mean rule, and ``$t$'' the pooled-$t$ 95\% interval. Throughput is the
-median steady-state training tokens/s. Seed groups are means of three runs.}
+\caption{Final quality and steady training throughput. B0 and GQA-2 are three-seed means; all other entries have one seed.
+$\Delta$ is test BPB relative to the stated reference. P/M/T denote resolution under the primary, seed-mean and pooled-$t$
+95\% rules (Y/N). These are comparison rules, not equivalence tests. Tok/s ratios use the B0 three-seed mean.}
 \label{tab:results}
-\begin{tabular}{@{}lrrrrccc r@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrlrc r@{}}
 \toprule
-Run & Test BPB & Val BPB & Reference & $\Delta$ test & Res. & means & $t$ & Tok/s (rel.\ B0) \\
+Model & Test BPB & Val BPB & Reference & $\Delta$ test & P/M/T & Tok/s ratio\\
 \midrule
-B0 (3 seeds) & \TBD{} & \TBD{} & --- & --- & --- & --- & --- & 1.000 \\
-GQA-2 (3 seeds) & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-GQA-2-R75 & \TBD{} & \TBD{} & GQA-2 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-GQA-2-R25 & \TBD{} & \TBD{} & GQA-2 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-GQA-2-PM & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-MQA & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-B0-noVE & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-GQA-2-noVE & \TBD{} & \TBD{} & B0-noVE & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-GQA-2-tok & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
-MQA-tok & \TBD{} & \TBD{} & B0 & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
+B0 & 0.960795 & 0.961092 & --- & --- & --- & 1.000\\
+GQA-2 & 0.965953 & 0.966193 & B0 & +0.005158 & Y/Y/Y & 1.028\\
+GQA-2-R75 & 0.965797 & 0.966148 & GQA-2 & -0.000156 & N/N/N & 1.027\\
+GQA-2-R25 & 0.966821 & 0.967022 & GQA-2 & +0.000868 & N/N/N & 1.024\\
+GQA-2-PM & 0.964867 & 0.965068 & B0 & +0.004072 & Y/Y/N & 0.991\\
+MQA & 0.972165 & 0.972318 & B0 & +0.011370 & Y/Y/Y & 1.064\\
+B0-noVE & 0.977541 & 0.977761 & B0 & +0.016746 & Y/Y/Y & 1.023\\
+GQA-2-noVE & 0.982192 & 0.982504 & B0-noVE & +0.004651 & Y/Y/N & 1.042\\
+GQA-2-tok & 0.969950 & 0.970276 & B0 & +0.009155 & Y/Y/Y & 1.029\\
+MQA-tok & 0.975687 & 0.975845 & B0 & +0.014892 & Y/Y/Y & 1.062\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{GQA-2 vs.\ MHA (H2a).}
-At fixed compute, GQA-2 reaches \TBD{x} test BPB against B0's \TBD{y} ($\Delta=\TBD{d}$, \TBD{resolved / unresolved}).
-The paired analysis over the three same-seed pairs gives a mean difference of \TBD{d} with 95\% interval \TBD{[l,u]}, and
-$s_d/(\sqrt2 s)=\TBD{r}$, so the shared data order removes \TBD{\%} of the seed noise. \TBD{Interpretation: does H2a hold?
-Note that this contrast changes K/V heads, value-embedding size and token count at once; E5 and E6 below decompose it.}
+\paragraph{GQA-2 versus MHA (H2a).}
+GQA-2 worsens test BPB by 0.005158 (0.537\% relative) despite processing 4.17\% more tokens and having 28.3\% fewer
+total parameters. The pooled 95\% interval is $[+0.002128,+0.008188]$. Every same-seed difference is positive
+($+0.006409,+0.005004,+0.004061$); their mean has paired 95\% interval $[+0.002223,+0.008093]$.
+H2a is contradicted by the primary rule and both sensitivity analyses. This is strong evidence for a quality penalty
+in this configuration, rather than a conclusion resting on one unlucky run.
 
-\paragraph{K/V dose--response (H4a).}
-\TBD{BPB at $n_\text{kv}=4,2,1$; monotone or not? MQA vs B0 resolved? Recall that MQA has 6.4\% more tokens and a
-quarter of B0's value-embedding parameters, and that its value gate is a $1\times32$ matrix, for which Muon's
-orthogonalised update reduces to a normalised vector.}
+The paired s.d. $s_d=0.001182$ exceeds B0's equal-noise prediction $\sqrt{2}s$, but is below the independent
+heteroscedastic estimate $\sqrt{s_{\mathrm{B0}}^2+s_{\mathrm{GQA-2}}^2}=0.001891$. With only three pairs,
+the result identifies a penalty for the complete modification, including narrower value embeddings and longer training.
+
+\paragraph{Stronger K/V sharing (H4a).}
+The fixed-compute ordering is monotone: MHA 0.960795, GQA-2 0.965953, MQA 0.972165 BPB.
+MQA loses 0.011370 BPB against B0 and 0.006212 against GQA-2. The pooled intervals are
+$[+0.007085,+0.015656]$ and $[+0.001927,+0.010497]$, respectively, supporting H4a.
+Its 6.37\% extra tokens do not recover the lost quality. Sharing K/V is a plausible capacity bottleneck because
+queries must use fewer independent key/value representations, but the experiment does not isolate this mechanism:
+MQA also quarters B0's value-embedding width and changes the gate and optimiser matrix shapes.
+The monotone association is established; a universal causal penalty for GQA is not.
 
 \paragraph{Partial RoPE (H2c, H4b).}
-\TBD{R75 and R25 against GQA-2, all at 1{,}750 updates, so curves are directly comparable (Fig.~\ref{fig:dose}).
-Interpret with the frequency argument from \S2: R25 keeps the extreme frequencies but drops 75\% of the rotated
-channels in favour of position-free ones.}
+At the shared 1{,}750-update horizon, R75 changes test BPB by $-0.000156$ and R25 by $+0.000868$ against the GQA-2 mean.
+R25 is 0.001024 worse than R75. All three differences are unresolved; the pooled intervals against full RoPE are
+$[-0.004441,+0.004130]$ for R75 and $[-0.003417,+0.005154]$ for R25.
+The registered unresolved-quality predictions hold, but these wide intervals cannot establish equivalence.
+For a direct same-seed comparison, R75 and R25 improve on full-RoPE GQA-2 s1 by 0.001839 and 0.000815;
+this different point ordering illustrates why a favourable single seed should not be presented as a robust improvement.
+
+These results neither establish a semantic-channel mechanism nor test context extrapolation; the ablation also changes
+the frequency grid.
+
+\paragraph{Value embeddings (E5, H5a--c).}
+Removing value embeddings costs B0 0.016746 BPB, supporting H5a, and costs GQA-2 0.016239 BPB.
+Both effects survive pooled sensitivity ($[+0.012461,+0.021032]$ and $[+0.011954,+0.020525]$).
+These are substantially larger than the GQA penalty itself, demonstrating the importance of retaining this component
+at the tested budget. The FLOP estimator barely charges it, making the large quality contribution especially relevant
+to this particular compute accounting.
+
+The GQA gap shrinks only from 0.005158 with value embeddings to 0.004651 without them. The interaction is
+$+0.000507$, well below its primary bound 0.002142, and its pooled interval is $[-0.005553,+0.006567]$.
+Its point-estimate sign agrees with H5b and its unresolved status agrees with H5c, but there is no resolved evidence
+that the effect differs between the two settings. In particular, the data do not establish that shrinking value
+embeddings explains GQA's loss. The noVE GQA penalty itself resolves under the primary rule but not the pooled interval
+($[-0.000597,+0.009899]$). More disabled-embedding seeds and a fixed-width embedding control are needed to separate
+these mechanisms.
+
+\paragraph{Spending the saving on MLP width (E3, H3).}
+PM reaches 0.964867 BPB: 0.004072 worse than B0 and 0.001086 better than GQA-2's mean. Thus matching scaling
+parameters and estimated FLOPs does not meet H3 under the primary rule. However, the PM--B0 pooled interval
+$[-0.000213,+0.008357]$ crosses zero; that particular loss is less secure than the main GQA result.
+The PM--GQA-2 interval also crosses zero ($[-0.005371,+0.003199]$), so the experiment cannot rank wider MLPs against
+extra tokens confidently. PM uses B0's 1{,}680 updates, but still lacks 33.5M of B0's value-embedding parameters.
+It is a match on scaling parameters, not total model capacity. Its altered Muon learning-rate scaling is an additional
+reason not to interpret it as a clean test of parameter location alone.
+
+\subsection{What the extra tokens buy (E6, H6)}
+The correct paired E6 comparisons use GQA-2 \emph{seed 1}, not its three-seed mean:
+\begin{align*}
+\text{GQA-2:}\quad 0.969950 &\longrightarrow 0.967636 && (\Delta=-0.002314),\\
+\text{MQA:}\quad 0.975687 &\longrightarrow 0.972165 && (\Delta=-0.003522).
+\end{align*}
+These gains are smaller than the predicted 0.005--0.006 and 0.008--0.009 BPB, respectively: extra data helps in the
+predicted direction, but the transferred scaling-law coefficients overpredict the measured benefit.
+The GQA-2 gain narrowly fails the secondary paired bound $2s_d=0.002363$; MQA passes it.
+Neither gain resolves under the pooled unpaired sensitivity analysis. The paired bound borrows the E2 paired spread,
+rather than estimating E6 variability from replicated twins, so its interpretation is conditional on that assumption.
+The general comparison table's 0.003997 gap between GQA-2-tok and the GQA-2 \emph{mean} is not the same-seed gain.
+
+Using B0 s1 throughout makes the decomposition internally consistent:
+\begin{align*}
+\underbrace{0.006409}_{\text{GQA-2 final gap}}
+ &=\underbrace{0.008723}_{\text{matched-token gap}}
+   -\underbrace{0.002314}_{\text{longer-horizon gain}},\\
+\underbrace{0.010938}_{\text{MQA final gap}}
+ &=\underbrace{0.014460}_{\text{matched-token gap}}
+   -\underbrace{0.003522}_{\text{longer-horizon gain}}.
+\end{align*}
+Thus longer training recovers about 26.5\% and 24.4\% of the respective matched-token penalties, leaving most of the
+loss intact. These matched-token penalties include value-embedding and optimiser changes as well as K/V sharing.
+Furthermore, each run decays its learning rate relative to its own horizon: decay begins at update 840 for the token
+controls, 875 for full GQA-2 and about 894 for MQA. The twins share initial weights and input batches, but cease to
+share an optimisation trajectory once their schedules diverge. E6 therefore measures \emph{extra tokens plus the
+corresponding longer schedule}, rather than the causal value of adding tokens to an otherwise identical trajectory.
 
 \begin{figure}[t]
-\centering
-\resultfigure{dose_response.pdf}{0.49\linewidth}{Test BPB vs.\ K/V heads (4, 2, 1) and vs.\ rotary fraction (1, 0.75, 0.25), with the $\pm2\sqrt2 s$ band.}
-\hfill
-\resultfigure{budget_comparison.pdf}{0.49\linewidth}{E6: test BPB vs.\ estimated FLOPs; arrows from each matched-token ablation to its fixed-compute twin; budget $C$ marked.}
-\caption{Left: dose--response along the K/V and rotary axes. Right: what the extra tokens buy (E6).}
+\centering\includegraphics[width=\linewidth]{figures/dose_budget.pdf}
+\caption{Left: fixed-compute K/V dose--response (MHA/GQA-2 means; MQA seed 1).
+Centre: rotary dose--response, with the heuristic $\pm\tau$ band around the GQA-2 mean (not an equivalence region).
+Right: matched-seed E6 comparisons; arrows connect token controls to their longer fixed-compute runs.
+The dotted line marks budget $C$.}
 \label{fig:dose}
 \end{figure}
 
-\paragraph{Value embeddings (E5, H5a--c).}
-\begin{table}[t]
-\centering\small
-\caption{E5 $2\times2$ on test BPB. The interaction is $(\text{GQA-2}-\text{B0})-(\text{GQA-2-noVE}-\text{B0-noVE})$,
-with two-sigma bound $2s\sqrt{1/3+1/3+1+1}\approx3.3s$.}
-\label{tab:ve}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-& Value emb.\ on & Value emb.\ off & Effect of removing \\
-\midrule
-MHA ($n_\text{kv}=4$) & \TBD{} (B0, $n=3$) & \TBD{} & \TBD{} \\
-GQA-2 ($n_\text{kv}=2$) & \TBD{} ($n=3$) & \TBD{} & \TBD{} \\
-Effect of GQA-2 & \TBD{} & \TBD{} & interaction \TBD{} (bound \TBD{}) \\
-\bottomrule
-\end{tabular}
-\end{table}
-\TBD{Is the value-embedding effect resolved (H5a)? Is the GQA gap smaller without value embeddings (H5b)? How large is the
-interaction relative to its bound? If the GQA penalty largely disappears without value embeddings, then the ``GQA cost''
-in this architecture is mostly a value-embedding capacity cost, which matters for anyone porting GQA into a model with
-value residuals.}
-
-\paragraph{Spending the saving on parameters instead of tokens (E3, H3).}
-\TBD{GQA-2-PM vs B0 and vs GQA-2. PM and GQA-2 are two ways to spend the same FLOP saving: on 256 extra MLP units or on 70
-extra updates. Which wins? Remember that PM still has 33.5M fewer embedding parameters than B0, and that
-Muon gives \texttt{c\_fc} about 6\% more learning rate in the wider MLP.}
-
-\subsection{What the extra tokens buy (E6, H6)}
-\TBD{GQA-2(s1) $-$ GQA-2-tok $=\Delta_1$ and MQA $-$ MQA-tok $=\Delta_2$ against the predicted $-0.005$ and $-0.009$ BPB.
-GQA-2-tok $-$ B0 and MQA-tok $-$ B0 are single-seed estimates of the per-token cost of K/V sharing. Decompose the E2 result:
-fixed-compute gap $=$ per-token cost $+$ data gain. State the paired-noise assumption ($2s_d$ threshold) and whether the
-Chinchilla-based prediction was of the right order.}
-
 \subsection{Training throughput and memory}\label{sec:speed}
-The pilots (8 timed updates each) and full runs agree that GQA buys little training speed at this size
-(Table~\ref{tab:speed}). GQA-2 removes 4.2\% of estimated FLOPs but is only \TBD{1.6}\% faster, and MQA removes 6.4\%
-and is \TBD{5.5}\% faster. Throughput in FLOP/s falls slightly as K/V heads are removed (379 to 369 TFLOP/s for GQA-2 in
-the pilot), which is consistent with the narrower $512\times256$ K/V matmuls using the tensor cores less efficiently than
-the square ones and with attention, which GQA does not shrink, taking a larger share of the step. Two observations show
-the limits of the FLOP budget. First, removing the value embeddings leaves the FLOP estimate unchanged but makes B0
-\TBD{2.0}\% faster: the lookups, gates and their AdamW state cost real time that the estimator does not count. Second,
-GQA-2-PM is FLOP-matched to B0 but \TBD{1.5}\% slower, because its 2{,}304-wide MLP is less efficient on the hardware.
-Under a wall-clock budget, both effects would shift tokens towards the variants without value embeddings and away from PM.
-Partial RoPE changes throughput by under 1\% (H2c). \TBD{Peak training VRAM per architecture; evaluation peak separately.}
+\begin{table}[t]
+\centering\small
+\caption{Full-run training performance. Throughput is each run's steady median, averaged across seeds for B0/GQA-2.
+TFLOP/s uses the same estimated FLOP model as the budget; it is not a hardware counter measurement.
+Memory is peak allocated memory in decimal GB (maximum across seeds), not reserved memory or total node usage.}
+\label{tab:speed}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Architecture & M tokens/s & vs.\ B0 & Est.\ TFLOP/s & Train GB & Eval GB\\
+\midrule
+B0 & 1.184 & 1.000 & 372.6 & 17.07 & 27.74\\
+GQA-2 & 1.218 & 1.028 & 367.8 & 15.67 & 27.33\\
+GQA-2-R75 & 1.216 & 1.027 & 367.3 & 15.66 & 27.33\\
+GQA-2-R25 & 1.213 & 1.024 & 366.2 & 15.66 & 27.33\\
+GQA-2-PM & 1.174 & 0.991 & 369.3 & 16.26 & 27.37\\
+MQA & 1.260 & 1.064 & 372.7 & 14.97 & 27.12\\
+B0-noVE & 1.212 & 1.023 & 381.2 & 15.99 & 27.00\\
+GQA-2-noVE & 1.234 & 1.042 & 372.8 & 15.13 & 26.96\\
+\bottomrule
+\end{tabular}
+\end{table}
+GQA-2 improves steady training throughput by 2.84\%, supporting H2b's under-5\% prediction; MQA improves it by 6.42\%.
+GQA-2's roughly 4.0\% FLOP reduction therefore does not translate one-for-one into tokens/s. Achieved estimated
+TFLOP/s falls from 372.6 to 367.8. Narrower projection matrices and work outside the FLOP model are plausible
+contributors, but no kernel profiler was saved to attribute the difference. MQA's 6.0\% FLOP reduction produces a
+speedup close to the ideal inverse-FLOP ratio. Attention products still operate over all query heads, limiting the
+training saving available from K/V sharing.
+
+R75 and R25 differ from full-RoPE GQA-2 by only $-0.14\%$ and $-0.45\%$ in steady throughput. This meets H2c's
+under-2\% prediction, but shows no measured training acceleration from partial RoPE. The rotary arithmetic may be too
+small a share of total runtime to yield a visible gain; these timings alone do not identify why.
+Removing value embeddings improves B0 throughput by 2.31\% despite essentially unchanged estimated FLOPs.
+Conversely, PM is 0.89\% slower than B0 despite matching its FLOPs. These observations demonstrate why equal estimated
+compute and equal wall time are distinct constraints; they do not establish the exact hardware mechanism.
+
+Including compilation, interim validation and checkpointing, phase throughput is 0.991M tokens/s for B0 and
+1.034M for GQA-2 (+4.28\%). GQA-2's 4.17\% larger token target leaves duration almost unchanged
+(443.91 versus 444.37 seconds). All phases last 406.36--456.35 seconds, well below the cap.
+Peak allocation is far below H100 capacity and median loader waits are at most 0.556\% of update time.
+
+\subsection{Inference: cache savings without a decode speedup}
+The allocated BF16 K/V cache obeys
+\[
+M_{\mathrm{KV}}=2\,n_{\mathrm{layer}}\,B\,(P+256)\,n_{\mathrm{kv}}\,d_{\mathrm{head}}\,2\ \text{bytes},
+\]
+where the first factor accounts for keys and values, $B$ is batch size and $P$ is prompt length.
+All 168 workloads succeeded. GQA-2 halves this allocation and MQA quarters it at every shared workload, and all recorded
+working-set checks satisfy the registered no-expanded-K/V gate (HIa). The gate tests for a large temporary expansion
+under the saved benchmark procedure; it is not a proof about every possible backend implementation.
+At batch 64 with 1{,}792-token prompts, cache allocation is exactly 2/1/0.5 GiB for B0/GQA-2/MQA.
+At 8{,}192 prompt tokens it is 8.25/4.125/2.0625 GiB. These are cache ratios, not total-VRAM ratios.
 
 \begin{table}[t]
 \centering\small
-\caption{Training throughput (full-run steady-state median; pilot value in parentheses) and achieved TFLOP/s ($=$
-tokens/s $\times$ FLOPs/token; H100 dense BF16 peak 989). \TBD{Replace pilot-only entries with full-run values.}}
-\label{tab:speed}
-\begin{tabular}{@{}lrrrr@{}}
+\caption{Representative inference cells, using seed 1 for all architectures. Decode is aggregate generated tokens/s
+(255 timed tokens per request); TTFT includes prefill and first-token production. Peak allocation includes prefill.}
+\label{tab:inference}
+\begin{tabular}{@{}rrlrrrr@{}}
 \toprule
-Architecture & Tokens/s (M) & vs.\ B0 & FLOP saving & Achieved TFLOP/s (MFU) \\
+Batch & Prompt & Model & Decode tok/s & TTFT ms & KV GiB & Peak GiB\\
 \midrule
-B0 & \TBD{} (1.205) & 1.000 & --- & \TBD{} (379, 38\%) \\
-GQA-2 & \TBD{} (1.223) & \TBD{} (1.016) & 4.2\% & \TBD{} (369, 37\%) \\
-GQA-2-R75 & \TBD{} (1.231) & \TBD{} (1.022) & 4.2\% & \TBD{} (372, 38\%) \\
-GQA-2-R25 & \TBD{} (1.230) & \TBD{} (1.021) & 4.2\% & \TBD{} (371, 38\%) \\
-GQA-2-PM & \TBD{} (1.187) & \TBD{} (0.985) & 0.0\% & \TBD{} (373, 38\%) \\
-MQA & \TBD{} (1.271) & \TBD{} (1.055) & 6.4\% & \TBD{} (376, 38\%) \\
-B0-noVE & \TBD{} (1.228) & \TBD{} (1.020) & 0.0\% & \TBD{} (386, 39\%) \\
-GQA-2-noVE & \TBD{} (1.242) & \TBD{} (1.031) & 4.2\% & \TBD{} (375, 38\%) \\
+1 & 128 & B0 & 268.3 & 4.18 & 0.00586 & 0.286\\
+1 & 128 & GQA-2 & 257.3 & 4.41 & 0.00293 & 0.217\\
+1 & 128 & MQA & 230.2 & 4.64 & 0.00146 & 0.181\\
+64 & 1{,}792 & B0 & 16{,}649 & 56.34 & 2.000 & 5.452\\
+64 & 1{,}792 & GQA-2 & 16{,}223 & 51.37 & 1.000 & 4.331\\
+64 & 1{,}792 & MQA & 15{,}127 & 48.95 & 0.500 & 3.769\\
+64 & 8{,}192 & B0 & 16{,}206 & 259.21 & 8.250 & 23.033\\
+64 & 8{,}192 & GQA-2 & 15{,}282 & 237.08 & 4.125 & 18.592\\
+64 & 8{,}192 & MQA & 16{,}072 & 225.91 & 2.0625 & 16.370\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Inference: where the K/V saving appears}
-We expected the K/V saving to matter only when K/V reads dominate the bytes moved per decode step. Analytically, at
-batch 1 and a 128-token prompt, the 84\,MB of BF16 matmul weights dominate, and K/V is only 5\% of the bytes read per step in
-B0, so the ideal bandwidth-bound speedup of GQA-2 is $1.08\times$. At batch 64 and the full 2{,}048 positions, K/V is
-94\% of the traffic, so the ideal speedups are $1.9\times$ (GQA-2) and $3.4\times$ (MQA). With the window
-capping reads at 1{,}025/2{,}049 positions, they barely change from the 1{,}792- to the 8{,}192-token prompt, while the
-allocated cache grows $4\times$ (8.25\,GB for B0 at batch 64).
-\TBD{Measured results (Fig.~\ref{fig:inference}): HIa (decode working set vs.\ half the cache), HIb (batch-1 spread), HIc (batch-64
-speedups vs.\ the ideal ratios above). Explain the gap between measured and ideal, e.g.\ eager kernel-launch overhead at
-small batch, or FA3's decode kernel not being purely bandwidth-bound.}
+At batch 64, GQA-2/B0 decode ratios are 0.954, 0.974 and 0.943 for prompts 128, 1{,}792 and 8{,}192;
+MQA/B0 ratios are 0.899, 0.909 and 0.992. All contradict HIc's predicted speedup. At batch 1, prompt 128,
+GQA-2 is 4.1\% slower and MQA 14.2\% slower, contradicting HIb's universal under-5\% prediction;
+GQA-2 is also 11.0\% and 9.0\% slower at longer prompts.
+
+Prefill differs: batch-64 TTFT falls by 8.8\%/13.1\% for GQA-2/MQA at prompt 1{,}792 and by 8.5\%/12.8\%
+at prompt 8{,}192. Thus lower prefill latency coexists with slower decode.
+Eager execution without CUDA graphs, launch overhead, grouped-head kernel efficiency and windowed cache reads
+may explain the missing speedup; no profiler isolates their contributions. Two warmups and five repeats were used,
+but per-repeat dispersion and randomized timing order were not retained, so differences are descriptive.
+Every workload fits in memory; maximum feasible batch size was not tested. The 8{,}192-token grid measures systems
+performance only, beyond the training context.
 
 \begin{figure}[t]
-\centering
-\resultfigure{inference_comparison_d8.pdf}{0.98\linewidth}{Decode tokens/s, TTFT, peak VRAM and allocated KV cache vs.\ prompt length, per batch size, for B0, GQA-2 and MQA.}
-\caption{Inference benchmark on one H100 (eager, BF16, greedy, 256 new tokens).}
+\centering\includegraphics[width=\linewidth]{figures/inference_comparison_d8.pdf}
+\caption{Inference on one H100: seed-1 MHA, GQA-2 and MQA, eager BF16, 256 generated tokens. Each prompt column has
+independent y limits to display all measurements. Throughput is aggregate across requests; peak allocation includes
+prefill. The right column exceeds the training context. No workload in this grid ran out of memory.}
 \label{fig:inference}
 \end{figure}
 
-% ---------------------------------------------------------------------------
-\section{Discussion}
-% ---------------------------------------------------------------------------
-\paragraph{What the experiments establish.}
-\TBD{Two or three sentences: the decomposition of GQA's fixed-compute result into per-token cost, data gain and
-value-embedding capacity; partial RoPE; where inference gains appear. State which hypotheses held and which failed.}
+\subsection{Compute accounting and actual expenditure}
+The 14 run pipelines totalled 8{,}326.53 seconds (2.313 hours), or \$10.25 at \$4.43/hour, including training,
+final evaluation, inference and pipeline overhead. This is a rate-based estimate, not an invoice. The cumulative
+ledger, including earlier work and allowances, ends at \$12.68 with zero reserved. Post-pilot and launch forecasts
+were \$21.38 and \$21.68, including \$2.08 and \$2.38 already spent, respectively; both allowed about \$19.30
+for remaining work. Most excess came from conservative overhead (\$7.24 forecast versus \$0.27 measured) and
+final-evaluation estimates (\$2.81 versus \$0.90). All training targets were completed; lower spend did not reduce
+the per-model scientific budget $C$.
 
-\paragraph{Predictions vs.\ outcomes.}
-\begin{table}[h]
+\section{Discussion}
+Arithmetic savings did not yield the best fixed-compute quality: extra tokens recovered only about one quarter of
+the matched-token penalties. The transferred Chinchilla coefficients overpredicted that benefit and were not fitted
+to this architecture or corpus. Cache savings were realised, while decode acceleration was not; this conclusion is
+conditional on the tested runtime. Table~\ref{tab:hypotheses} retains both successful and failed predictions.
+
+\begin{table}[t]
 \centering\small
-\begin{tabularx}{\linewidth}{@{}lXl@{}}
+\caption{Registered predictions and observed outcomes. ``Unresolved'' refers to the specified detection procedure,
+not evidence of equality. Failures are retained rather than reformulated after observing results.}
+\label{tab:hypotheses}
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
 \toprule
-Hyp. & Prediction (registered before results) & Outcome \\
+Hypothesis & Prediction & Outcome\\
 \midrule
-E1 & $s\in[0.001,0.003]$ BPB & \TBD{} \\
-H2a & GQA-2 not resolved-worse than B0 at fixed compute & \TBD{} \\
-H2b & GQA-2 training-throughput gain $<5\%$ & \TBD{held (pilot: 1.6\%)} \\
-H2c & R75 unresolved in BPB; $<2\%$ throughput difference & \TBD{} \\
-H3 & PM within threshold of B0 & \TBD{} \\
-H4a & Monotone degradation with K/V sharing; MQA resolved-worse & \TBD{} \\
-H4b & R25 unresolved from R75/full & \TBD{} \\
-H5a & Removing value embeddings costs B0 a resolved loss & \TBD{} \\
-H5b/c & GQA gap smaller without value embeddings; interaction unresolved & \TBD{} \\
-H6 & Extra tokens worth $\approx0.005$ / $0.009$ BPB (GQA-2 / MQA) & \TBD{} \\
-HIa & No K/V-sized temporary in decode & \TBD{held in all pilots} \\
-HIb & Batch-1 decode within 5\% across variants & \TBD{} \\
-HIc & Batch-64 GQA speedup grows to 1{,}792 tokens, then plateaus & \TBD{} \\
+E1 & B0 $s\in[0.001,0.003]$ & Failed: $s=0.000656$; GQA-2 variance larger.\\
+H2a & GQA-2 not resolved-worse & Failed: +0.005158 BPB; robust to pooled/paired checks.\\
+H2b & GQA-2 training gain $<5\%$ & Held: +2.84\% steady tokens/s.\\
+H2c & R75 unresolved; speed difference $<2\%$ & Held: $-0.000156$ BPB; $-0.14\%$ throughput.\\
+H3 & PM within B0 threshold & Failed by primary rule; pooled interval unresolved.\\
+H4a & Monotone K/V quality loss & Held: MHA $<$ GQA-2 $<$ MQA BPB; pooled checks agree.\\
+H4b & R25 unresolved from R75/full & Held under detection rule; not equivalence.\\
+H5a & Value-embedding removal hurts B0 & Held: +0.016746 BPB; pooled check agrees.\\
+H5b/c & Smaller GQA gap without VE; unresolved interaction & Sign agrees; +0.000507 interaction unresolved.\\
+H6 & Extra tokens save about 0.005/0.009 BPB & Overpredicted: observed 0.002314/0.003522.\\
+HIa & No expanded-K/V-sized temporary & All 168 saved working-set checks pass.\\
+HIb & Batch-1 decode within 5\% & Failed: MQA 14.2\% slower at prompt 128.\\
+HIc & High-batch decode speedup grows then plateaus & Failed: all three batch-64 ratios below one.\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+
+
 \paragraph{Limitations and threats to validity.}\label{sec:limits}
 \begin{itemize}
-\item \emph{Statistical power.} Three seeds give $s$ two degrees of freedom. Most variants are single runs, and no
-  multiplicity correction is applied across $\approx17$ contrasts. A true effect of $2s$ against a three-seed mean
-  is detected only about 40\% of the time. ``Unresolved'' therefore means ``not distinguishable at this budget'', not
-  ``equal''.
-\item \emph{The FLOP measure.} The estimator ignores embedding lookups, norms, softmax and rotary work, so value embeddings
-  are free and partial RoPE saves nothing by its measure. It also charges every token the full attention window rather than the
-  causal average, which slightly understates GQA's relative saving. Measured throughput (\S\ref{sec:speed}) shows how
-  this differs from a time budget.
-\item \emph{Architectural confounds.} The value embeddings shrink with $n_\text{kv}$ (E5 addresses this only at
-  $n_\text{kv}\in\{4,2\}$). The value gate becomes a single row at MQA. NorMuon's factored second moment is reduced along
-  the longer axis, so the square MHA K/V matrices receive per-row statistics while the GQA ones receive per-column
-  statistics. PM's wider \texttt{c\_fc} gets about 6\% more Muon learning rate. None of these is isolated.
-\item \emph{No per-variant tuning.} All hyperparameters were tuned upstream for MHA. Part of any GQA penalty could come
-  from this mismatch, which a learning-rate sweep at $0.5\times$ and $2\times$ would test.
-\item \emph{Scale and duration.} All results are for a 42M-scaling-parameter model trained on about 0.45B tokens. GQA's quality
-  cost is known to shrink with model size~\cite{ainslie2023gqa}, so we make no claim about transfer to larger models.
-\item \emph{Metric scope.} BPB on ClimbMix measures in-distribution language modelling only, not downstream tasks or the
-  use of long context, which is where positional encoding choices are expected to matter most.
+\item \emph{Statistical power.} Only B0 and GQA-2 have three seeds; others have one. B0's threshold has two degrees of
+freedom and understates GQA-2 variability. Pooled-$t$ intervals assume transferable noise and do not fix unequal
+variances. Seventeen contrasts have no multiplicity correction; unresolved results do not establish equivalence.
+\item \emph{Compute measure.} The estimator omits embedding lookups, norms, softmax and rotary operations and charges
+full rather than causal-average attention windows. Equal estimated FLOPs need not imply equal operations, energy or time.
+\item \emph{Confounds and tuning.} K/V sharing changes value-embedding width, gates and Muon statistics. PM matches
+scaling rather than total parameters and changes MLP learning-rate scaling. E5 cannot resolve attribution; E6 changes
+both tokens and schedule with single-seed twins. Upstream MHA hyperparameters were not tuned per variant.
+\item \emph{Scope.} One depth, width, corpus and short horizon cannot establish downstream, instruction-following,
+long-context or larger-model quality. No data-mixture experiment or comparable GPT-2 evaluation was performed.
+\item \emph{Timing and provenance.} Inference uses eager execution and fixed random prompts without randomized order
+or saved repeat variance. Memory is allocation, not total device usage. Held-out/tokenizer hashes agree, but training
+shards have filenames/sizes rather than content hashes and tokenizer inputs are checked by recipe only.
+The audit checks retained records, not an independent rerun.
 \end{itemize}
 
-\paragraph{Future work.}
-A d12 replication to test whether the per-token cost of GQA shrinks with size; a learning-rate sweep for B0 and GQA-2;
-fixing the value-embedding width to $n_\text{head}\cdot d_\text{head}$ independently of $n_\text{kv}$, which would
-remove the main confound; and a wall-clock-budget variant of the suite.
+\paragraph{Prioritised follow-up experiments.}
+First, hold value-embedding capacity independent of K/V count and replicate the noVE cells. Next, repeat E6 with
+multiple paired seeds and a shared schedule up to the cutoff. Profile prefill/decode with randomized timing order
+and saved repeat distributions, test compiled/CUDA-graph execution, and extend batches until OOM. Finally, replicate
+at depth 12 with learning-rate sweeps and equal-wall-time comparisons.
 
-% ---------------------------------------------------------------------------
 \section{Conclusion}
-% ---------------------------------------------------------------------------
-\TBD{Three to four sentences answering the research question with the measured numbers.}
+Under $1.3854\times10^{17}$ estimated training FLOPs, MHA achieved the best tested mean test BPB, 0.960795.
+GQA-2 and MQA were worse by 0.005158 and 0.011370 BPB despite extra training, while improving steady training
+throughput by 2.84\% and 6.42\%. Partial RoPE produced no resolved quality change and no measured training speedup.
+GQA halved or quartered allocated K/V cache, but did not accelerate decoding in the reported high-batch comparisons.
+For this small-model objective, retain MHA for quality; GQA offers a demonstrated memory tradeoff whose value depends
+on deployment constraints, with the observed quality and runtime costs stated explicitly.
 
-\paragraph{Reproducibility.}
-Every run is defined in one table (\texttt{experiments/config.py}), from which all configs are generated. The whole suite
-runs with a single Modal command, and the tables and figures in this report are regenerated without a GPU from the
-saved results in \texttt{results/} (see \texttt{readme.md}). Each run records its config, code commit and diff,
-hardware, software versions, data and tokenizer hashes, and data order.
+\paragraph{Reproducibility and evidence.}
+Namespace \texttt{d8-v5}, launch commit \texttt{c07aa7e}, overlays experiment code on nanochat \texttt{324e69c}.
+Configs, scores, logs, inference cells and provenance are in \texttt{results/d8-v5/artifacts/};
+\texttt{comparison.json} holds analysis rules and sensitivity results; \texttt{results/d8-v5/audit/} holds the audit
+and timing CSV. All 56 final-checkpoint files match checksum markers; no consistency assertions failed.
+An omitted \texttt{source/experiments/checkpoints.py} was restored with its recorded hash; no training effect is recorded.
+The corpus is excluded.
 
-{\footnotesize
-\setlength{\bibsep}{1pt}
+From the repository root, run \texttt{python3 report/make\_figures.py} to regenerate figures and
+\texttt{python3 -m experiments.report --output-root results/d8-v5/artifacts} for comparisons.
+Build in \texttt{report/} with \texttt{latexmk -pdf report.tex}. No additional GPU runs were required.
+
+{\fontsize{7.5}{9}\selectfont
+\setlength{\bibsep}{0pt}
 \bibliographystyle{plainnat}
 \bibliography{references}
 }
-
 \end{document}

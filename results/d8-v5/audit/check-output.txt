@@ -1,0 +1,91 @@
+{
+  "failures": [],
+  "log_warnings": [
+    {
+      "run_id": "d8-b0-s1",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa4",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "missing_source_snapshot": "experiments/checkpoints.py",
+      "recovered_hash_matches": true
+    }
+  ],
+  "run_count": 14,
+  "total_updates": 24047,
+  "total_tokens": 6303776768,
+  "totals": {
+    "training_seconds": 6160.028986239998,
+    "final_evaluation_seconds": 729.448487326004,
+    "benchmark_seconds": 1214.394018034001,
+    "pipeline_seconds": 8326.530444839002,
+    "pipeline_cost_usd": 10.246258297399102,
+    "projected_seconds": 15688.207507674691,
+    "projected_training_seconds": 6284.865066778836,
+    "projected_final_evaluation_seconds": 2285.920804863981,
+    "projected_benchmark_seconds": 1237.4216360318744,
+    "projected_overhead_seconds": 5880,
+    "actual_other_seconds": 222.65895323899866
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "run_id": "pilot-d8-b0-nove",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-b0-s1",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa2-nove",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa2-pm",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa2-r25",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa2-r75",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa2-s1",
+    "valid": true
+  },
+  {
+    "run_id": "pilot-d8-gqa4",
+    "valid": true
+  }
+]

@@ -1,0 +1,3244 @@
+{
+  "runs": [
+    {
+      "run_id": "d8-b0-s1",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 125829648,
+      "scaling_parameters": 41943552,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 314575872,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 138539818014474240,
+      "training_seconds": 456.2821726,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9615667274921506,
+      "test_bpb": 0.9612267073081054,
+      "training_tokens_per_second": 965196.4210884884,
+      "peak_vram_bytes": 17068546560.0,
+      "eval_peak_vram_bytes": 27741995520.0,
+      "evaluation_seconds": 52.815666521000026,
+      "training_gpu_hours": 0.12674504794444444,
+      "evaluation_gpu_hours": 0.014671018478055563,
+      "training_cost_usd": 0.5614805623938889,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-s1/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1183999.7268789506,
+      "steady_data_wait_fraction": 0.005170889654467157
+    },
+    {
+      "run_id": "d8-b0-s2",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 125829648,
+      "scaling_parameters": 41943552,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 314575872,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 138539818014474240,
+      "training_seconds": 438.46971325699997,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9614461978761936,
+      "test_bpb": 0.9611179260552988,
+      "training_tokens_per_second": 1004406.7051487945,
+      "peak_vram_bytes": 17068546560.0,
+      "eval_peak_vram_bytes": 27741995520.0,
+      "evaluation_seconds": 52.59226670300018,
+      "training_gpu_hours": 0.12179714257138888,
+      "evaluation_gpu_hours": 0.014608962973055604,
+      "training_cost_usd": 0.5395613415912527,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-s2/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1184531.0524848665,
+      "steady_data_wait_fraction": 0.004707283613958996
+    },
+    {
+      "run_id": "d8-b0-s3",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 125829648,
+      "scaling_parameters": 41943552,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 314575872,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 138539818014474240,
+      "training_seconds": 438.3445095740001,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9602647603249718,
+      "test_bpb": 0.9600402935909975,
+      "training_tokens_per_second": 1004693.5923253594,
+      "peak_vram_bytes": 17068546560.0,
+      "eval_peak_vram_bytes": 27741995520.0,
+      "evaluation_seconds": 52.29263893600023,
+      "training_gpu_hours": 0.12176236377055558,
+      "evaluation_gpu_hours": 0.014525733037777842,
+      "training_cost_usd": 0.5394072715035612,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-s3/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1184567.8381260142,
+      "steady_data_wait_fraction": 0.004723729441068959
+    },
+    {
+      "run_id": "d8-gqa2-s1",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138539169742848000,
+      "training_seconds": 456.34766253399994,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9679067162228787,
+      "test_bpb": 0.9676358573105333,
+      "training_tokens_per_second": 1005268.6529665766,
+      "peak_vram_bytes": 15666596352.0,
+      "eval_peak_vram_bytes": 27330949632.0,
+      "evaluation_seconds": 51.46942787500029,
+      "training_gpu_hours": 0.12676323959277777,
+      "evaluation_gpu_hours": 0.014297063298611192,
+      "training_cost_usd": 0.5615611513960055,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-s1/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1217373.578732788,
+      "steady_data_wait_fraction": 0.004937736445379103
+    },
+    {
+      "run_id": "d8-gqa2-s2",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138539169742848000,
+      "training_seconds": 438.8162895649998,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9664298829140218,
+      "test_bpb": 0.9661215001106994,
+      "training_tokens_per_second": 1045430.6526650653,
+      "peak_vram_bytes": 15667644928.0,
+      "eval_peak_vram_bytes": 27329901056.0,
+      "evaluation_seconds": 51.545309262000046,
+      "training_gpu_hours": 0.1218934137680555,
+      "evaluation_gpu_hours": 0.01431814146166668,
+      "training_cost_usd": 0.5399878229924858,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-s2/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1218844.5208048094,
+      "steady_data_wait_fraction": 0.004812295130118437
+    },
+    {
+      "run_id": "d8-gqa2-s3",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138539169742848000,
+      "training_seconds": 436.570790969,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9642431832671292,
+      "test_bpb": 0.9641014846006933,
+      "training_tokens_per_second": 1050807.817402917,
+      "peak_vram_bytes": 15667644928.0,
+      "eval_peak_vram_bytes": 27330949632.0,
+      "evaluation_seconds": 51.78383311400012,
+      "training_gpu_hours": 0.12126966415805555,
+      "evaluation_gpu_hours": 0.014384398087222255,
+      "training_cost_usd": 0.537224612220186,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-s3/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1217927.9539937754,
+      "steady_data_wait_fraction": 0.004755750020811966
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 0.75,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138539169742848000,
+      "training_seconds": 446.0797817919997,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9661480894727317,
+      "test_bpb": 0.9657969742208089,
+      "training_tokens_per_second": 1028407.9636093194,
+      "peak_vram_bytes": 15664499200.0,
+      "eval_peak_vram_bytes": 27328852480.0,
+      "evaluation_seconds": 52.28534033899996,
+      "training_gpu_hours": 0.1239110504977777,
+      "evaluation_gpu_hours": 0.014523705649722211,
+      "training_cost_usd": 0.5489259537051552,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-r75/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1216343.3453236604,
+      "steady_data_wait_fraction": 0.004699338300942692
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 92274960,
+      "scaling_parameters": 41943296,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 314574336,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.5,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 138539141557125120,
+      "training_seconds": 448.8344039249996,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9650679782673326,
+      "test_bpb": 0.9648669526811049,
+      "training_tokens_per_second": 981212.4831535671,
+      "peak_vram_bytes": 16263252480.0,
+      "eval_peak_vram_bytes": 27374219776.0,
+      "evaluation_seconds": 54.13638208100019,
+      "training_gpu_hours": 0.12467622331249989,
+      "evaluation_gpu_hours": 0.015037883911388942,
+      "training_cost_usd": 0.5523156692743745,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-pm/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1173835.9523188593,
+      "steady_data_wait_fraction": 0.00481624369032965
+    },
+    {
+      "run_id": "d8-gqa4",
+      "step": 1787,
+      "stop_reason": "token_target",
+      "parameters": 72351888,
+      "scaling_parameters": 38797440,
+      "target_tokens": 468451328,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 295699200,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 1,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 468451328,
+      "estimated_flops": 138520682928537600,
+      "training_seconds": 446.92717809900023,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9723183765776132,
+      "test_bpb": 0.9721649676797284,
+      "training_tokens_per_second": 1048160.3065460295,
+      "peak_vram_bytes": 14965621248.0,
+      "eval_peak_vram_bytes": 27124378112.0,
+      "evaluation_seconds": 51.330931275000694,
+      "training_gpu_hours": 0.1241464383608334,
+      "evaluation_gpu_hours": 0.014258592020833526,
+      "training_cost_usd": 0.5499687219384919,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa4/checkpoints",
+      "checkpoint_step": 1787,
+      "steady_tokens_per_second": 1260261.1232343924,
+      "steady_data_wait_fraction": 0.005382866233081198
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 0.25,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138539169742848000,
+      "training_seconds": 454.79702134299987,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9670222747018034,
+      "test_bpb": 0.9668211613503422,
+      "training_tokens_per_second": 1008696.1401930937,
+      "peak_vram_bytes": 15661615616.0,
+      "eval_peak_vram_bytes": 27325968896.0,
+      "evaluation_seconds": 52.05303781600105,
+      "training_gpu_hours": 0.1263325059286111,
+      "evaluation_gpu_hours": 0.014459177171111403,
+      "training_cost_usd": 0.559653001263747,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-r25/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1212585.4027392853,
+      "steady_data_wait_fraction": 0.005556000432740989
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 58720272,
+      "scaling_parameters": 41943040,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 314572800,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": false
+      },
+      "tokens": 440401920,
+      "estimated_flops": 138538465099776000,
+      "training_seconds": 433.3089782849993,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9777611943468361,
+      "test_bpb": 0.9775414229279047,
+      "training_tokens_per_second": 1016369.2470510858,
+      "peak_vram_bytes": 15992692736.0,
+      "eval_peak_vram_bytes": 27003787264.0,
+      "evaluation_seconds": 53.14098599600038,
+      "training_gpu_hours": 0.12036360507916646,
+      "evaluation_gpu_hours": 0.014761384998888995,
+      "training_cost_usd": 0.5332107705007074,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-nove/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1211757.67720582,
+      "steady_data_wait_fraction": 0.005428128048142232
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "step": 1750,
+      "stop_reason": "token_target",
+      "parameters": 56623120,
+      "scaling_parameters": 39845888,
+      "target_tokens": 458752000,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301989888,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": false
+      },
+      "tokens": 458752000,
+      "estimated_flops": 138538465099776000,
+      "training_seconds": 437.15579156900003,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9825038928924098,
+      "test_bpb": 0.9821923304885778,
+      "training_tokens_per_second": 1049401.6294591199,
+      "peak_vram_bytes": 15128666112.0,
+      "eval_peak_vram_bytes": 26961844224.0,
+      "evaluation_seconds": 50.99803328899998,
+      "training_gpu_hours": 0.12143216432472223,
+      "evaluation_gpu_hours": 0.01416612035805555,
+      "training_cost_usd": 0.5379444879585195,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-nove/checkpoints",
+      "checkpoint_step": 1750,
+      "steady_tokens_per_second": 1234406.084732404,
+      "steady_data_wait_fraction": 0.005352761680240237
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 90177808,
+      "scaling_parameters": 39846144,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 301991424,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 132997602953134080,
+      "training_seconds": 421.73618447899935,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9702762106343458,
+      "test_bpb": 0.969949931233875,
+      "training_tokens_per_second": 1044259.2696760411,
+      "peak_vram_bytes": 15667644928.0,
+      "eval_peak_vram_bytes": 27329901056.0,
+      "evaluation_seconds": 52.66898585600029,
+      "training_gpu_hours": 0.11714894013305538,
+      "evaluation_gpu_hours": 0.014630273848888969,
+      "training_cost_usd": 0.5189698047894352,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa2-tok/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1219195.2875043647,
+      "steady_data_wait_fraction": 0.0051080714412623796
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "step": 1680,
+      "stop_reason": "token_target",
+      "parameters": 72351888,
+      "scaling_parameters": 38797440,
+      "target_tokens": 440401920,
+      "flop_budget": 138539818014474240,
+      "flops_per_token": 295699200,
+      "data_epoch": 1,
+      "model_config": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 1,
+        "n_embd": 512,
+        "rotary_fraction": 1.0,
+        "window_pattern": "SSSL",
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "tokens": 440401920,
+      "estimated_flops": 130226495422464000,
+      "training_seconds": 406.3585082489999,
+      "overrun_seconds": 0,
+      "val_bpb": 0.9758453771922937,
+      "test_bpb": 0.9756869061688264,
+      "training_tokens_per_second": 1083776.7908384476,
+      "peak_vram_bytes": 14965621248.0,
+      "eval_peak_vram_bytes": 27124378112.0,
+      "evaluation_seconds": 50.33564826300062,
+      "training_gpu_hours": 0.11287736340249997,
+      "evaluation_gpu_hours": 0.013982124517500173,
+      "training_cost_usd": 0.5000467198730748,
+      "checkpoint_dir": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-gqa4-tok/checkpoints",
+      "checkpoint_step": 1680,
+      "steady_tokens_per_second": 1257761.7128220922,
+      "steady_data_wait_fraction": 0.005199530982451404
+    }
+  ],
+  "eligibility": {
+    "d8-b0-s1": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-b0-s2": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-b0-s3": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-s1": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-s2": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-s3": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-r75": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-pm": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa4": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-r25": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-b0-nove": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-nove": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa2-tok": {
+      "eligible": true,
+      "reasons": []
+    },
+    "d8-gqa4-tok": {
+      "eligible": true,
+      "reasons": []
+    }
+  },
+  "noise": {
+    "n": 3,
+    "mean": 0.9607949756514672,
+    "std": 0.0006558331339118763,
+    "threshold": 0.0018549762252636514
+  },
+  "gqa2_noise": {
+    "n": 3,
+    "mean": 0.965952947340642,
+    "std": 0.0017732047654559835,
+    "threshold": 0.0050153804563449105
+  },
+  "pooled_noise": {
+    "members": {
+      "d8-b0": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "d8-gqa2": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ]
+    },
+    "n": 6,
+    "df": 4,
+    "std": 0.0013368568060515087,
+    "t_critical": 2.776
+  },
+  "comparisons": [
+    {
+      "run_id": "d8-gqa2",
+      "reference": "d8-b0",
+      "bpb_delta": 0.0051006989035712325,
+      "bpb_relative_delta": 0.00530718799186147,
+      "training_speedup": 1.0284392432971445,
+      "whole_phase_training_speedup": 1.0427699105062362,
+      "members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 3,
+      "n_ref": 3,
+      "test_bpb_delta": 0.005157971689174756,
+      "test_bpb_relative_delta": 0.0053684415717072135,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.0021278593937198533,
+          0.00818808398462966
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa2-s1",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": 0.06548993399991332,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.948857285315551,
+          "decode": 0.9593104312523888,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9417009795770639,
+          "decode": 0.8898717729944331,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0594842401519422,
+          "decode": 0.9100047867380372,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.877179114388883,
+          "decode": 0.9070743136686165,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0715671944154799,
+          "decode": 0.9504747564556573,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.087132397882833,
+          "decode": 0.9378075178774589,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.93065970678299,
+          "decode": 0.9338514404453663,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0884903714809295,
+          "decode": 0.9712616346593702,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.088899100625961,
+          "decode": 1.0054481581411252,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.067134099954856,
+          "decode": 0.9537721474936648,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0966570729746852,
+          "decode": 0.974406347496598,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.093325308135828,
+          "decode": 0.9430024869315726,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "reference": "d8-b0",
+      "bpb_delta": 0.0050555275749596396,
+      "bpb_relative_delta": 0.005260188014541495,
+      "training_speedup": 1.026999368384805,
+      "whole_phase_training_speedup": 1.0372952609512756,
+      "members": [
+        "d8-gqa2-r75"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.005001998569341692,
+      "test_bpb_relative_delta": 0.005206104003562348,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.0007167726655958979,
+          0.009287224473087486
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa2-r75",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -10.202390808000303,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9308432977010738,
+          "decode": 0.9643507348916918,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9974096753868955,
+          "decode": 0.9919625271873737,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0599121190643574,
+          "decode": 1.0009501519936952,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.9167015030875658,
+          "decode": 0.9505500308525298,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.9172364162065334,
+          "decode": 0.7415395401188981,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0901260112291395,
+          "decode": 0.9823669356484992,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9979759598363396,
+          "decode": 0.9875689726481293,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0893398181031626,
+          "decode": 0.9964791143924572,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.096686867529984,
+          "decode": 1.0424134490712678,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0459082275067586,
+          "decode": 0.9859188676229631,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.1048681562433138,
+          "decode": 1.0050169842845162,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.100178808069047,
+          "decode": 1.0274303718981554,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-r75",
+      "reference": "d8-gqa2",
+      "bpb_delta": -4.51713286115929e-05,
+      "bpb_relative_delta": -4.6751856428939085e-05,
+      "training_speedup": 0.9985999416866638,
+      "whole_phase_training_speedup": 0.9947498968853992,
+      "members": [
+        "d8-gqa2-r75"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": -0.00015597311983306383,
+      "test_bpb_relative_delta": -0.00016147072200822234,
+      "resolved": false,
+      "resolved_by_means": false,
+      "sensitivity": {
+        "ci95": [
+          -0.004441199023578858,
+          0.004129252783912731
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-r75",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.02931672508272154
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.004591852172047606
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.002341830839940995
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": -0.0003968025768772421
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": -3.637598495109806e-05
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": -0.0013792440190432131
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": -0.0015915580347939384
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": -0.0017212652321295652
+        }
+      ],
+      "matched_estimated_flops": [
+        {
+          "estimated_flops": 15833047970611200,
+          "bpb_delta": 0.02931672508272154
+        },
+        {
+          "estimated_flops": 31666095941222400,
+          "bpb_delta": 0.004591852172047606
+        },
+        {
+          "estimated_flops": 47499143911833600,
+          "bpb_delta": 0.002341830839940995
+        },
+        {
+          "estimated_flops": 63332191882444800,
+          "bpb_delta": -0.0003968025768772421
+        },
+        {
+          "estimated_flops": 79165239853056000,
+          "bpb_delta": -3.637598495109806e-05
+        },
+        {
+          "estimated_flops": 94998287823667200,
+          "bpb_delta": -0.0013792440190432131
+        },
+        {
+          "estimated_flops": 110831335794278400,
+          "bpb_delta": -0.0015915580347939384
+        },
+        {
+          "estimated_flops": 126664383764889600,
+          "bpb_delta": -0.0017212652321295652
+        }
+      ],
+      "elapsed_seconds_difference": -10.267880742000216,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.981015071609545,
+          "decode": 1.0052540903081006,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0591575213555067,
+          "decode": 1.114725241648472,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.00040385585382,
+          "decode": 1.0999394361228105,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.0450562354374084,
+          "decode": 1.0479296089954062,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.8559765742986085,
+          "decode": 0.7801780479516537,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.00275367871672,
+          "decode": 1.0475144599735047,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 1.0723317583889407,
+          "decode": 1.0575225671624433,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0007803896520253,
+          "decode": 1.025963632077294,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0071519637582087,
+          "decode": 1.036764989453543,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9801094609862104,
+          "decode": 1.0337048216534461,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0074873754713094,
+          "decode": 1.0314146524871906,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0062684910723456,
+          "decode": 1.0895309250363718,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "reference": "d8-b0",
+      "bpb_delta": 0.003975416369560558,
+      "bpb_relative_delta": 0.00413635119775634,
+      "training_speedup": 0.991108954764793,
+      "whole_phase_training_speedup": 0.9896919265281786,
+      "members": [
+        "d8-gqa2-pm"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.004071977029637686,
+      "test_bpb_relative_delta": 0.004238133142689137,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          -0.0002132488741081089,
+          0.00835720293338348
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 92274960.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 41943296.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa2-pm",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.0013550416704901647
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.001291275003643566
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.0029019630384914397
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.0026701567120797076
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.002564144628447229
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.0034379653506098062
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.0031180450845555985
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.0029669615614019706
+        }
+      ],
+      "matched_estimated_flops": [],
+      "elapsed_seconds_difference": -7.447768675000418,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9321670588357459,
+          "decode": 0.9350712553565916,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9976846692554256,
+          "decode": 0.9517558673165912,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0137851194729328,
+          "decode": 0.9160856143135132,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.9600805267922212,
+          "decode": 0.9539067141299227,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0352815141778995,
+          "decode": 0.9779640166136956,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.033373114060317,
+          "decode": 0.9105192735122313,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9459585686335429,
+          "decode": 0.9440776803892527,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0342576457148331,
+          "decode": 0.948067211459725,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0332770551145227,
+          "decode": 0.9599140646791539,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0128726869903981,
+          "decode": 0.9410635473164004,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0370649856895942,
+          "decode": 0.8785054411474966,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.036909222377744,
+          "decode": 0.9900573806003998,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-pm",
+      "reference": "d8-gqa2",
+      "bpb_delta": -0.0011252825340106742,
+      "bpb_relative_delta": -0.0011646557471094192,
+      "training_speedup": 0.9637019991451592,
+      "whole_phase_training_speedup": 0.9490990452991784,
+      "members": [
+        "d8-gqa2-pm"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": -0.0010859946595370706,
+      "test_bpb_relative_delta": -0.00112427283598742,
+      "resolved": false,
+      "resolved_by_means": false,
+      "sensitivity": {
+        "ci95": [
+          -0.005371220563282865,
+          0.003199231244208724
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 92274960.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 41943296.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-pm",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -7.5132586090003315,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9824101825025724,
+          "decode": 0.974732708927023,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0594495396017376,
+          "decode": 1.0695427096354762,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 0.9568666347765065,
+          "decode": 1.00668219295557,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.0945091042906265,
+          "decode": 1.0516301693869985,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.9661377462592315,
+          "decode": 1.0289216099336993,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 0.9505494602798972,
+          "decode": 0.9709020840150769,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 1.016438728075417,
+          "decode": 1.0109506068106608,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 0.9501762007390924,
+          "decode": 0.976119284061107,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 0.9489190086763194,
+          "decode": 0.9547126392412365,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9491522077996071,
+          "decode": 0.9866754337389069,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 0.9456602353154506,
+          "decode": 0.9015801707414101,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 0.9483995428091971,
+          "decode": 1.0498990133333992,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa4",
+      "reference": "d8-b0",
+      "bpb_delta": 0.011225814679841184,
+      "bpb_relative_delta": 0.01168026382149364,
+      "training_speedup": 1.0640806171527541,
+      "whole_phase_training_speedup": 1.0572182997121045,
+      "members": [
+        "d8-gqa4"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.011369992028261167,
+      "test_bpb_relative_delta": 0.01183394201302077,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.007084766124515372,
+          0.01565521793200696
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 72351888.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 38797440.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa4",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -9.354994500999794,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9004794655710701,
+          "decode": 0.8580167929578426,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9617474395629102,
+          "decode": 0.9409702553567643,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.073153597293692,
+          "decode": 0.8764440384287139,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.8969417431315815,
+          "decode": 0.903224869734183,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0916779665189138,
+          "decode": 0.911828763809337,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.1388756586731184,
+          "decode": 0.9005377560007208,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9090439371428531,
+          "decode": 0.8876648735060586,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.1393313496397746,
+          "decode": 0.9224581710782555,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.1389692269504852,
+          "decode": 0.9411210503334996,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0661609951965991,
+          "decode": 0.8993105329922616,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.1509383462332439,
+          "decode": 0.9085450640804951,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.1473780783048506,
+          "decode": 0.9917132107858677,
+          "kv_cache_bytes_ratio": 0.25
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa4",
+      "reference": "d8-gqa2",
+      "bpb_delta": 0.0061251157762699515,
+      "bpb_relative_delta": 0.006339431276088482,
+      "training_speedup": 1.0346557894284005,
+      "whole_phase_training_speedup": 1.0138557787871478,
+      "members": [
+        "d8-gqa4"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.00621202033908641,
+      "test_bpb_relative_delta": 0.006430976121754872,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.0019267944353406159,
+          0.010497246242832204
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 72351888.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 38797440.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa4",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -9.420484434999707,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9490146511038354,
+          "decode": 0.8944099480266191,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0212875004068165,
+          "decode": 1.0574222982603256,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0129018975683768,
+          "decode": 0.9631202507960165,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.0225297529529838,
+          "decode": 0.9957561978369065,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.018767625780485,
+          "decode": 0.9593403271535248,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0475960985902495,
+          "decode": 0.9602586232608896,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9767737127947055,
+          "decode": 0.950541847515617,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0467077885950191,
+          "decode": 0.9497525055664013,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0459823378453899,
+          "decode": 0.9360214574100431,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9990881138946849,
+          "decode": 0.9428987157524801,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0494970347579309,
+          "decode": 0.9324088111850761,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0494388721881733,
+          "decode": 1.0516549261845476,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "reference": "d8-gqa2",
+      "bpb_delta": 0.0008290139004600849,
+      "bpb_relative_delta": 0.0008580207853783991,
+      "training_speedup": 0.9955147262661607,
+      "whole_phase_training_speedup": 0.9756832083682313,
+      "members": [
+        "d8-gqa2-r25"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.0008682140097002744,
+      "test_bpb_relative_delta": 0.00089881604698298,
+      "resolved": false,
+      "resolved_by_means": false,
+      "sensitivity": {
+        "ci95": [
+          -0.00341701189404552,
+          0.005153439913446069
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-r25",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.03766117313656969
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.007560480362242217
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.004466492701996838
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.0016878601941565652
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.0010157740180176678
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": -0.00035528178130550536
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": -0.0004713660998149072
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": -0.0008533139418016589
+        }
+      ],
+      "matched_estimated_flops": [
+        {
+          "estimated_flops": 15833047970611200,
+          "bpb_delta": 0.03766117313656969
+        },
+        {
+          "estimated_flops": 31666095941222400,
+          "bpb_delta": 0.007560480362242217
+        },
+        {
+          "estimated_flops": 47499143911833600,
+          "bpb_delta": 0.004466492701996838
+        },
+        {
+          "estimated_flops": 63332191882444800,
+          "bpb_delta": 0.0016878601941565652
+        },
+        {
+          "estimated_flops": 79165239853056000,
+          "bpb_delta": 0.0010157740180176678
+        },
+        {
+          "estimated_flops": 94998287823667200,
+          "bpb_delta": -0.00035528178130550536
+        },
+        {
+          "estimated_flops": 110831335794278400,
+          "bpb_delta": -0.0004713660998149072
+        },
+        {
+          "estimated_flops": 126664383764889600,
+          "bpb_delta": -0.0008533139418016589
+        }
+      ],
+      "elapsed_seconds_difference": -1.550641191000068,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9038852069762906,
+          "decode": 0.9088783217509019,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9889501139442184,
+          "decode": 1.0246569758840232,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 0.9989384536099648,
+          "decode": 0.9842017392609562,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.9794248114735954,
+          "decode": 0.9750665945464903,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.9002341011169147,
+          "decode": 0.8429917844233479,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0422997868116637,
+          "decode": 0.9132253943209306,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9704479965818525,
+          "decode": 0.9374922149772474,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.039947482029212,
+          "decode": 0.920263096600309,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.049663160201314,
+          "decode": 0.9326126896130378,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9845679623768236,
+          "decode": 0.9958197278258383,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0499951886248882,
+          "decode": 0.9755047918297781,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.051128241435517,
+          "decode": 0.9662555030674205,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-r25",
+      "reference": "d8-gqa2-r75",
+      "bpb_delta": 0.0008741852290716778,
+      "bpb_relative_delta": 0.0009048149435856755,
+      "training_speedup": 0.9969104590419943,
+      "whole_phase_training_speedup": 0.9808326810820827,
+      "members": [
+        "d8-gqa2-r25"
+      ],
+      "reference_members": [
+        "d8-gqa2-r75"
+      ],
+      "n_run": 1,
+      "n_ref": 1,
+      "test_bpb_delta": 0.0010241871295333382,
+      "test_bpb_relative_delta": 0.0010604580019104302,
+      "resolved": false,
+      "resolved_by_means": false,
+      "sensitivity": {
+        "ci95": [
+          -0.004224121318833711,
+          0.006272495577900388
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-r25",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-r75",
+        "matched_estimated_flops": "d8-gqa2-r75",
+        "elapsed_seconds_difference": "d8-gqa2-r75",
+        "inference_speedups": "d8-gqa2-r75"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.008344448053848152
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.002968628190194611
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.0021246618620558433
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.0020846627710338073
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.0010521500029687658
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.0010239622377377078
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.0011201919349790312
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.0008679512903279063
+        }
+      ],
+      "matched_estimated_flops": [
+        {
+          "estimated_flops": 15833047970611200,
+          "bpb_delta": 0.008344448053848152
+        },
+        {
+          "estimated_flops": 31666095941222400,
+          "bpb_delta": 0.002968628190194611
+        },
+        {
+          "estimated_flops": 47499143911833600,
+          "bpb_delta": 0.0021246618620558433
+        },
+        {
+          "estimated_flops": 63332191882444800,
+          "bpb_delta": 0.0020846627710338073
+        },
+        {
+          "estimated_flops": 79165239853056000,
+          "bpb_delta": 0.0010521500029687658
+        },
+        {
+          "estimated_flops": 94998287823667200,
+          "bpb_delta": 0.0010239622377377078
+        },
+        {
+          "estimated_flops": 110831335794278400,
+          "bpb_delta": 0.0011201919349790312
+        },
+        {
+          "estimated_flops": 126664383764889600,
+          "bpb_delta": 0.0008679512903279063
+        }
+      ],
+      "elapsed_seconds_difference": 8.717239551000148,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9213774926956954,
+          "decode": 0.9041279518418468,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9337139131850407,
+          "decode": 0.9192013759092289,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 0.9985351893285094,
+          "decode": 0.8947781186300408,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.9371981892090783,
+          "decode": 0.9304695527032909,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0517041332054806,
+          "decode": 1.0805120531609558,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0394375098633926,
+          "decode": 0.8718021843288247,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9049885811829754,
+          "decode": 0.8864985429982241,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0391365506180683,
+          "decode": 0.8969743837186798,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0422093169381053,
+          "decode": 0.8995410716025417,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0045489831167704,
+          "decode": 0.9633501817598089,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0421919065077052,
+          "decode": 0.9457930323923658,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0445802991559099,
+          "decode": 0.8868545911490893,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-b0-nove",
+      "reference": "d8-b0",
+      "bpb_delta": 0.016668632449064025,
+      "bpb_relative_delta": 0.017343420508998807,
+      "training_speedup": 1.0231275354202476,
+      "whole_phase_training_speedup": 1.0251525081958763,
+      "members": [
+        "d8-b0-nove"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.01674644727643748,
+      "test_bpb_relative_delta": 0.017429782316547345,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.012461221372691688,
+          0.021031673180183275
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 58720272.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 41943040.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-b0-nove",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.11163659349681754
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.03151037088436581
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.027566764850511127
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.02326294961109432
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.01995534361691287
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.018968481985340735
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.01749539951906287
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.016063040765021186
+        }
+      ],
+      "matched_estimated_flops": [],
+      "elapsed_seconds_difference": -22.97319431500074,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9690594547036318,
+          "decode": 0.9639381136650124,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.1016306849059803,
+          "decode": 1.0648202248237466,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0420253843994052,
+          "decode": 1.07391787805693,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.0648290247228438,
+          "decode": 1.0638103334209494,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.028124359194271,
+          "decode": 1.1018418746624452,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0250503381319716,
+          "decode": 1.058368337868846,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 1.0526061442484995,
+          "decode": 1.0730175816067347,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.030808279612851,
+          "decode": 1.0251745819754674,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.025192078810308,
+          "decode": 1.1095021227585455,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.000729148271031,
+          "decode": 0.9837158062974731,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0294839299873462,
+          "decode": 1.0526350597284342,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0248304698692283,
+          "decode": 1.138921697268099,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "reference": "d8-b0-nove",
+      "bpb_delta": 0.0047426985455737425,
+      "bpb_relative_delta": 0.0048505694161261525,
+      "training_speedup": 1.0186905418076728,
+      "whole_phase_training_speedup": 1.0325003757284814,
+      "members": [
+        "d8-gqa2-nove"
+      ],
+      "reference_members": [
+        "d8-b0-nove"
+      ],
+      "n_run": 1,
+      "n_ref": 1,
+      "test_bpb_delta": 0.004650907560673101,
+      "test_bpb_relative_delta": 0.004757760082169033,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          -0.0005974008876939484,
+          0.00989921600904015
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 56623120.0,
+        "reference": 58720272.0
+      },
+      "scaling_parameters": {
+        "run": 39845888.0,
+        "reference": 41943040.0
+      },
+      "field_subject": "d8-gqa2-nove",
+      "field_references": {
+        "matched_tokens": "d8-b0-nove",
+        "matched_estimated_flops": "d8-b0-nove",
+        "elapsed_seconds_difference": "d8-b0-nove",
+        "inference_speedups": "d8-b0-nove"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": 3.8468132840007456,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 1.1070573261733472,
+          "decode": 1.064568049077641,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 0.9480583274067238,
+          "decode": 0.9294014389502072,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.069663393537992,
+          "decode": 1.0201118841669237,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.994607130393174,
+          "decode": 1.013792534905235,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0668331076973905,
+          "decode": 0.9536315529572919,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0827452202074954,
+          "decode": 1.015730249977907,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 1.060501690043744,
+          "decode": 1.014598290411027,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0834814526512133,
+          "decode": 1.0713380623446211,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0825369865181256,
+          "decode": 1.022034790689724,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0914896952317417,
+          "decode": 1.1307420701778583,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.084497914302041,
+          "decode": 1.0670923991715078,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.085155716650072,
+          "decode": 1.016823245052816,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-nove",
+      "reference": "d8-gqa2",
+      "bpb_delta": 0.016310632091066535,
+      "bpb_relative_delta": 0.016881334980062675,
+      "training_speedup": 1.013429184260004,
+      "whole_phase_training_speedup": 1.0150564752845421,
+      "members": [
+        "d8-gqa2-nove"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.016239383147935826,
+      "test_bpb_relative_delta": 0.01681177452032664,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.011954157244190033,
+          0.02052460905168162
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 56623120.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 39845888.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-nove",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.09677229360639084
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.032605490925334824
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.025443624693004985
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.024264448591193144
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.020793875285945784
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.018470304900601642
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.01708106110880281
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.015397910952538396
+        }
+      ],
+      "matched_estimated_flops": [],
+      "elapsed_seconds_difference": -19.191870964999907,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 1.1306277407886833,
+          "decode": 1.0697034908254452,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.1090677053569087,
+          "decode": 1.1121214080589388,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0520367992161446,
+          "decode": 1.203857832388046,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.2073777444835754,
+          "decode": 1.1889687077736084,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0235821989837202,
+          "decode": 1.1055014043360785,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.02091369574296,
+          "decode": 1.1463085077685364,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 1.1994616150135509,
+          "decode": 1.1657976383909205,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0260647971376173,
+          "decode": 1.13080606813399,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0192021859138118,
+          "decode": 1.1278053081322297,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0235691588358728,
+          "decode": 1.166241696407762,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0180695519067862,
+          "decode": 1.1527622682502896,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0171726884031957,
+          "decode": 1.2280795354479734,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "reference": "d8-gqa2",
+      "bpb_delta": 0.004082949833002503,
+      "bpb_relative_delta": 0.0042258107137035684,
+      "training_speedup": 1.0009413441420594,
+      "whole_phase_training_speedup": 1.0100824163070015,
+      "members": [
+        "d8-gqa2-tok"
+      ],
+      "reference_members": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.003996983893232997,
+      "test_bpb_relative_delta": 0.004137866036060104,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          -0.0002882420105127974,
+          0.00828220979697879
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 90177808.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 39846144.0
+      },
+      "field_subject": "d8-gqa2-tok",
+      "field_references": {
+        "matched_tokens": "d8-gqa2-s1",
+        "matched_estimated_flops": "d8-gqa2-s1",
+        "elapsed_seconds_difference": "d8-gqa2-s1",
+        "inference_speedups": "d8-gqa2-s1"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -34.61147805500059,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 1.0136600911573947,
+          "decode": 1.01581881560484,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.1117925224392107,
+          "decode": 1.1162730900511721,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 0.9969810255338478,
+          "decode": 1.084406923553764,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.8392291502216974,
+          "decode": 1.0615034372748766,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.9917315138211263,
+          "decode": 1.0056240439279058,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 0.9964163876361607,
+          "decode": 0.9934359837610779,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9346860143484823,
+          "decode": 0.9517911366616557,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 0.995050456742456,
+          "decode": 1.0063907342654903,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 0.9992612680320604,
+          "decode": 0.9628227717278011,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9790090449239883,
+          "decode": 1.0029054099917016,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 0.99813359630861,
+          "decode": 1.000445959914792,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.000007342046354,
+          "decode": 1.066482093040583,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa2-tok",
+      "reference": "d8-b0",
+      "bpb_delta": 0.009183648736573735,
+      "bpb_relative_delta": 0.009555425877440685,
+      "training_speedup": 1.0294073585542864,
+      "whole_phase_training_speedup": 1.0532835508563747,
+      "members": [
+        "d8-gqa2-tok"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.009154955582407753,
+      "test_bpb_relative_delta": 0.009528521499813458,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.004869729678661959,
+          0.013440181486153547
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 90177808.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 39846144.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa2-tok",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.011184528440649766
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.00413838421622259
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.006086528350507381
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.006123846343036865
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.0059366766834179074
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.007719824567237188
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.007928732863281218
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.008236624417180205
+        }
+      ],
+      "matched_estimated_flops": [],
+      "elapsed_seconds_difference": -34.545988121000676,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9618187623283195,
+          "decode": 0.9744855860721698,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0469761074674595,
+          "decode": 0.9933399137898111,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0562856842836328,
+          "decode": 0.986815491205794,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.7361542827608033,
+          "decode": 0.9628625018229859,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.062706955878721,
+          "decode": 0.9558202682383294,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.0832365367806496,
+          "decode": 0.931651734101128,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.8698746120477201,
+          "decode": 0.8888315239746197,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0831028413018646,
+          "decode": 0.9774687096687439,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0880946960504678,
+          "decode": 0.9680683824500508,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0447339360026233,
+          "decode": 0.9565432466207996,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0946102681654963,
+          "decode": 0.9748408936683003,
+          "kv_cache_bytes_ratio": 0.5
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0933333353809205,
+          "decode": 1.0056952660052585,
+          "kv_cache_bytes_ratio": 0.5
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "reference": "d8-gqa4",
+      "bpb_delta": 0.0035270006146804755,
+      "bpb_relative_delta": 0.0036274133037523027,
+      "training_speedup": 0.9980167519522577,
+      "whole_phase_training_speedup": 1.0339799972103352,
+      "members": [
+        "d8-gqa4-tok"
+      ],
+      "reference_members": [
+        "d8-gqa4"
+      ],
+      "n_run": 1,
+      "n_ref": 1,
+      "test_bpb_delta": 0.0035219384890979866,
+      "test_bpb_relative_delta": 0.0036227786499073477,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          -0.0017263699592690628,
+          0.008770246937465035
+        ],
+        "resolved": false
+      },
+      "parameters": {
+        "run": 72351888.0,
+        "reference": 72351888.0
+      },
+      "scaling_parameters": {
+        "run": 38797440.0,
+        "reference": 38797440.0
+      },
+      "field_subject": "d8-gqa4-tok",
+      "field_references": {
+        "matched_tokens": "d8-gqa4",
+        "matched_estimated_flops": "d8-gqa4",
+        "elapsed_seconds_difference": "d8-gqa4",
+        "inference_speedups": "d8-gqa4"
+      },
+      "matched_tokens": [],
+      "matched_estimated_flops": [],
+      "matched_observations_note": "different token targets; curves are not schedule-matched",
+      "elapsed_seconds_difference": -40.56866985000033,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 1.0618045646919374,
+          "decode": 1.0970316790391115,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0523508876769012,
+          "decode": 1.0284830683656438,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0228068581259295,
+          "decode": 1.1147417795643713,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 1.0792403670263833,
+          "decode": 1.0705465325879535,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 0.9510987882007371,
+          "decode": 0.9617862324735996,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 0.996192333635016,
+          "decode": 0.96787577969626,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.9483368366247156,
+          "decode": 0.9773073969621382,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.0000352101052268,
+          "decode": 1.0282667265881846,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.0003693200988975,
+          "decode": 1.065571513204257,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 0.9792434609826757,
+          "decode": 1.0492815306495462,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.0003491523396826,
+          "decode": 1.079525249893442,
+          "kv_cache_bytes_ratio": 1.0
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.0008238597278243,
+          "decode": 1.048041114098799,
+          "kv_cache_bytes_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "run_id": "d8-gqa4-tok",
+      "reference": "d8-b0",
+      "bpb_delta": 0.01475281529452166,
+      "bpb_relative_delta": 0.015350046269623366,
+      "training_speedup": 1.0619702813461456,
+      "whole_phase_training_speedup": 1.0931425745870371,
+      "members": [
+        "d8-gqa4-tok"
+      ],
+      "reference_members": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "n_run": 1,
+      "n_ref": 3,
+      "test_bpb_delta": 0.014891930517359153,
+      "test_bpb_relative_delta": 0.015499592415397131,
+      "resolved": true,
+      "resolved_by_means": true,
+      "sensitivity": {
+        "ci95": [
+          0.01060670461361336,
+          0.019177156421104947
+        ],
+        "resolved": true
+      },
+      "parameters": {
+        "run": 72351888.0,
+        "reference": 125829648.0
+      },
+      "scaling_parameters": {
+        "run": 38797440.0,
+        "reference": 41943552.0
+      },
+      "field_subject": "d8-gqa4-tok",
+      "field_references": {
+        "matched_tokens": "d8-b0-s1",
+        "matched_estimated_flops": "d8-b0-s1",
+        "elapsed_seconds_difference": "d8-b0-s1",
+        "inference_speedups": "d8-b0-s1"
+      },
+      "matched_tokens": [
+        {
+          "tokens": 52428800,
+          "bpb_delta": 0.03980532730928643
+        },
+        {
+          "tokens": 104857600,
+          "bpb_delta": 0.01383758409207525
+        },
+        {
+          "tokens": 157286400,
+          "bpb_delta": 0.013634472765744476
+        },
+        {
+          "tokens": 209715200,
+          "bpb_delta": 0.012147767420640276
+        },
+        {
+          "tokens": 262144000,
+          "bpb_delta": 0.012725073141966137
+        },
+        {
+          "tokens": 314572800,
+          "bpb_delta": 0.013643313144557356
+        },
+        {
+          "tokens": 367001600,
+          "bpb_delta": 0.013739687766041286
+        },
+        {
+          "tokens": 419430400,
+          "bpb_delta": 0.013859395190621515
+        }
+      ],
+      "matched_estimated_flops": [],
+      "elapsed_seconds_difference": -49.92366435100013,
+      "inference_speedups": [
+        {
+          "batch_size": 1,
+          "prompt_tokens": 128,
+          "prefill": 0.9561332069547186,
+          "decode": 0.9412716030222958,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 1792,
+          "prefill": 1.0120957717450154,
+          "decode": 0.9677719754701283,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 1,
+          "prompt_tokens": 8192,
+          "prefill": 1.0976288591345003,
+          "decode": 0.9770087870866088,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 128,
+          "prefill": 0.9680157360586121,
+          "decode": 0.9669442524411356,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 1792,
+          "prefill": 1.0382935910615838,
+          "decode": 0.876984351405242,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 4,
+          "prompt_tokens": 8192,
+          "prefill": 1.1345392001336898,
+          "decode": 0.8716086827351179,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 128,
+          "prefill": 0.8620798517029301,
+          "decode": 0.8675214469009318,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 1792,
+          "prefill": 1.1393714656164837,
+          "decode": 0.9485330439891615,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 16,
+          "prompt_tokens": 8192,
+          "prefill": 1.1393898711780237,
+          "decode": 1.0028317817122467,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 128,
+          "prefill": 1.0440311829010516,
+          "decode": 0.9436299325873795,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 1792,
+          "prefill": 1.151340199049662,
+          "decode": 0.9807973373409498,
+          "kv_cache_bytes_ratio": 0.25
+        },
+        {
+          "batch_size": 64,
+          "prompt_tokens": 8192,
+          "prefill": 1.1483233568961544,
+          "decode": 1.039356218298518,
+          "kv_cache_bytes_ratio": 0.25
+        }
+      ]
+    }
+  ],
+  "interactions": {
+    "E5": {
+      "terms": [
+        "d8-gqa2",
+        "d8-b0",
+        "d8-gqa2-nove",
+        "d8-b0-nove"
+      ],
+      "members": [
+        [
+          "d8-gqa2-s1",
+          "d8-gqa2-s2",
+          "d8-gqa2-s3"
+        ],
+        [
+          "d8-b0-s1",
+          "d8-b0-s2",
+          "d8-b0-s3"
+        ],
+        [
+          "d8-gqa2-nove"
+        ],
+        [
+          "d8-b0-nove"
+        ]
+      ],
+      "effect_with": 0.005157971689174756,
+      "effect_without": 0.004650907560673101,
+      "interaction": 0.0005070641285016553,
+      "threshold": 0.0021419420459926498,
+      "resolved": false,
+      "sensitivity": {
+        "ci95": [
+          -0.0055531604624081505,
+          0.006567288719411461
+        ],
+        "resolved": false
+      }
+    }
+  },
+  "paired": {
+    "e2_seed_pairs": {
+      "pairs": [
+        [
+          "d8-gqa2-s1",
+          "d8-b0-s1"
+        ],
+        [
+          "d8-gqa2-s2",
+          "d8-b0-s2"
+        ],
+        [
+          "d8-gqa2-s3",
+          "d8-b0-s3"
+        ]
+      ],
+      "differences": {
+        "d8-gqa2-s1": 0.00640915000242781,
+        "d8-gqa2-s2": 0.005003574055400639,
+        "d8-gqa2-s3": 0.004061191009695819
+      },
+      "n": 3,
+      "df": 2,
+      "mean": 0.005157971689174756,
+      "std": 0.0011815696466455294,
+      "t_critical": 4.303,
+      "ci95": [
+        0.002222553070218609,
+        0.008093390308130903
+      ],
+      "resolved": true,
+      "unpaired_difference_std": 0.0009274881126318257,
+      "noise_ratio": 1.273945865777973
+    },
+    "e6_compute_vs_tokens": [
+      {
+        "run_id": "d8-gqa2-s1",
+        "ablation": "d8-gqa2-tok",
+        "test_bpb_delta": -0.0023140739233417085,
+        "threshold": 0.0023631392932910588,
+        "resolved": false
+      },
+      {
+        "run_id": "d8-gqa4",
+        "ablation": "d8-gqa4-tok",
+        "test_bpb_delta": -0.0035219384890979866,
+        "threshold": 0.0023631392932910588,
+        "resolved": true
+      }
+    ],
+    "n_contrasts": 3
+  },
+  "n_contrasts": 17,
+  "missing_runs": [],
+  "caveat": "primary resolution uses seed noise from the three d8 baseline runs only (s on 2 df); the pre-registered 2*sqrt(2)*s rule then has a false-positive rate well above 5% (about 13-18% per contrast by simulation); resolved_by_means is a secondary rule for three-seed group means; `sensitivity` is a separately labelled sensitivity analysis using the SD pooled over the d8-b0 and d8-gqa2 seeds with Student-t 95% intervals; n_contrasts counts the contrasts reported, with no multiplicity correction; `paired` is a secondary paired analysis of same-seed pairs (E2 seeds, E6 fixed-compute run vs matched-token ablation) on 2 df, with its own contrast count; unresolved differences are not ties"
+}

@@ -1,0 +1,86 @@
+{
+  "model_type": "modified_gpt_324e69c",
+  "model_config": {
+    "sequence_len": 2048,
+    "vocab_size": 32768,
+    "n_layer": 8,
+    "n_head": 4,
+    "n_kv_head": 2,
+    "n_embd": 512,
+    "rotary_fraction": 0.25,
+    "window_pattern": "SSSL",
+    "mlp_ratio": 4.0,
+    "value_embeds": true
+  },
+  "experiment_config": {
+    "run_id": "pilot-d8-gqa2-r25",
+    "base_commit": "324e69c45d3606095adb6b409078647145165454",
+    "seed": 1,
+    "workers": 1,
+    "model": {
+      "sequence_len": 2048,
+      "vocab_size": 32768,
+      "n_layer": 8,
+      "n_head": 4,
+      "n_kv_head": 2,
+      "n_embd": 512,
+      "window_pattern": "SSSL",
+      "rotary_fraction": 0.25,
+      "mlp_ratio": 4.0,
+      "value_embeds": true
+    },
+    "training": {
+      "target_tokens": 458752000,
+      "tokens_per_scaling_param": 10.5,
+      "flop_budget": 138539818014474240,
+      "wallclock_cap_seconds": 7200,
+      "device_batch_size": 32,
+      "total_batch_size": 262144,
+      "save_every": -1,
+      "eval_every": -1,
+      "max_steps": 10,
+      "compile": true
+    },
+    "optimizer": {
+      "embedding_lr": 0.3,
+      "unembedding_lr": 0.004,
+      "matrix_lr": 0.02,
+      "scalar_lr": 0.5,
+      "weight_decay": 0.2,
+      "adam_betas": [
+        0.8,
+        0.95
+      ],
+      "reference_batch_size": 524288,
+      "warmup_ratio": 0.0,
+      "warmdown_ratio": 0.5,
+      "final_lr_frac": 0.0
+    },
+    "evaluation": {
+      "interim_tokens": 131072,
+      "final_tokens": 131072,
+      "test_tokens": 131072
+    },
+    "benchmark": {
+      "batch_sizes": [
+        1,
+        4,
+        16,
+        64
+      ],
+      "prompt_lengths": [
+        128,
+        1792,
+        8192
+      ],
+      "decode_tokens": 256,
+      "warmup": 1,
+      "repeats": 1
+    }
+  },
+  "step": 10,
+  "val_bpb": null,
+  "training_seconds_before_save": 20.547981018999963,
+  "tokens": 2621440,
+  "estimated_flops": 791652398530560
+}

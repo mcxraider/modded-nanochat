@@ -1,0 +1,215 @@
+{
+  "dataset": "karpathy/climbmix-400b-shuffle",
+  "shards": [
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00000.parquet",
+      "bytes": 92291918
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00001.parquet",
+      "bytes": 92124317
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00002.parquet",
+      "bytes": 91803619
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00003.parquet",
+      "bytes": 91793972
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00004.parquet",
+      "bytes": 91428652
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00005.parquet",
+      "bytes": 91845922
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00006.parquet",
+      "bytes": 91455616
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00007.parquet",
+      "bytes": 91202032
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00008.parquet",
+      "bytes": 91155507
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00009.parquet",
+      "bytes": 92072356
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00010.parquet",
+      "bytes": 92181541
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00011.parquet",
+      "bytes": 91758078
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00012.parquet",
+      "bytes": 91531067
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00013.parquet",
+      "bytes": 91842434
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00014.parquet",
+      "bytes": 91794786
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00015.parquet",
+      "bytes": 91642426
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00016.parquet",
+      "bytes": 91875697
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00017.parquet",
+      "bytes": 92252148
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00018.parquet",
+      "bytes": 92097325
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00019.parquet",
+      "bytes": 91468190
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00020.parquet",
+      "bytes": 92023878
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00021.parquet",
+      "bytes": 92007015
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00022.parquet",
+      "bytes": 91895569
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00023.parquet",
+      "bytes": 91788901
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00024.parquet",
+      "bytes": 91816001
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00025.parquet",
+      "bytes": 92082140
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00026.parquet",
+      "bytes": 91646155
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00027.parquet",
+      "bytes": 91534737
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00028.parquet",
+      "bytes": 92205715
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00029.parquet",
+      "bytes": 91416996
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00030.parquet",
+      "bytes": 91557375
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00031.parquet",
+      "bytes": 91761076
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00032.parquet",
+      "bytes": 91797604
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00033.parquet",
+      "bytes": 91448157
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00034.parquet",
+      "bytes": 91977442
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00035.parquet",
+      "bytes": 91501064
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00036.parquet",
+      "bytes": 91493685
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00037.parquet",
+      "bytes": 91950930
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00038.parquet",
+      "bytes": 91681390
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00039.parquet",
+      "bytes": 91480777
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00040.parquet",
+      "bytes": 91501658
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00041.parquet",
+      "bytes": 91995895
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00042.parquet",
+      "bytes": 91400837
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00043.parquet",
+      "bytes": 91490600
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00044.parquet",
+      "bytes": 91090081
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00045.parquet",
+      "bytes": 91188024
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00046.parquet",
+      "bytes": 91600459
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_00047.parquet",
+      "bytes": 92007753
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_06541.parquet",
+      "bytes": 91897402
+    },
+    {
+      "path": "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/nanochat/base_data_climbmix/shard_06542.parquet",
+      "bytes": 91699537
+    }
+  ],
+  "train_shards": 48,
+  "validation_shard": "shard_06542.parquet",
+  "validation_sha256": "769fe59d108dfd2cfa186c63173b83fbfb90a7adb3519519ba6eaa6ca9889f94",
+  "test_shard": "shard_06541.parquet",
+  "test_sha256": "51da1a9bc052dfd5a77988d6ca4d1cbe62b89eedb247b56850fc1b9b45e56c73",
+  "tokenizer": {
+    "tokenizer.pkl": "ae73c5f7a960edc56022dfd46a653df2b9b38d84456e5e9f48eb5e02a60c21c2",
+    "token_bytes.pt": "009ef93d20dd4684497c19c4b7fed29278b53f20022d2dc39264e27b9eefa2a8"
+  },
+  "loader": "historical BOS best-fit; tokenizer_threads=4, tokenizer_batch_size=128, buffer_size=1000; train split in one DataLoader worker (same order)"
+}

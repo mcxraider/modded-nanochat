@@ -1,0 +1,1617 @@
+[
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/preflight.json",
+    "size": 9289,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-b0-nove.json",
+    "size": 1312,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-b0-s1.json",
+    "size": 1309,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa2-nove.json",
+    "size": 1314,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa2-pm.json",
+    "size": 1311,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa2-r25.json",
+    "size": 1313,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa2-r75.json",
+    "size": 1313,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa2-s1.json",
+    "size": 1311,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/configs/pilot-d8-gqa4.json",
+    "size": 1308,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/benchmark.log",
+    "size": 1019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/config.json",
+    "size": 1312,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/evaluation_000010.json",
+    "size": 168,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/hardware.json",
+    "size": 4335,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/inference.json",
+    "size": 10827,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/launch.json",
+    "size": 1669,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/metrics.jsonl",
+    "size": 4361,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/rental_accounting.json",
+    "size": 982,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/result.json",
+    "size": 1259,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/train.log",
+    "size": 5265,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/benchmark.log",
+    "size": 1018,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/config.json",
+    "size": 1309,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/evaluation_000010.json",
+    "size": 165,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/hardware.json",
+    "size": 4996,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/inference.json",
+    "size": 10832,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/launch.json",
+    "size": 1665,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/metrics.jsonl",
+    "size": 4366,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/rental_accounting.json",
+    "size": 977,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/result.json",
+    "size": 1253,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/train.log",
+    "size": 5264,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/benchmark.log",
+    "size": 1019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/config.json",
+    "size": 1314,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/evaluation_000010.json",
+    "size": 166,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/hardware.json",
+    "size": 4671,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/inference.json",
+    "size": 10820,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/launch.json",
+    "size": 1673,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/metrics.jsonl",
+    "size": 4369,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/rental_accounting.json",
+    "size": 969,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/result.json",
+    "size": 1264,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/train.log",
+    "size": 5279,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/benchmark.log",
+    "size": 1018,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/config.json",
+    "size": 1311,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/evaluation_000010.json",
+    "size": 167,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/hardware.json",
+    "size": 5333,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/inference.json",
+    "size": 10818,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/launch.json",
+    "size": 1669,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/metrics.jsonl",
+    "size": 4370,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/rental_accounting.json",
+    "size": 981,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/result.json",
+    "size": 1258,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/train.log",
+    "size": 5274,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/benchmark.log",
+    "size": 1019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/config.json",
+    "size": 1313,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/evaluation_000010.json",
+    "size": 166,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/hardware.json",
+    "size": 5332,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/inference.json",
+    "size": 10821,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/launch.json",
+    "size": 1671,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/metrics.jsonl",
+    "size": 4358,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/rental_accounting.json",
+    "size": 983,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/result.json",
+    "size": 1259,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/train.log",
+    "size": 5265,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/benchmark.log",
+    "size": 1019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/config.json",
+    "size": 1313,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/evaluation_000010.json",
+    "size": 166,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/hardware.json",
+    "size": 5331,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/inference.json",
+    "size": 10819,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/launch.json",
+    "size": 1671,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/metrics.jsonl",
+    "size": 4355,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/rental_accounting.json",
+    "size": 983,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/result.json",
+    "size": 1257,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/train.log",
+    "size": 5262,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/training_complete.json",
+    "size": 148,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/benchmark.log",
+    "size": 1018,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/config.json",
+    "size": 1311,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/evaluation_000010.json",
+    "size": 165,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/hardware.json",
+    "size": 5333,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/inference.json",
+    "size": 10815,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/launch.json",
+    "size": 1669,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/metrics.jsonl",
+    "size": 4361,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/rental_accounting.json",
+    "size": 982,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/result.json",
+    "size": 1256,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/train.log",
+    "size": 5265,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/benchmark.log",
+    "size": 1018,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/config.json",
+    "size": 1308,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/data_manifest.json",
+    "size": 7955,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/data_order.json",
+    "size": 1352,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/evaluation_000010.json",
+    "size": 167,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/hardware.json",
+    "size": 5333,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/inference.json",
+    "size": 10810,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/launch.json",
+    "size": 1663,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/metrics.jsonl",
+    "size": 4351,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/rental_accounting.json",
+    "size": 976,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/result.json",
+    "size": 1250,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/train.log",
+    "size": 5246,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/training_complete.json",
+    "size": 149,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints/meta_000010.json",
+    "size": 1910,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints/model_000010.pt",
+    "size": 201347945,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints/optim_000010_rank0.pt",
+    "size": 302192661,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/checkpoints/timing_000010.json",
+    "size": 416,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints/meta_000010.json",
+    "size": 1906,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints/model_000010.pt",
+    "size": 335570681,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints/optim_000010_rank0.pt",
+    "size": 570633637,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/checkpoints/timing_000010.json",
+    "size": 416,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints/meta_000010.json",
+    "size": 1911,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints/model_000010.pt",
+    "size": 192959337,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints/optim_000010_rank0.pt",
+    "size": 293804709,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/checkpoints/timing_000010.json",
+    "size": 416,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints/meta_000010.json",
+    "size": 1907,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints/model_000010.pt",
+    "size": 268460793,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints/optim_000010_rank0.pt",
+    "size": 436431989,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/checkpoints/timing_000010.json",
+    "size": 415,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints/meta_000010.json",
+    "size": 1911,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints/model_000010.pt",
+    "size": 260072185,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints/optim_000010_rank0.pt",
+    "size": 428026997,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/checkpoints/timing_000010.json",
+    "size": 415,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints/meta_000010.json",
+    "size": 1910,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints/model_000010.pt",
+    "size": 260072185,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints/optim_000010_rank0.pt",
+    "size": 428026997,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/checkpoints/timing_000010.json",
+    "size": 416,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints/meta_000010.json",
+    "size": 1907,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints/model_000010.pt",
+    "size": 260072185,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints/optim_000010_rank0.pt",
+    "size": 428026997,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/checkpoints/timing_000010.json",
+    "size": 410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints/meta_000010.json",
+    "size": 1905,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints/model_000010.pt",
+    "size": 222322873,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints/optim_000010_rank0.pt",
+    "size": 356723253,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints/runtime_000010_rank0.pt",
+    "size": 10829,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/checkpoints/timing_000010.json",
+    "size": 410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/nanochat",
+    "size": 0,
+    "type": "2"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-nove/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-b0-s1/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-nove/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-pm/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r25/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-r75/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa2-s1/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/backend.py",
+    "size": 2019,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/benchmark.py",
+    "size": 9410,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/checkpoints.py",
+    "size": 2452,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/config.py",
+    "size": 13026,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/data.py",
+    "size": 4807,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/make_configs.py",
+    "size": 4106,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/preflight.py",
+    "size": 9449,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/report.py",
+    "size": 23214,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/resume.py",
+    "size": 7407,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/run.py",
+    "size": 14267,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/run_all.py",
+    "size": 1755,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/train.py",
+    "size": 23927,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/experiments/visualise.py",
+    "size": 27674,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/nanochat/checkpoint_manager.py",
+    "size": 9073,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/nanochat/flash_attention.py",
+    "size": 6684,
+    "type": "1"
+  },
+  {
+    "path": "experiments/d8-v5/pilots/9a34115f44463cc7/pilot-d8-gqa4/source/nanochat/modified_gpt.py",
+    "size": 26040,
+    "type": "1"
+  }
+]

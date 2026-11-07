@@ -1,0 +1,327 @@
+{
+  "status": "passed",
+  "device": "NVIDIA H100 80GB HBM3",
+  "attention_kernel": {
+    "repo": "varunneal/flash-attention-3",
+    "revision": "de87b9b5af06dd9984df595bef90b2eba44b181a"
+  },
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "rtol": 0.03,
+  "atol": 0.03,
+  "grad_rtol": 0.05,
+  "scalar_grad_rtol": 0.15,
+  "elapsed_seconds": 120.769887694,
+  "variants": [
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-b0-s1",
+        "d8-b0-s2",
+        "d8-b0-s3"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023386061191558838,
+        "rms_error": 0.004708893597126007
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.02731156349182129,
+        "rms_error": 0.004492912907153368
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 7.152557373046875e-05,
+        "max_grad_relative_error": 0.01828131452202797,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 0.00012111663818359375,
+        "max_grad_relative_error": 0.028935635462403297,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-gqa2-s1",
+        "d8-gqa2-s2",
+        "d8-gqa2-s3",
+        "d8-gqa2-tok"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.022459551692008972,
+        "rms_error": 0.004506668541580439
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.02733635902404785,
+        "rms_error": 0.004706546198576689
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 3.62396240234375e-05,
+        "max_grad_relative_error": 0.023263270035386086,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 8.0108642578125e-05,
+        "max_grad_relative_error": 0.029552403837442398,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 0.75,
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-gqa2-r75"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.020507395267486572,
+        "rms_error": 0.004607027396559715
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.02831905335187912,
+        "rms_error": 0.004714683163911104
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 9.5367431640625e-07,
+        "max_grad_relative_error": 0.022842787206172943,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 0.0001220703125,
+        "max_grad_relative_error": 0.02838493511080742,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.5,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-gqa2-pm"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023337244987487793,
+        "rms_error": 0.004585844464600086
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.031224608421325684,
+        "rms_error": 0.00474311038851738
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 0.0001392364501953125,
+        "max_grad_relative_error": 0.0234842412173748,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 6.771087646484375e-05,
+        "max_grad_relative_error": 0.0293732900172472,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 1,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-gqa4",
+        "d8-gqa4-tok"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023355603218078613,
+        "rms_error": 0.004593214951455593
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.02729576826095581,
+        "rms_error": 0.004688779357820749
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 0.00012874603271484375,
+        "max_grad_relative_error": 0.02293708175420761,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 0.000362396240234375,
+        "max_grad_relative_error": 0.029061507433652878,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 0.25,
+        "mlp_ratio": 4.0,
+        "value_embeds": true
+      },
+      "run_ids": [
+        "d8-gqa2-r25"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023422598838806152,
+        "rms_error": 0.004742756020277739
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.027339398860931396,
+        "rms_error": 0.004714335780590773
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 0.0001087188720703125,
+        "max_grad_relative_error": 0.02135719358921051,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 9.918212890625e-05,
+        "max_grad_relative_error": 0.026892630383372307,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 4,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.0,
+        "value_embeds": false
+      },
+      "run_ids": [
+        "d8-b0-nove"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023427486419677734,
+        "rms_error": 0.004583772271871567
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.027332544326782227,
+        "rms_error": 0.004486690741032362
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 2.956390380859375e-05,
+        "max_grad_relative_error": 0.019158007577061653,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 0.0001316070556640625,
+        "max_grad_relative_error": 0.02986936643719673,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "status": "passed"
+    },
+    {
+      "model": {
+        "sequence_len": 2048,
+        "vocab_size": 32768,
+        "n_layer": 8,
+        "n_head": 4,
+        "n_kv_head": 2,
+        "n_embd": 512,
+        "window_pattern": "SSSL",
+        "rotary_fraction": 1.0,
+        "mlp_ratio": 4.0,
+        "value_embeds": false
+      },
+      "run_ids": [
+        "d8-gqa2-nove"
+      ],
+      "tokens": 1030,
+      "training_tokens": 2048,
+      "cached_vs_full": {
+        "max_absolute_error": 0.023389756679534912,
+        "rms_error": 0.004562544170767069
+      },
+      "fa3_vs_sdpa": {
+        "max_absolute_error": 0.02732989192008972,
+        "rms_error": 0.004744907841086388
+      },
+      "fa3_vs_sdpa_grad": {
+        "loss_difference": 7.62939453125e-06,
+        "max_grad_relative_error": 0.023215074092149734,
+        "worst_parameter": "transformer.h.7.attn.c_k.weight"
+      },
+      "compiled_vs_eager": {
+        "loss_difference": 8.0108642578125e-05,
+        "max_grad_relative_error": 0.029969260096549988,
+        "worst_parameter": "transformer.h.7.attn.c_q.weight"
+      },
+      "status": "passed"
+    }
+  ]
+}

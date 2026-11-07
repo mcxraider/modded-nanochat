@@ -1,0 +1,72 @@
+{
+  "d8-gqa2-r25": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43759.0
+  },
+  "d8-gqa4-tok": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43285.0
+  },
+  "d8-gqa2-nove": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43581.0
+  },
+  "d8-gqa2-tok": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43775.0
+  },
+  "d8-b0-s1": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 44777.0
+  },
+  "d8-gqa2-pm": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 44291.0
+  },
+  "d8-gqa2-s2": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43775.0
+  },
+  "d8-gqa2-s3": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43775.0
+  },
+  "d8-gqa2-r75": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43745.0
+  },
+  "d8-gqa4": {
+    "sample_count": 176,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43271.0
+  },
+  "d8-b0-s3": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 44747.0
+  },
+  "d8-b0-s2": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 44747.0
+  },
+  "d8-gqa2-s1": {
+    "sample_count": 173,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 43795.0
+  },
+  "d8-b0-nove": {
+    "sample_count": 166,
+    "median_gpu_utilization_pct": 100.0,
+    "max_sampled_memory_mib": 44361.0
+  }
+}

@@ -1,0 +1,13 @@
+2026-11-07 06:22:40,124 - nanochat.checkpoint_manager - [32m[1mINFO[0m - Building model with config: {'sequence_len': 2048, 'vocab_size': 32768, 'n_layer': 8, 'n_head': 4, 'n_kv_head': 1, 'n_embd': 512, 'rotary_fraction': 1.0, 'window_pattern': 'SSSL', 'mlp_ratio': 4.0, 'value_embeds': True}
+{"benchmark_row": 1, "prompt_tokens": 128, "status": "ok"}
+{"benchmark_row": 1, "prompt_tokens": 1792, "status": "ok"}
+{"benchmark_row": 1, "prompt_tokens": 8192, "status": "ok"}
+{"benchmark_row": 4, "prompt_tokens": 128, "status": "ok"}
+{"benchmark_row": 4, "prompt_tokens": 1792, "status": "ok"}
+{"benchmark_row": 4, "prompt_tokens": 8192, "status": "ok"}
+{"benchmark_row": 16, "prompt_tokens": 128, "status": "ok"}
+{"benchmark_row": 16, "prompt_tokens": 1792, "status": "ok"}
+{"benchmark_row": 16, "prompt_tokens": 8192, "status": "ok"}
+{"benchmark_row": 64, "prompt_tokens": 128, "status": "ok"}
+{"benchmark_row": 64, "prompt_tokens": 1792, "status": "ok"}
+{"benchmark_row": 64, "prompt_tokens": 8192, "status": "ok"}

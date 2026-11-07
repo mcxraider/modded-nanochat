@@ -1,0 +1,33 @@
+{
+  "attention_kernel": {
+    "repo": "varunneal/flash-attention-3",
+    "revision": "de87b9b5af06dd9984df595bef90b2eba44b181a"
+  },
+  "base_commit": "324e69c45d3606095adb6b409078647145165454",
+  "overlay_sha256": {
+    "nanochat/modified_gpt.py": "b2f6a01526552b111a7ae79340d302dfb9174954d4dc4607da67afff2b6929c9",
+    "experiments/train.py": "6a8a35959df0855d10db22f482505fd3c734542158e86ac5ae046a1e51844cde",
+    "experiments/data.py": "e31b575b14646e05bcadd50f65f8dbdc72c16f6bbf9bf5315b1a817c2e2ff99a",
+    "experiments/benchmark.py": "995f475c6288806eddacbb16ed23efb81a0e02e189c164b714b4c9a150fee857",
+    "experiments/backend.py": "cc0442d2facf08735bcedcc360b126702625b72396bb58a7af0dbe522f2f94e4",
+    "experiments/config.py": "0c93c53f5e2c5be430fe50f2ba3f46b4313c9754183cf14822bbaab1c2b7695c",
+    "experiments/checkpoints.py": "74b8d197861890017cadfe6138998ed6119dbf90fe04d5bb515957065b59bba3",
+    "nanochat/checkpoint_manager.py": "617fcaca56de9d9703d22dc40a6e78a75bfd1a77ed9d482c1c6757fce8698bfd",
+    "nanochat/flash_attention.py": "29a4aaf2d25a141a5b5b26f2bd42d6afb1e0b1c108e16ced86ea65c1a65ad45f"
+  },
+  "command": [
+    "/root/modded-nanochat-experiments-324e69c/.venv/bin/python",
+    "-m",
+    "torch.distributed.run",
+    "--standalone",
+    "--nproc_per_node=1",
+    "-m",
+    "experiments.train",
+    "--config",
+    "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-s2/config.json",
+    "--output",
+    "/__modal/volumes/vo-pEGZ6k9jlolOyE0sPfJsjM/experiments/d8-v5/artifacts/d8-b0-s2"
+  ],
+  "source_commit": "c07aa7eecf51db82d58683688b18170c81b9ae10",
+  "source_diff": ""
+}
