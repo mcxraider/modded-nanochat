@@ -503,6 +503,22 @@ the matched-token penalties. The transferred Chinchilla coefficients overpredict
 to this architecture or corpus. Cache savings were realised, while decode acceleration was not; this conclusion is
 conditional on the tested runtime. Table~\ref{tab:hypotheses} retains both successful and failed predictions.
 
+\paragraph{Deployment tradeoff.}
+Relative to MHA's 0.960795 test BPB, GQA-2 increases BPB by 0.005158 (0.54\%) and MQA by 0.011370
+(1.18\%); lower BPB is better. At batch 64 and a 1{,}792-token prompt, their allocated K/V caches fall
+from 2.0 GiB to 1.0 and 0.5 GiB, while peak allocated memory falls from 5.452 GiB to 4.331 and
+3.769 GiB. Decode throughput at this workload falls from 16{,}649 to 16{,}223 and 15{,}127 tokens/s.
+Thus the measured tradeoff is lower memory use at a quality cost, without a decode-throughput gain on
+the tested eager runtime.
+
+The appropriate model and attention configuration depend on the application, its quality requirements,
+context length, latency target and expected number of concurrent requests. K/V-cache demand grows with
+the number of live sequences and their retained tokens; when many users must be served on fixed GPU
+memory, a smaller model or fewer K/V heads can make higher concurrency feasible. That capacity benefit
+must be weighed against the measured quality loss and the absence of a decode speedup here. We did not
+measure maximum supported concurrency or compare different model sizes, so this is a deployment
+implication rather than an observed serving-capacity result.
+
 \begin{table}[t]
 \centering\small
 \caption{Registered predictions and observed outcomes. ``Unresolved'' refers to the specified detection procedure,
@@ -557,11 +573,12 @@ at depth 12 with learning-rate sweeps and equal-wall-time comparisons.
 
 \section{Conclusion}
 Under $1.3854\times10^{17}$ estimated training FLOPs, MHA achieved the best tested mean test BPB, 0.960795.
-GQA-2 and MQA were worse by 0.005158 and 0.011370 BPB despite extra training, while improving steady training
-throughput by 2.84\% and 6.42\%. Partial RoPE produced no resolved quality change and no measured training speedup.
-GQA halved or quartered allocated K/V cache, but did not accelerate decoding in the reported high-batch comparisons.
-For this small-model objective, retain MHA for quality; GQA offers a demonstrated memory tradeoff whose value depends
-on deployment constraints, with the observed quality and runtime costs stated explicitly.
+GQA-2 and MQA were worse by 0.005158 (0.54\%) and 0.011370 (1.18\%) BPB despite extra training, while improving
+steady training throughput by 2.84\% and 6.42\%. Partial RoPE produced no resolved quality change and no measured
+training speedup. GQA halved or quartered allocated K/V cache, but did not accelerate decoding in the reported
+high-batch comparisons. For this small-model objective, retain MHA when quality is the priority. Memory-limited
+serving, especially with many concurrent users or long contexts, may favour fewer K/V heads or a smaller model;
+the right choice depends on the application's quality, latency and concurrency requirements.
 
 \paragraph{Reproducibility and evidence.}
 Namespace \texttt{d8-v5}, launch commit \texttt{c07aa7e}, overlays experiment code on nanochat \texttt{324e69c}.
