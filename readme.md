@@ -106,7 +106,7 @@ worktree.
   - Training pool: shards 0–47 (`SHARDS = 48` in `modal_app.py`). Seeds 2 and 3 rotate the pool by 16 and 32 shards.
   - **Validation:** shard 06542, $2^{24}$ tokens, used for curves and any decision.
   - **Test:** shard 06541, $2^{24}$ tokens, evaluated once per run after training. This is the primary metric.
-- **Tokenizer:** the nanochat BPE recipe (`scripts.tok_train`, vocabulary 32,768), trained by us on the training
+- **Tokenizer:** the nanochat BPE recipe (`scripts.tok_train`, vocabulary 32,768), trained by me on the training
   shards. The trained tokenizer is saved in `results/d8-v5/export/tokenizer/`.
 - **On Modal:** `prepare()` downloads the shards and the test shard and trains the tokenizer, then checks that the
   pool holds enough tokens for the largest run.

@@ -67,7 +67,7 @@ A Controlled Study of a Small Language Model Trained from Scratch\par}
 \centerline{\bfseries Abstract}
 \vspace{4pt}
 \small
-We test grouped-query attention and partial rotary embeddings in 14 from-scratch depth-8 language-model runs under a
+I test grouped-query attention and partial rotary embeddings in 14 from-scratch depth-8 language-model runs under a
 fixed estimated training-FLOP allowance. Multi-head attention achieves mean held-out test BPB 0.960795; two K/V heads
 and one K/V head worsen it by 0.005158 and 0.011370 despite longer training. Training throughput improves by 2.84\%
 and 6.41\%, and allocated K/V cache halves and quarters, respectively. Extra tokens recover about one quarter of
@@ -93,8 +93,8 @@ safety stop only; no comparable run reached it (each needed about 6.77--7.61 min
 checks and tokenizer training are excluded from the budget and reported separately.
 
 \paragraph{Initialisation.} Every model is trained from random initialisation. No pretrained weights, embeddings or
-other pretrained neural components are used. We reuse the nanochat architecture and code, its BPE tokenizer recipe
-(trained by us on the training shards, vocabulary 32{,}768) and the ClimbMix corpus.
+other pretrained neural components are used. I reuse the nanochat architecture and code, its BPE tokenizer recipe
+(trained by me on the training shards, vocabulary 32{,}768) and the ClimbMix corpus.
 
 \paragraph{Evaluation objective.} Bits per byte (BPB) of next-token prediction on held-out ClimbMix web text: $2^{24}$
 tokens from shard 06542 (validation, used for curves and any decision) and, separately, $2^{24}$ tokens from shard
@@ -109,12 +109,12 @@ Grouped-query attention (GQA) shares key/value (K/V) heads across query heads, r
 projection FLOPs~\cite{ainslie2023gqa,shazeer2019mqa}. Partial rotary embeddings rotate only a fraction of each
 head's dimensions~\cite{su2021roformer,black2022gptneox}. Their effects on small models trained from scratch under
 limited compute are less clear than their large-model motivations. At fixed compute, GQA buys extra training tokens
-but may lose per-token quality. We ask:
+but may lose per-token quality. I ask:
 \begin{quote}\itshape
 At depth 8 and a fixed budget of $C$ estimated training FLOPs, what do GQA and partial RoPE cost or buy in
 held-out BPB, training throughput and inference memory/speed, and how much does GQA benefit from extra tokens?
 \end{quote}
-We pre-registered hypotheses and analysis rules in \path{experiments/experiments.md}. The study combines replicated
+I pre-registered hypotheses and analysis rules in \path{experiments/experiments.md}. The study combines replicated
 MHA/GQA-2 comparisons, a rotary dose--response, value-embedding and matched-token controls, and H100 inference measurements.
 
 % ---------------------------------------------------------------------------
@@ -124,15 +124,15 @@ MHA/GQA-2 comparisons, a rotary dose--response, value-embedding and matched-toke
 MHA~\cite{vaswani2017attention} gives each query head independent K/V projections. MQA shares one K/V head;
 GQA uses an intermediate number. This reduces cache reads, which can dominate decoding at large batch or long
 context~\cite{shazeer2019mqa,pope2023efficiently}. GQA's near-MHA quality evidence comes from uptrained T5-XXL
-checkpoints~\cite{ainslie2023gqa}, motivating our from-scratch test. Training saves only K/V projection matmuls:
+checkpoints~\cite{ainslie2023gqa}, motivating my from-scratch test. Training saves only K/V projection matmuls:
 attention products still use every query head. Here GQA-2 saves 4.0\% of estimated FLOPs and MQA 6.0\%.
 
 \paragraph{Rotary embeddings and partial RoPE.}
 RoPE~\cite{su2021roformer} rotates query/key dimension pairs by position-dependent angles, with frequencies
 $\theta_i=10000^{-2i/d}$. GPT-NeoX rotates only 25\% of each head~\cite{black2022gptneox}; evidence that low-frequency
 pairs serve almost position-independent semantic roles also motivates partial rotation~\cite{barbero2025round}.
-Our implementation recomputes frequencies over the rotated prefix: R25 uses 16 rather than 64 pairs, with lowest
-frequency $10^{-3.75}$ rather than $10^{-3.9375}$, leaving 96 dimensions unrotated. Thus fraction changes both
+My implementation recomputes frequencies over the rotated prefix: R25 uses 16 rather than 64 pairs, with lowest
+frequency $10^{-3.75}$ rather than $10^{-3.9375}$, leaving 96 dimensions unrotated. Thus the fraction changes both
 positional capacity and the frequency grid.
 
 \paragraph{Value embeddings.}
@@ -146,7 +146,7 @@ so this change is invisible to the budget. A naive ``GQA vs MHA'' comparison in 
 
 \paragraph{Compute-optimal training.}
 Chinchilla~\cite{hoffmann2022chinchilla} models loss as $L(N,D)=E+A/N^{\alpha}+B/D^{\beta}$; embedding parameters
-require separate treatment~\cite{kaplan2020scaling}. We adopt nanochat's fitted horizon of 10.5 tokens per scaling
+require separate treatment~\cite{kaplan2020scaling}. I adopt nanochat's fitted horizon of 10.5 tokens per scaling
 parameter (transformer matrices plus unembedding)~\cite{karpathy2025nanochat}, using Chinchilla's data term only to
 predict the approximate benefit of GQA's extra tokens (\S\ref{sec:design}).
 
@@ -161,20 +161,20 @@ vocabulary 32{,}768. It keeps that commit's design: pre-norm with parameter-free
 squared-ReLU MLP~\cite{so2021primer} of width $4\times$, untied embeddings, logit soft-capping, learnable residual and
 input-skip scalars, gated value embeddings in alternating layers, and sliding-window attention with the
 pattern SSSL (short windows of 1{,}024 tokens, every fourth and the final layer full)~\cite{beltagy2020longformer}.
-We made one deliberate change: we train in BF16 rather than the leaderboard's FP8, so that numerical precision cannot
+I made one deliberate change: I train in BF16 rather than the leaderboard's FP8, so that numerical precision cannot
 interact with the head shapes.
 
 \paragraph{Variants.}
-We extended the model with three switches, each verified by CPU unit tests and a GPU preflight
+I extended the model with three switches, each verified by CPU unit tests and a GPU preflight
 (\S\ref{sec:validity}): the number of K/V heads $n_\text{kv}\in\{4,2,1\}$; the rotary fraction
 $f\in\{1, 0.75, 0.25\}$, where the first $f\cdot d_\text{head}$ dimensions of $q$ and $k$ are rotated and the rest pass
 through unchanged; and the MLP ratio and value-embedding on/off flags used by the controls.
 Table~\ref{tab:arch} lists the eight resulting architectures.
 
 \paragraph{Data and tokenizer.}
-We use NVIDIA ClimbMix~\cite{diao2025climb}, a 400B-token web mixture, in nanochat's shard format.
+I use NVIDIA ClimbMix~\cite{diao2025climb}, a 400B-token web mixture, in nanochat's shard format.
 Training uses shards 0--47; 06542 is validation and 06541 is test, never used for decisions.
-Our $2^{15}$-vocabulary BPE trainer reads training files in order up to $2\times10^9$ characters, excluding held-out
+My $2^{15}$-vocabulary BPE trainer reads training files in order up to $2\times10^9$ characters, excluding held-out
 shards by recipe; its retained export does not enumerate every input. BOS-aligned best-fit packing produces
 2{,}048-token rows. All runs end in the first epoch, with seed rotations 0, 16 and 32 over 48 shards.
 The pool's exact token capacity was not measured.
@@ -186,7 +186,7 @@ embeddings, unembedding and scalars with AdamW. Upstream's own depth-8 rules set
 tokens, all learning rates scaled by $\sqrt{262144/524288}=0.707$, and the Muon weight decay to $0.371$, computed once from
 B0 and \emph{frozen for every variant}. The schedule has no warm-up, a constant learning rate for 50\% of updates and
 then linear decay to zero. Weight decay decays linearly with progress, and Muon momentum warms up from 0.85 to 0.95
-over 300 updates. We tuned no hyperparameters for any variant (see Limitations, \S\ref{sec:limits}).
+over 300 updates. I tuned no hyperparameters for any variant (see Limitations, \S\ref{sec:limits}).
 
 \paragraph{Metric definition.}
 For held-out target tokens $x_i$ whose decoded UTF-8 byte lengths are $b_i$, the evaluation computes
@@ -196,7 +196,7 @@ For held-out target tokens $x_i$ whose decoded UTF-8 byte lengths are $b_i$, the
 Lower is better. Comparisons share tokenizer, held-out files and masking. Each final split requests $2^{24}$ tokens;
 saved scores and configurations agree, but independent consumed-token counters were not retained.
 
-\subsection{The FLOP budget and why we chose it}\label{sec:budget}
+\subsection{The FLOP budget and why I chose it}\label{sec:budget}
 Estimated FLOPs provide a reproducible arithmetic budget and reward GQA for removed projections.
 The estimator omits non-matmul work, including embedding lookups and rotary operations; measured throughput is
 therefore reported separately (\S\ref{sec:speed}). Training refuses targets above $C$ and stops at the assigned token
@@ -227,7 +227,7 @@ GQA-2-noVE & GQA-2, no value emb. & 301.99M & 1{,}750 & 0.459B & 39.85M / 56.62M
 \end{table*}
 
 \subsection{Experimental design}\label{sec:design}
-We ran 14 training runs. Apart from the stated change, all share data, tokenizer, context, batch, optimiser, schedule and evaluation text, and all variants use seed 1 unless noted. The seed sets both the initialisation and the training-shard rotation,
+I ran 14 training runs. Apart from the stated change, all share data, tokenizer, context, batch, optimiser, schedule and evaluation text, and all variants use seed 1 unless noted. The seed sets both the initialisation and the training-shard rotation,
 so seed noise includes data-order noise.
 \begin{itemize}
 \item \textbf{E1, noise floor} (\texttt{d8-b0-s1..s3}): B0 with seeds 1--3. The sample s.d.\ $s$ of test BPB defines the resolution threshold.
@@ -252,8 +252,8 @@ at 4.2--4.8 bytes per token.
 \paragraph{Statistical procedure.}
 A difference counts as \emph{resolved} only if it exceeds $2\sqrt{2}\,s$, a two-sigma bound on the difference of two
 single runs, where $s$ is the s.d.\ of the three B0 seeds. This rule is crude: $s$ has two degrees of freedom. By
-simulation it flags about 18\% of null single-vs-single contrasts, so across our $\approx17$ contrasts two or three
-spurious ``resolved'' flags can occur~\cite{bouthillier2021variance}. We therefore pre-registered three secondary
+simulation it flags about 18\% of null single-vs-single contrasts, so across my $\approx17$ contrasts two or three
+spurious ``resolved'' flags can occur~\cite{bouthillier2021variance}. I therefore pre-registered three secondary
 analyses and report where they disagree with the primary rule: (i) a bound that accounts for seed means,
 $2s\sqrt{1/n_1+1/n_2}$; (ii) a Student-$t$ 95\% interval using $s_p$, the s.d.\ pooled over the B0 and GQA-2 groups
 (df$\,=4$); and (iii) a \emph{paired} analysis that uses the shared data order of same-seed runs (E2 seed pairs and
@@ -263,8 +263,8 @@ learning-rate decay starts later.
 \subsection{Inference benchmark}
 After training, each final checkpoint is benchmarked on the H100 with fixed random prompts, greedy decoding of exactly 256
 tokens, a batch size $\in\{1,4,16,64\}$ and a prompt length $\in\{128, 1792, 8192\}$. A 1{,}792-token prompt plus 256
-generated tokens exactly fills the 2{,}048 training context. The 8{,}192-token prompt exceeds the context, so we use it
-only to measure speed and memory, with no quality claim. We report prefill throughput, time to first token, decode
+generated tokens exactly fills the 2{,}048 training context. The 8{,}192-token prompt exceeds the context, so I use it
+only to measure speed and memory, with no quality claim. I report prefill throughput, time to first token, decode
 throughput (the remaining 255 tokens), peak memory and the allocated KV cache, and compare them with the analytic cache
 size and the K/V bytes read per decoded token. Execution is eager. Weights are cast to BF16 once, and the cache position
 is kept on the host to avoid a GPU synchronisation per step.
@@ -603,7 +603,7 @@ The appropriate model and attention configuration depend on the application, its
 context length, latency target and expected number of concurrent requests. K/V-cache demand grows with
 the number of live sequences and their retained tokens; when many users must be served on fixed GPU
 memory, a smaller model or fewer K/V heads can make higher concurrency feasible. That capacity benefit
-must be weighed against the measured quality loss and the absence of a decode speedup here. We did not
+must be weighed against the measured quality loss and the absence of a decode speedup here. I did not
 measure maximum supported concurrency or compare different model sizes, so this is a deployment
 implication rather than an observed serving-capacity result.
 
@@ -658,7 +658,7 @@ Namespace \texttt{d8-v5}, launch commit \texttt{c07aa7e}, overlays experiment co
 Configs, scores, logs, inference cells and provenance are in \path{results/d8-v5/artifacts/};
 \texttt{comparison.json} holds analysis rules and sensitivity results; \path{results/d8-v5/audit/} holds the audit
 and timing CSV. All 56 final-checkpoint files match checksum markers; no consistency assertions failed.
-An omitted \path{source/experiments/checkpoints.py} was restored with its recorded hash; no training effect is recorded.
+The run snapshots lacked \path{source/experiments/checkpoints.py}; a copy matching its recorded hash is in \path{results/d8-v5/export/recovered-source/}; no training effect is recorded.
 The corpus is excluded.
 
 From the repository root (environment: \texttt{uv sync -{}-frozen -{}-extra cpu -{}-group dev}; see \path{readme.md}):
