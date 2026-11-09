@@ -11,6 +11,10 @@ from nanochat.tokenizer import RustBPETokenizer
 
 import pytest
 
+# The pinned 324e69c runtime imports `tokenizers`, which this project does not declare; install the
+# runtime's version to run this test: uv pip install tokenizers==0.22.0
+pytest.importorskip("tokenizers", reason="pinned runtime needs tokenizers==0.22.0 (see readme)")
+
 @pytest.mark.parametrize('value_embeds', [True, False])
 def test_pinned_training_completed_resume_preserves_saved_evidence(tmp_path, value_embeds):
     root=tmp_path; runtime=root/'runtime'

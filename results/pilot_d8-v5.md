@@ -1,9 +1,10 @@
 # Pilot results: experiment `d8-v5`
 
 These are the 10-update pilots, one per distinct architecture, run before the full suite with
-`modal run modal_app.py --pilot-only --experiment d8-v5`. Artifacts are on the Modal volume at
-`/vol/experiments/d8-v5/pilots/9a34115f44463cc7/` (the folder name is the config and source fingerprint). The raw
-numbers below come from the console output and are also saved in [`pilot_d8-v5.json`](pilot_d8-v5.json).
+`modal run modal_app.py --pilot-only --experiment d8-v5`. Their complete artifacts are exported to
+[`d8-v5/pilots/9a34115f44463cc7/`](d8-v5/pilots/9a34115f44463cc7/) (the folder name is the config and source
+fingerprint). The raw numbers below come from the console output and are also saved in
+[`pilot_d8-v5.json`](pilot_d8-v5.json).
 
 Pilots are preliminary runs. They are **excluded from the per-run compute budget** and are not used for any quality
 comparison. They checked that the setup works (H100, FA3 selected, no inference OOM, decode working set below
@@ -11,9 +12,15 @@ half the KV cache, data-loader wait ≤ 2%, VRAM < 90%) and produced the cost pr
 All eight pilots passed every check, so the full 14-run suite was launched under the same namespace with
 **unchanged configs**: no calibration change was made after the pilots.
 
-> TODO (when pulled from the volume): add `preflight.json` (worst FA3-vs-SDPA and compiled-vs-eager gradient
-> errors), and from each pilot `result.json` (`peak_vram_bytes`, `eval_peak_vram_bytes`, data-wait fraction) and
-> `inference.json` (decode working set vs cache).
+Exported pilot evidence:
+
+- [`preflight.json`](d8-v5/pilots/9a34115f44463cc7/preflight.json): numerical preflight on the H100 for all eight
+  architectures (FA3 vs SDPA, compiled vs eager gradients, cached vs full-sequence decoding), with tolerances.
+- `pilot-<run>/result.json`: peak training and evaluation VRAM (`peak_vram_bytes`, `eval_peak_vram_bytes`) and
+  data-loader wait (`steady_data_wait_fraction`).
+- `pilot-<run>/inference.json`: the pilot inference grid (decode working set vs allocated cache).
+- `pilot-<run>/checkpoints/`: metadata only. The 10-update `model_*.pt`/`optim_*.pt` files are not committed, but
+  their hashes are in `d8-v5/export/SHA256SUMS`.
 
 ## Model IDs and acronyms
 

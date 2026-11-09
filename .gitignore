@@ -25,3 +25,7 @@ report/*.bbl
 report/*.blg
 report/*.out
 report/*.xdv
+
+# OS / editor clutter
+.DS_Store
+experiments/.claude/
